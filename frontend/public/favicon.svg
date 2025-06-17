@@ -1,0 +1,42 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ff8533;stop-opacity:1" />
+    </linearGradient>
+    <filter id="iconGlow">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#0a0a0a" stroke="url(#iconGradient)" stroke-width="1"/>
+  
+  <!-- Runner hub symbol -->
+  <g transform="translate(16, 16)">
+    <!-- Central runner -->
+    <path d="M0 -8 C1.1 -8 2 -7.1 2 -6 S1.1 -4 0 -4 -2 -4.9 -2 -6 -1.1 -8 0 -8 M0.5 -3 H-0.5 C-1.05 -3 -1.5 -2.55 -1.5 -2 V2.5 H-2.5 C-2.78 2.5 -3 2.72 -3 3 S-2.78 3.5 -2.5 3.5 H-1.5 L-1.25 5.23 L-2.44 6.93 C-2.71 7.39 -2.54 8 -2.07 8.27 C-1.61 8.54 -1 8.37 -0.73 7.91 L0.37 6.36 L1.47 7.91 C1.74 8.37 2.35 8.54 2.82 8.27 C3.29 8 3.46 7.39 3.19 6.93 L2 5.23 L2.25 3.5 H3.25 C3.53 3.5 3.75 3.28 3.75 3 S3.53 2.5 3.25 2.5 H2.25 V-2 C2.25 -2.55 1.8 -3 1.25 -3 H0.5 Z" 
+          fill="url(#iconGradient)" 
+          transform="scale(0.8)"
+          filter="url(#iconGlow)"/>
+    
+    <!-- Orbital runners (smaller) -->
+    <circle cx="0" cy="-10" r="2" fill="#ff6500" opacity="0.8"/>
+    <circle cx="8.66" cy="-5" r="2" fill="#ff6500" opacity="0.8"/>
+    <circle cx="8.66" cy="5" r="2" fill="#ff6500" opacity="0.8"/>
+    <circle cx="0" cy="10" r="2" fill="#ff6500" opacity="0.8"/>
+    <circle cx="-8.66" cy="5" r="2" fill="#ff6500" opacity="0.8"/>
+    <circle cx="-8.66" cy="-5" r="2" fill="#ff6500" opacity="0.8"/>
+    
+    <!-- Connection lines -->
+    <path d="M0,0 L0,-10 M0,0 L8.66,-5 M0,0 L8.66,5 M0,0 L0,10 M0,0 L-8.66,5 M0,0 L-8.66,-5" 
+          stroke="url(#iconGradient)" 
+          stroke-width="0.5" 
+          opacity="0.5"
+          fill="none"/>
+  </g>
+</svg>

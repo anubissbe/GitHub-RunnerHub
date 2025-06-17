@@ -7,7 +7,7 @@ import AlertsPanel from './components/AlertsPanel';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Runner, WorkflowRun, Job, Metrics } from './types';
 
-const API_BASE = 'http://192.168.1.25:8300';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8300';
 
 function App() {
   const [runners, setRunners] = useState<Runner[]>([]);
@@ -18,7 +18,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const { isConnected, error } = useWebSocket(`ws://192.168.1.25:8300/ws`, {
+  const WS_URL = import.meta.env.VITE_WS_URL || API_BASE.replace('http', 'ws') + '/ws';
+  const { isConnected, error } = useWebSocket(WS_URL, {
     onMessage: (data) => {
       console.log('WebSocket message:', data);
       if (data.type === 'runners') {

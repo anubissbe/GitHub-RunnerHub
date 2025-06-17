@@ -1,9 +1,15 @@
+export interface RunnerLabel {
+  id: number;
+  name: string;
+  type: string;
+}
+
 export interface Runner {
   id: number;
   name: string;
   status: 'online' | 'offline';
   busy: boolean;
-  labels: string[];
+  labels: RunnerLabel[];
   os: string;
 }
 

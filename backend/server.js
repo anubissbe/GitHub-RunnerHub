@@ -39,12 +39,21 @@ wss.on('connection', (ws) => {
   }));
 });
 
-// Broadcast function
-function broadcast(event, data) {
-  const message = JSON.stringify({ event, data });
+// Broadcast function with error handling
+function broadcast(type, data) {
+  const message = JSON.stringify({ 
+    type, 
+    data,
+    timestamp: new Date().toISOString()
+  });
+  
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+      try {
+        client.send(message);
+      } catch (error) {
+        console.error('Error broadcasting to client:', error.message);
+      }
     }
   });
 }
@@ -143,11 +152,15 @@ async function updateCache() {
     cache.lastUpdate = new Date();
     console.log(`Cache updated: ${cache.runners.length} runners, ${cache.workflows.length} workflows, ${cache.jobs.length} jobs`);
     
-    // Broadcast update
-    broadcast('update', {
-      runners: cache.runners.length,
-      workflows: cache.workflows.length,
-      jobs: cache.jobs.length
+    // Broadcast updates with correct types
+    broadcast('runners', cache.runners);
+    broadcast('workflows', cache.workflows);
+    broadcast('jobs', cache.jobs);
+    broadcast('metrics', {
+      total_runners: cache.runners.length,
+      online_runners: cache.runners.filter(r => r.status === 'online').length,
+      busy_runners: cache.runners.filter(r => r.busy).length,
+      total_workflows_today: cache.workflows.length
     });
   } catch (error) {
     console.error('Error updating cache:', error.message);
