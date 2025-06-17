@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Activity, Clock, GitBranch, Monitor, Server, AlertTriangle } from 'lucide-react';
+import { Activity, Clock, GitBranch, Monitor, Server, AlertTriangle, LogOut } from 'lucide-react';
 import RunnerGrid from './components/RunnerGrid';
 import WorkflowTracker from './components/WorkflowTracker';
 import MetricsPanel from './components/MetricsPanel';
 import AlertsPanel from './components/AlertsPanel';
+import { Login } from './components/Login';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Runner, WorkflowRun, Job, Metrics } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8300';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState<string>('');
+  const [user, setUser] = useState<any>(null);
   const [runners, setRunners] = useState<Runner[]>([]);
   const [workflows, setWorkflows] = useState<WorkflowRun[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -37,12 +41,53 @@ function App() {
     }
   });
 
+  // Check for existing auth on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (newToken: string) => {
+    setToken(newToken);
+    setIsAuthenticated(true);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setToken('');
+    setUser(null);
+  };
+
+  const fetchWithAuth = async (url: string) => {
+    return fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
   const fetchData = async () => {
+    if (!isAuthenticated) return;
+    
     try {
       const [runnersRes, workflowsRes, jobsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/runners`),
-        fetch(`${API_BASE}/api/workflows/active`),
-        fetch(`${API_BASE}/api/jobs/active`)
+        fetchWithAuth(`${API_BASE}/api/runners`),
+        fetchWithAuth(`${API_BASE}/api/workflows/active`),
+        fetchWithAuth(`${API_BASE}/api/jobs/active`)
       ]);
 
       if (runnersRes.ok) setRunners(await runnersRes.json());
@@ -56,16 +101,25 @@ function App() {
   };
 
   useEffect(() => {
-    fetchData().finally(() => setLoading(false));
-    
-    // Refresh data every 10 seconds
-    const interval = setInterval(fetchData, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
+    if (isAuthenticated) {
+      fetchData().finally(() => setLoading(false));
+      
+      // Refresh data every 10 seconds
+      const interval = setInterval(fetchData, 10000);
+      
+      return () => clearInterval(interval);
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, token]);
 
   const activeRunners = runners.filter(r => r.status === 'online').length;
   const busyRunners = jobs.filter(j => j.status === 'in_progress').length;
+
+  // Show login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
 
   if (loading) {
     return (
@@ -109,6 +163,18 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-6">
+              {/* User info */}
+              {user && (
+                <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50">
+                  <div className="flex items-center space-x-3">
+                    <div className="text-sm">
+                      <span className="text-gray-400">Logged in as</span>
+                      <p className="font-medium text-white">{user.username}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50">
                 <div className="flex items-center space-x-2">
                   <div className={`relative ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
@@ -127,6 +193,15 @@ function App() {
                   <span className="font-mono">{lastUpdate.toLocaleTimeString()}</span>
                 </div>
               </div>
+              
+              {/* Logout button */}
+              <button
+                onClick={handleLogout}
+                className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50 hover:border-orange-500/50 transition-all flex items-center space-x-2 text-sm"
+              >
+                <LogOut className="w-4 h-4 text-orange-400" />
+                <span className="text-gray-300">Logout</span>
+              </button>
             </div>
           </div>
         </div>

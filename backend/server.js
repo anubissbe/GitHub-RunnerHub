@@ -4,10 +4,23 @@ const { Octokit } = require('@octokit/rest');
 const AutoScaler = require('./auto-scaler');
 const WebSocket = require('ws');
 const http = require('http');
+const { jwtAuth, setupAuthEndpoints } = require('./auth/jwt-middleware');
+const { setupAPIKeyEndpoints } = require('./auth/api-key-manager');
+const { createAuthMiddleware } = require('./auth/combined-auth');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Import rate limiting
+const { rateLimiters, globalRateLimit } = require('./middleware/rate-limiter');
+
+// Apply global rate limit
+app.use(globalRateLimit({
+  windowMs: 900000,  // 15 minutes
+  max: 1000,         // 1000 requests per window
+  message: 'Too many requests from this IP, please try again later'
+}));
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const PORT = process.env.PORT || 8300;
@@ -189,20 +202,38 @@ function generateMockRunners() {
 updateCache();
 setInterval(updateCache, 30000);
 
-// API endpoints
-app.get('/api/runners', (req, res) => {
+// Setup authentication endpoints with rate limiting
+setupAuthEndpoints(app, rateLimiters);
+
+// Setup API key management endpoints
+const apiKeyManager = setupAPIKeyEndpoints(app, jwtAuth);
+
+// Create combined auth middleware
+const auth = createAuthMiddleware(apiKeyManager);
+
+// Public endpoints (no auth required)
+app.get('/api/public/status', (req, res) => {
+  res.json({
+    runners: cache.runners.length,
+    workflows: cache.workflows.length,
+    autoScaler: !!autoScaler
+  });
+});
+
+// Protected API endpoints (auth required - JWT or API key)
+app.get('/api/runners', rateLimiters.read, auth.readAccess(), (req, res) => {
   res.json(cache.runners);
 });
 
-app.get('/api/workflows/active', (req, res) => {
+app.get('/api/workflows/active', rateLimiters.read, auth.readAccess(), (req, res) => {
   res.json(cache.workflows);
 });
 
-app.get('/api/jobs/active', (req, res) => {
+app.get('/api/jobs/active', rateLimiters.read, auth.readAccess(), (req, res) => {
   res.json(cache.jobs);
 });
 
-app.get('/api/metrics', async (req, res) => {
+app.get('/api/metrics', auth.readAccess(), async (req, res) => {
   const metrics = {
     total_runners: cache.runners.length,
     online_runners: cache.runners.filter(r => r.status === 'online').length,
@@ -222,8 +253,8 @@ app.get('/api/metrics', async (req, res) => {
   res.json(metrics);
 });
 
-// Auto-scaler status endpoint
-app.get('/api/scaler/status', async (req, res) => {
+// Auto-scaler status endpoint (admin only)
+app.get('/api/scaler/status', auth.adminOnly(), async (req, res) => {
   if (!autoScaler) {
     return res.json({ 
       enabled: false, 
@@ -238,8 +269,30 @@ app.get('/api/scaler/status', async (req, res) => {
   });
 });
 
-// Manual scaling endpoint
-app.post('/api/runners/scale', async (req, res) => {
+// Runner lifecycle status endpoint
+app.get('/api/runners/lifecycle', auth.readAccess(), async (req, res) => {
+  if (!autoScaler) {
+    return res.json({ 
+      enabled: false, 
+      message: 'Lifecycle manager not configured' 
+    });
+  }
+  
+  const lifecycleRunners = autoScaler.lifecycleManager.getAllRunners();
+  res.json({
+    enabled: true,
+    runners: lifecycleRunners,
+    summary: {
+      total: lifecycleRunners.length,
+      healthy: lifecycleRunners.filter(r => r.health === 'healthy').length,
+      unhealthy: lifecycleRunners.filter(r => r.health === 'unhealthy').length,
+      unknown: lifecycleRunners.filter(r => r.health === 'unknown').length
+    }
+  });
+});
+
+// Manual scaling endpoint (admin only or write access)
+app.post('/api/runners/scale', rateLimiters.scaling, auth.writeAccess(), async (req, res) => {
   if (!autoScaler) {
     return res.status(400).json({ 
       error: 'Auto-scaler not configured' 
@@ -265,7 +318,7 @@ app.post('/api/runners/scale', async (req, res) => {
   }
 });
 
-app.get('/api/alerts', (req, res) => {
+app.get('/api/alerts', auth.readAccess(), (req, res) => {
   res.json([]);
 });
 

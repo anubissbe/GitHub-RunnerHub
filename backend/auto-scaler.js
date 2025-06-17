@@ -1,5 +1,6 @@
 const { Octokit } = require('@octokit/rest');
 const Docker = require('dockerode');
+const RunnerLifecycleManager = require('./runner-lifecycle');
 const docker = new Docker();
 
 class AutoScaler {
@@ -25,20 +26,28 @@ class AutoScaler {
     this.lastScaleTime = 0;
     this.runnerPool = new Map(); // runner_id -> container_info
     this.scalingInProgress = false;
+    
+    // Initialize lifecycle manager
+    this.lifecycleManager = new RunnerLifecycleManager(this.config);
+    this.lifecycleManager.on('runner:unhealthy', (data) => this.handleUnhealthyRunner(data));
+    this.lifecycleManager.on('runner:removed', (data) => this.handleRunnerRemoved(data));
   }
 
   async start() {
     console.log('Starting Auto-Scaler Engine...');
     console.log(`Configuration: Min=${this.config.minRunners}, Max=${this.config.maxRunners}, Threshold=${this.config.scaleThreshold * 100}%`);
     
+    // Start lifecycle manager
+    await this.lifecycleManager.start();
+    
     // Initial runner spawn
     await this.ensureMinimumRunners();
     
     // Start monitoring loop
-    setInterval(() => this.monitorAndScale(), 30000); // Check every 30 seconds
+    this.monitorInterval = setInterval(() => this.monitorAndScale(), 30000); // Check every 30 seconds
     
     // Start idle cleanup loop
-    setInterval(() => this.cleanupIdleRunners(), 60000); // Check every minute
+    this.cleanupInterval = setInterval(() => this.cleanupIdleRunners(), 60000); // Check every minute
   }
 
   async monitorAndScale() {
@@ -206,11 +215,25 @@ class AutoScaler {
       console.log(`✅ Spawned runner: ${runnerName}`);
       
       // Track container
-      this.runnerPool.set(runnerName, {
+      const runnerInfo = {
         container,
+        containerId: container.id,
+        name: runnerName,
         startTime: Date.now(),
-        lastActiveTime: Date.now()
-      });
+        lastActiveTime: Date.now(),
+        labels: [
+          { id: 1, name: 'self-hosted', type: 'read-only' },
+          { id: 2, name: 'Linux', type: 'read-only' },
+          { id: 3, name: 'X64', type: 'read-only' },
+          { id: 4, name: 'docker', type: 'read-only' },
+          { id: 5, name: 'auto-scaled', type: 'read-only' }
+        ]
+      };
+      
+      this.runnerPool.set(runnerName, runnerInfo);
+      
+      // Register with lifecycle manager
+      this.lifecycleManager.registerRunner(runnerName, runnerInfo);
 
       return runnerName;
     } catch (error) {
@@ -308,8 +331,11 @@ class AutoScaler {
   async getStatus() {
     const metrics = await this.getRunnerMetrics();
     const containers = await docker.listContainers({
-      filters: { label: [`com.github.runner=true`] }
+      filters: { name: ['github-runner'] }
     });
+
+    // Get lifecycle status
+    const lifecycleRunners = this.lifecycleManager.getAllRunners();
 
     return {
       config: {
@@ -322,12 +348,55 @@ class AutoScaler {
       runnerPool: Array.from(this.runnerPool.entries()).map(([name, info]) => ({
         name,
         startTime: info.startTime,
-        uptime: Math.round((Date.now() - info.startTime) / 1000 / 60) // minutes
+        uptime: Math.round((Date.now() - info.startTime) / 1000 / 60), // minutes
+        health: lifecycleRunners.find(r => r.name === name)?.health || 'unknown'
       })),
       containers: containers.length,
       lastScaleTime: this.lastScaleTime,
-      scalingInProgress: this.scalingInProgress
+      scalingInProgress: this.scalingInProgress,
+      lifecycleStatus: {
+        totalTracked: lifecycleRunners.length,
+        healthy: lifecycleRunners.filter(r => r.health === 'healthy').length,
+        unhealthy: lifecycleRunners.filter(r => r.health === 'unhealthy').length
+      }
     };
+  }
+
+  // Lifecycle event handlers
+  async handleUnhealthyRunner(data) {
+    console.log(`Handling unhealthy runner: ${data.runnerId}`);
+    
+    // Check if we're below minimum runners
+    const metrics = await this.getRunnerMetrics();
+    if (metrics.totalRunners <= this.config.minRunners) {
+      console.log('Below minimum runners, spawning replacement...');
+      await this.spawnRunner();
+    }
+  }
+
+  async handleRunnerRemoved(data) {
+    console.log(`Runner removed: ${data.name}`);
+    
+    // Remove from our pool
+    this.runnerPool.delete(data.name);
+    
+    // Check if we need to maintain minimum
+    const metrics = await this.getRunnerMetrics();
+    if (metrics.totalRunners < this.config.minRunners) {
+      console.log('Below minimum runners after removal, spawning replacement...');
+      await this.spawnRunner();
+    }
+  }
+
+  async shutdown() {
+    console.log('Shutting down Auto-Scaler...');
+    
+    // Clear intervals
+    clearInterval(this.monitorInterval);
+    clearInterval(this.cleanupInterval);
+    
+    // Shutdown lifecycle manager
+    await this.lifecycleManager.gracefulShutdown();
   }
 }
 
