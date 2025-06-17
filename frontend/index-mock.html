@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Runners Monitor</title>
+    <meta name="description" content="Real-time monitoring dashboard for GitHub self-hosted runners" />
+    <script src="/mock-api.js"></script>
+    <script>
+      // Override fetch to use mock data
+      window._originalFetch = window.fetch;
+      window.fetch = function(url, options) {
+        if (url.includes('/api/runners')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(window.MOCK_API.runners)
+          });
+        }
+        if (url.includes('/api/workflows')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(window.MOCK_API.workflows)
+          });
+        }
+        if (url.includes('/api/jobs')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(window.MOCK_API.jobs)
+          });
+        }
+        if (url.includes('/api/metrics')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(window.MOCK_API.metrics)
+          });
+        }
+        if (url.includes('/api/alerts')) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(window.MOCK_API.alerts)
+          });
+        }
+        return window._originalFetch(url, options);
+      };
+      
+      // Mock WebSocket
+      window.WebSocket = class MockWebSocket {
+        static CONNECTING = 0;
+        static OPEN = 1;
+        static CLOSING = 2;
+        static CLOSED = 3;
+        
+        constructor(url) {
+          this.url = url;
+          this.readyState = MockWebSocket.CONNECTING;
+          this.onopen = null;
+          this.onmessage = null;
+          this.onerror = null;
+          this.onclose = null;
+          
+          // Simulate connection opening
+          setTimeout(() => {
+            this.readyState = MockWebSocket.OPEN;
+            if (this.onopen) {
+              this.onopen(new Event('open'));
+            }
+            
+            // Send initial data
+            setTimeout(() => {
+              if (this.onmessage) {
+                // Send runners
+                this.onmessage({
+                  data: JSON.stringify({ type: 'runners', data: window.MOCK_API.runners })
+                });
+                // Send metrics
+                this.onmessage({
+                  data: JSON.stringify({ type: 'metrics', data: window.MOCK_API.metrics })
+                });
+                // Send workflows
+                this.onmessage({
+                  data: JSON.stringify({ type: 'workflows', data: window.MOCK_API.workflows })
+                });
+                // Send jobs
+                this.onmessage({
+                  data: JSON.stringify({ type: 'jobs', data: window.MOCK_API.jobs })
+                });
+              }
+            }, 500);
+            
+            // Send periodic updates
+            setInterval(() => {
+              if (this.readyState === MockWebSocket.OPEN && this.onmessage) {
+                // Randomly update a runner's status
+                const randomRunner = Math.floor(Math.random() * 40) + 1;
+                const updatedRunners = [...window.MOCK_API.runners];
+                const runner = updatedRunners.find(r => r.id === randomRunner);
+                if (runner) {
+                  runner.status = Math.random() > 0.2 ? 'online' : 'offline';
+                }
+                
+                this.onmessage({
+                  data: JSON.stringify({ type: 'runners', data: updatedRunners })
+                });
+              }
+            }, 10000);
+          }, 100);
+        }
+        
+        send(data) {
+          console.log('WebSocket send:', data);
+        }
+        
+        close() {
+          this.readyState = MockWebSocket.CLOSED;
+          if (this.onclose) {
+            this.onclose(new Event('close'));
+          }
+        }
+      };
+    </script>
+    <script type="module" crossorigin src="/assets/index-CBfk8miA.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BZncSCO2.css">
+  </head>
+  <body class="bg-gray-900 text-white">
+    <div id="root"></div>
+  </body>
+</html>
