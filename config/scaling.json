@@ -1,0 +1,12 @@
+{
+  "minRunners": 5,
+  "maxRunners": 50,
+  "scaleUpThreshold": 0.8,
+  "scaleDownThreshold": 0.2,
+  "scaleIncrement": 5,
+  "cooldownPeriod": 300,
+  "idleTimeout": 1800,
+  "runnerLabels": ["self-hosted", "Linux", "X64", "docker", "auto-scaled"],
+  "ephemeralRunners": true,
+  "runnerImage": "myoung34/github-runner:latest"
+}

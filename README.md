@@ -1,14 +1,14 @@
 # GitHub RunnerHub
 
 <div align="center">
-  <h1 style="background: linear-gradient(135deg, #ff6500 0%, #ff8533 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
-    GitHub RunnerHub
-  </h1>
+  <img src="frontend/public/logo.svg" alt="GitHub RunnerHub Logo" width="360" />
+  
   <p><strong>Dynamic GitHub Actions Runner Management with Auto-Scaling</strong></p>
   
   ![License](https://img.shields.io/badge/license-MIT-orange.svg)
   ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-orange.svg)
   ![Docker](https://img.shields.io/badge/docker-%3E%3D20.0.0-orange.svg)
+  ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-orange.svg)
   
   <p>
     <a href="#features">Features</a> •
@@ -189,12 +189,25 @@ GET /health
 
 ### WebSocket Events
 
-Connect to `ws://localhost:8300/ws` for real-time updates:
+Connect to `ws://localhost:8300` for real-time updates:
 
+- `connected` - Initial connection confirmation
+- `scale` - Auto-scaling events (up/down with details)
+- `update` - Cache updates with runner/workflow counts
 - `runner:status` - Runner status changes
 - `workflow:start` - Workflow started
 - `workflow:complete` - Workflow completed
 - `metrics:update` - Metrics updated
+
+Example WebSocket client:
+```javascript
+const ws = new WebSocket('ws://localhost:8300');
+
+ws.on('message', (data) => {
+  const { event, data: payload } = JSON.parse(data);
+  console.log(`Event: ${event}`, payload);
+});
+```
 
 ## 🎨 UI Customization
 
@@ -248,10 +261,24 @@ The dashboard provides:
 
 ## 🔒 Security
 
-- GitHub tokens are stored securely and never exposed
-- All API endpoints require authentication
-- Runner tokens are rotated automatically
-- TLS/SSL support for production deployments
+- GitHub tokens are stored securely in environment variables
+- WebSocket connections include error handling and timestamps
+- Docker socket access is controlled and monitored
+- Health checks ensure service reliability
+- TLS/SSL support ready for production deployments
+
+## 📱 Screenshots
+
+### Dashboard Overview
+- Real-time runner status monitoring
+- Live utilization metrics with charts
+- Active workflow tracking
+- Auto-scaling event history
+
+### Auto-Scaling in Action
+- Automatic runner spawning at 80% utilization
+- Graceful scale-down during low usage
+- Configurable thresholds and increments
 
 ## 🤝 Contributing
 
