@@ -224,13 +224,13 @@ class AutoScaler extends EventEmitter {
         Image: this.config.runnerImage,
         name: runnerName,
         Env: [
-          `ACCESS_TOKEN=${token.token}`,
+          `RUNNER_TOKEN=${token.token}`,
           `RUNNER_NAME=${runnerName}`,
           `RUNNER_WORKDIR=/tmp/runner/work`,
           `RUNNER_GROUP=default`,
           `LABELS=self-hosted,Linux,X64,docker,auto-scaled`,
-          `REPO_URL=https://github.com/${this.config.githubOrg}/${this.config.githubRepo}`,
-          'EPHEMERAL=true' // Runner removes itself after job completion
+          `REPO_URL=https://github.com/${this.config.githubOrg}/${this.config.githubRepo}`
+          // Removed EPHEMERAL=true to keep runners persistent
         ],
         HostConfig: {
           AutoRemove: false,
@@ -253,7 +253,8 @@ class AutoScaler extends EventEmitter {
       };
       
       this.runnerPool.set(runnerName, runnerInfo);
-      this.lifecycleManager.trackRunner(runnerName, container.id);
+      // TODO: Fix lifecycle manager tracking
+      // this.lifecycleManager.trackRunner(runnerName, container.id);
       
       this.emit('runner', 'spawned', { name: runnerName, id: container.id });
     } catch (error) {
