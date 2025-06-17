@@ -40,10 +40,8 @@ class AutoScaler extends EventEmitter {
     console.log(`Configuration: Min=${this.config.minRunners}, Max=${this.config.maxRunners}, Threshold=${this.config.scaleThreshold * 100}%`);
     
     try {
-      // Start lifecycle manager (without cleanup to avoid blocking)
-      console.log('Starting lifecycle manager...');
-      this.lifecycleManager.startHealthMonitoring();
-      this.lifecycleManager.startStateSynchronization();
+      // Start lifecycle manager
+      await this.lifecycleManager.start();
       
       // Initial runner spawn
       console.log('Checking initial runner state...');
@@ -57,15 +55,6 @@ class AutoScaler extends EventEmitter {
       
       // Start idle cleanup loop
       this.cleanupInterval = setInterval(() => this.cleanupIdleRunners(), 60000); // Check every minute
-      
-      // Clean up orphaned containers in background after a delay
-      setTimeout(() => {
-        console.log('Starting background cleanup of orphaned containers...');
-        this.lifecycleManager.cleanupOrphanedContainers().catch(err => 
-          console.error('Background cleanup error:', err)
-        );
-      }, 10000); // 10 second delay
-      
     } catch (error) {
       console.error('Error starting auto-scaler:', error);
       throw error;
@@ -233,7 +222,7 @@ class AutoScaler extends EventEmitter {
           'EPHEMERAL=true' // Runner removes itself after job completion
         ],
         HostConfig: {
-          AutoRemove: false,
+          AutoRemove: true,
           RestartPolicy: { Name: 'unless-stopped' },
           Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
           SecurityOpt: ['label:disable']

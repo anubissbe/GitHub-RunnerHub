@@ -1,24 +1,22 @@
-const Docker = require('dockerode');
 const { Octokit } = require('@octokit/rest');
-const EventEmitter = require('events');
+const Docker = require('dockerode');
 const RunnerLifecycleManager = require('./runner-lifecycle');
+const docker = new Docker();
 
-const docker = new Docker({ socketPath: '/var/run/docker.sock' });
-
-class AutoScaler extends EventEmitter {
+class AutoScaler {
   constructor(config) {
-    super();
     this.config = {
-      githubToken: config.GITHUB_TOKEN,
-      githubOrg: config.GITHUB_ORG,
-      githubRepo: config.GITHUB_REPO,
       minRunners: config.MIN_RUNNERS || 5,
       maxRunners: config.MAX_RUNNERS || 50,
       scaleThreshold: config.SCALE_THRESHOLD || 0.8,
       scaleIncrement: config.SCALE_INCREMENT || 5,
-      cooldownPeriod: config.COOLDOWN_PERIOD || 300,
-      idleTimeout: config.IDLE_TIMEOUT || 1800,
-      runnerImage: config.RUNNER_IMAGE || 'myoung34/github-runner:latest'
+      cooldownPeriod: config.COOLDOWN_PERIOD || 300, // 5 minutes
+      idleTimeout: config.IDLE_TIMEOUT || 1800, // 30 minutes
+      githubToken: config.GITHUB_TOKEN,
+      githubOrg: config.GITHUB_ORG,
+      githubRepo: config.GITHUB_REPO,
+      runnerImage: config.RUNNER_IMAGE || 'myoung34/github-runner:latest',
+      ...config
     };
 
     this.octokit = new Octokit({
@@ -39,37 +37,17 @@ class AutoScaler extends EventEmitter {
     console.log('Starting Auto-Scaler Engine...');
     console.log(`Configuration: Min=${this.config.minRunners}, Max=${this.config.maxRunners}, Threshold=${this.config.scaleThreshold * 100}%`);
     
-    try {
-      // Start lifecycle manager (without cleanup to avoid blocking)
-      console.log('Starting lifecycle manager...');
-      this.lifecycleManager.startHealthMonitoring();
-      this.lifecycleManager.startStateSynchronization();
-      
-      // Initial runner spawn
-      console.log('Checking initial runner state...');
-      await this.ensureMinimumRunners();
-      
-      // Start monitoring loop
-      this.monitorInterval = setInterval(() => {
-        console.log('Running monitoring cycle...');
-        this.monitorAndScale().catch(err => console.error('Monitor error:', err));
-      }, 30000); // Check every 30 seconds
-      
-      // Start idle cleanup loop
-      this.cleanupInterval = setInterval(() => this.cleanupIdleRunners(), 60000); // Check every minute
-      
-      // Clean up orphaned containers in background after a delay
-      setTimeout(() => {
-        console.log('Starting background cleanup of orphaned containers...');
-        this.lifecycleManager.cleanupOrphanedContainers().catch(err => 
-          console.error('Background cleanup error:', err)
-        );
-      }, 10000); // 10 second delay
-      
-    } catch (error) {
-      console.error('Error starting auto-scaler:', error);
-      throw error;
-    }
+    // Start lifecycle manager
+    await this.lifecycleManager.start();
+    
+    // Initial runner spawn
+    await this.ensureMinimumRunners();
+    
+    // Start monitoring loop
+    this.monitorInterval = setInterval(() => this.monitorAndScale(), 30000); // Check every 30 seconds
+    
+    // Start idle cleanup loop
+    this.cleanupInterval = setInterval(() => this.cleanupIdleRunners(), 60000); // Check every minute
   }
 
   async monitorAndScale() {
@@ -119,15 +97,8 @@ class AutoScaler extends EventEmitter {
         runners: runners.runners
       };
     } catch (error) {
-      console.error('Error getting runner metrics:', error.message);
-      // Return empty metrics on error
-      return {
-        totalRunners: 0,
-        busyRunners: 0,
-        idleRunners: 0,
-        utilization: 0,
-        runners: []
-      };
+      console.error('Error getting runner metrics:', error);
+      return { totalRunners: 0, busyRunners: 0, idleRunners: 0, utilization: 0, runners: [] };
     }
   }
 
@@ -139,71 +110,73 @@ class AutoScaler extends EventEmitter {
 
   async scaleUp() {
     this.scalingInProgress = true;
-    console.log(`📈 Scaling up by ${this.config.scaleIncrement} runners`);
-
+    const metrics = await this.getRunnerMetrics();
+    
+    console.log(`🚀 Scaling up! Current: ${metrics.totalRunners} runners at ${(metrics.utilization * 100).toFixed(1)}% utilization`);
+    
     try {
+      const runnersToAdd = Math.min(
+        this.config.scaleIncrement,
+        this.config.maxRunners - metrics.totalRunners
+      );
+
+      console.log(`Adding ${runnersToAdd} new runners...`);
+      
       const promises = [];
-      for (let i = 0; i < this.config.scaleIncrement; i++) {
+      for (let i = 0; i < runnersToAdd; i++) {
         promises.push(this.spawnRunner());
       }
-
+      
       await Promise.all(promises);
       this.lastScaleTime = Date.now();
-      this.emit('scale', 'up', { count: this.config.scaleIncrement });
+      
+      console.log(`✅ Successfully added ${runnersToAdd} runners`);
+      
+      // Emit scaling event
+      this.emit('scale', {
+        action: 'up',
+        count: runnersToAdd,
+        reason: `Utilization reached ${(metrics.utilization * 100).toFixed(1)}%`,
+        totalRunners: metrics.totalRunners + runnersToAdd
+      });
     } catch (error) {
       console.error('Error scaling up:', error);
-      this.emit('scale', 'error', { error: error.message });
     } finally {
       this.scalingInProgress = false;
     }
   }
 
   async scaleDown() {
-    console.log(`📉 Scaling down by removing idle runners`);
+    const metrics = await this.getRunnerMetrics();
+    
+    console.log(`📉 Scaling down! Current: ${metrics.totalRunners} runners at ${(metrics.utilization * 100).toFixed(1)}% utilization`);
     
     try {
-      const metrics = await this.getRunnerMetrics();
-      const idleRunners = metrics.runners.filter(r => r.status === 'online' && !r.busy);
-      
-      // Remove up to scaleIncrement idle runners
-      let removed = 0;
-      for (const runner of idleRunners) {
-        if (removed >= this.config.scaleIncrement) break;
-        if (metrics.totalRunners - removed <= this.config.minRunners) break;
-        
-        await this.removeRunner(runner.id, runner.name);
-        removed++;
-      }
+      const runnersToRemove = Math.min(
+        this.config.scaleIncrement,
+        metrics.totalRunners - this.config.minRunners
+      );
 
-      this.emit('scale', 'down', { count: removed });
+      // Find idle runners to remove
+      const idleRunners = metrics.runners
+        .filter(r => r.status === 'online' && !r.busy)
+        .slice(0, runnersToRemove);
+
+      for (const runner of idleRunners) {
+        await this.removeRunner(runner.id);
+      }
+      
+      console.log(`✅ Successfully removed ${idleRunners.length} idle runners`);
+      
+      // Emit scaling event
+      this.emit('scale', {
+        action: 'down',
+        count: idleRunners.length,
+        reason: `Low utilization: ${(metrics.utilization * 100).toFixed(1)}%`,
+        totalRunners: metrics.totalRunners - idleRunners.length
+      });
     } catch (error) {
       console.error('Error scaling down:', error);
-      this.emit('scale', 'error', { error: error.message });
-    }
-  }
-
-  async removeRunner(runnerId, runnerName) {
-    try {
-      // Remove from GitHub
-      await this.octokit.rest.actions.deleteSelfHostedRunnerFromRepo({
-        owner: this.config.githubOrg,
-        repo: this.config.githubRepo,
-        runner_id: runnerId
-      });
-
-      // Stop and remove container
-      const containers = await docker.listContainers({ all: true });
-      const container = containers.find(c => c.Names.includes(`/${runnerName}`));
-      
-      if (container) {
-        const dockerContainer = docker.getContainer(container.Id);
-        await dockerContainer.stop();
-        await dockerContainer.remove();
-      }
-
-      console.log(`🗑️  Removed runner: ${runnerName}`);
-    } catch (error) {
-      console.error(`Error removing runner ${runnerName}:`, error.message);
     }
   }
 
@@ -211,8 +184,6 @@ class AutoScaler extends EventEmitter {
     const runnerName = `github-runner-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
     try {
-      console.log(`Creating runner: ${runnerName}`);
-      
       // Get registration token
       const { data: token } = await this.octokit.rest.actions.createRegistrationTokenForRepo({
         owner: this.config.githubOrg,
@@ -233,7 +204,7 @@ class AutoScaler extends EventEmitter {
           'EPHEMERAL=true' // Runner removes itself after job completion
         ],
         HostConfig: {
-          AutoRemove: false,
+          AutoRemove: true,
           RestartPolicy: { Name: 'unless-stopped' },
           Binds: ['/var/run/docker.sock:/var/run/docker.sock'],
           SecurityOpt: ['label:disable']
@@ -249,57 +220,68 @@ class AutoScaler extends EventEmitter {
         containerId: container.id,
         name: runnerName,
         startTime: Date.now(),
-        lastActiveTime: Date.now()
+        lastActiveTime: Date.now(),
+        labels: [
+          { id: 1, name: 'self-hosted', type: 'read-only' },
+          { id: 2, name: 'Linux', type: 'read-only' },
+          { id: 3, name: 'X64', type: 'read-only' },
+          { id: 4, name: 'docker', type: 'read-only' },
+          { id: 5, name: 'auto-scaled', type: 'read-only' }
+        ]
       };
       
       this.runnerPool.set(runnerName, runnerInfo);
-      this.lifecycleManager.trackRunner(runnerName, container.id);
       
-      this.emit('runner', 'spawned', { name: runnerName, id: container.id });
+      // Register with lifecycle manager
+      this.lifecycleManager.registerRunner(runnerName, runnerInfo);
+
+      return runnerName;
     } catch (error) {
-      console.error(`Error creating runner ${runnerName}:`, error);
-      this.emit('runner', 'error', { name: runnerName, error: error.message });
+      console.error(`Error spawning runner ${runnerName}:`, error);
       throw error;
     }
   }
 
-  async handleUnhealthyRunner(data) {
-    console.log(`🏥 Handling unhealthy runner: ${data.name}`);
-    
+  async removeRunner(runnerId) {
     try {
-      // Try to restart the container
-      const container = docker.getContainer(data.containerId);
-      await container.restart();
-      console.log(`Restarted unhealthy runner: ${data.name}`);
-    } catch (error) {
-      console.error(`Failed to restart runner ${data.name}, removing it:`, error.message);
-      // Remove the runner if restart fails
-      try {
-        const metrics = await this.getRunnerMetrics();
-        const runner = metrics.runners.find(r => r.name === data.name);
-        if (runner) {
-          await this.removeRunner(runner.id, runner.name);
+      // Find runner in pool
+      let runnerContainer = null;
+      let runnerName = null;
+      
+      for (const [name, info] of this.runnerPool.entries()) {
+        if (name.includes(runnerId.toString())) {
+          runnerContainer = info.container;
+          runnerName = name;
+          break;
         }
-      } catch (removeError) {
-        console.error(`Failed to remove unhealthy runner ${data.name}:`, removeError.message);
       }
+
+      if (runnerContainer) {
+        // Stop and remove container
+        await runnerContainer.stop();
+        this.runnerPool.delete(runnerName);
+        console.log(`✅ Removed runner: ${runnerName}`);
+      }
+
+      // Remove from GitHub
+      try {
+        await this.octokit.rest.actions.deleteSelfHostedRunnerFromRepo({
+          owner: this.config.githubOrg,
+          repo: this.config.githubRepo,
+          runner_id: runnerId
+        });
+      } catch (error) {
+        // Runner might already be removed
+        console.log(`Runner ${runnerId} may already be removed from GitHub`);
+      }
+    } catch (error) {
+      console.error(`Error removing runner ${runnerId}:`, error);
     }
   }
 
-  async handleRunnerRemoved(data) {
-    this.runnerPool.delete(data.name);
-    console.log(`Runner removed from pool: ${data.name}`);
-    
-    // Ensure minimum runners
-    await this.ensureMinimumRunners();
-  }
-
   async ensureMinimumRunners() {
-    console.log('Ensuring minimum runners...');
     const metrics = await this.getRunnerMetrics();
     const runnersNeeded = this.config.minRunners - metrics.totalRunners;
-    
-    console.log(`Current runners: ${metrics.totalRunners}, Minimum required: ${this.config.minRunners}, Need to spawn: ${runnersNeeded}`);
     
     if (runnersNeeded > 0) {
       console.log(`📦 Spawning ${runnersNeeded} runners to meet minimum requirement`);
@@ -328,32 +310,33 @@ class AutoScaler extends EventEmitter {
         
         // Find the runner ID
         const runner = metrics.runners.find(r => r.name === name);
-        if (runner) {
-          await this.removeRunner(runner.id, name);
+        if (runner && !runner.busy) {
+          await this.removeRunner(runner.id);
         }
       }
     }
   }
 
-  async stop() {
-    console.log('Stopping Auto-Scaler Engine...');
-    
-    if (this.monitorInterval) {
-      clearInterval(this.monitorInterval);
+  // Event emitter functionality
+  emit(event, data) {
+    if (this.onScaleCallback) {
+      this.onScaleCallback(event, data);
     }
-    
-    if (this.cleanupInterval) {
-      clearInterval(this.cleanupInterval);
-    }
-    
-    await this.lifecycleManager.stop();
   }
 
-  // Get status for API
+  onScale(callback) {
+    this.onScaleCallback = callback;
+  }
+
   async getStatus() {
     const metrics = await this.getRunnerMetrics();
-    const containers = await docker.listContainers({ all: true, filters: { name: ['github-runner'] } });
-    
+    const containers = await docker.listContainers({
+      filters: { name: ['github-runner'] }
+    });
+
+    // Get lifecycle status
+    const lifecycleRunners = this.lifecycleManager.getAllRunners();
+
     return {
       config: {
         minRunners: this.config.minRunners,
@@ -364,15 +347,56 @@ class AutoScaler extends EventEmitter {
       metrics,
       runnerPool: Array.from(this.runnerPool.entries()).map(([name, info]) => ({
         name,
-        containerId: info.containerId,
         startTime: info.startTime,
-        lastActiveTime: info.lastActiveTime
+        uptime: Math.round((Date.now() - info.startTime) / 1000 / 60), // minutes
+        health: lifecycleRunners.find(r => r.name === name)?.health || 'unknown'
       })),
       containers: containers.length,
       lastScaleTime: this.lastScaleTime,
       scalingInProgress: this.scalingInProgress,
-      lifecycleStatus: this.lifecycleManager.getStatus()
+      lifecycleStatus: {
+        totalTracked: lifecycleRunners.length,
+        healthy: lifecycleRunners.filter(r => r.health === 'healthy').length,
+        unhealthy: lifecycleRunners.filter(r => r.health === 'unhealthy').length
+      }
     };
+  }
+
+  // Lifecycle event handlers
+  async handleUnhealthyRunner(data) {
+    console.log(`Handling unhealthy runner: ${data.runnerId}`);
+    
+    // Check if we're below minimum runners
+    const metrics = await this.getRunnerMetrics();
+    if (metrics.totalRunners <= this.config.minRunners) {
+      console.log('Below minimum runners, spawning replacement...');
+      await this.spawnRunner();
+    }
+  }
+
+  async handleRunnerRemoved(data) {
+    console.log(`Runner removed: ${data.name}`);
+    
+    // Remove from our pool
+    this.runnerPool.delete(data.name);
+    
+    // Check if we need to maintain minimum
+    const metrics = await this.getRunnerMetrics();
+    if (metrics.totalRunners < this.config.minRunners) {
+      console.log('Below minimum runners after removal, spawning replacement...');
+      await this.spawnRunner();
+    }
+  }
+
+  async shutdown() {
+    console.log('Shutting down Auto-Scaler...');
+    
+    // Clear intervals
+    clearInterval(this.monitorInterval);
+    clearInterval(this.cleanupInterval);
+    
+    // Shutdown lifecycle manager
+    await this.lifecycleManager.gracefulShutdown();
   }
 }
 

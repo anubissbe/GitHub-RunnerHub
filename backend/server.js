@@ -90,7 +90,7 @@ if (GITHUB_TOKEN && process.env.GITHUB_ORG && process.env.GITHUB_REPO) {
   autoScaler.start().catch(console.error);
 
   // Listen for scaling events
-  autoScaler.onScale((event, data) => {
+  autoScaler.on('scale', (event, data) => {
     broadcast('scale', data);
   });
 } else {
