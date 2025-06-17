@@ -1,41 +1,63 @@
-# GitHub RunnerHub
+# 🏃 GitHub RunnerHub
 
 <div align="center">
-  <img src="frontend/public/logo.svg" alt="GitHub RunnerHub Logo" width="360" />
-  
-  <p><strong>Dynamic GitHub Actions Runner Management with Auto-Scaling</strong></p>
-  
-  ![License](https://img.shields.io/badge/license-MIT-orange.svg)
-  ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-orange.svg)
-  ![Docker](https://img.shields.io/badge/docker-%3E%3D20.0.0-orange.svg)
-  ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-Ready-orange.svg)
-  
-  <p>
-    <a href="#features">Features</a> •
-    <a href="#quick-start">Quick Start</a> •
-    <a href="#architecture">Architecture</a> •
-    <a href="#installation">Installation</a> •
-    <a href="#configuration">Configuration</a> •
-    <a href="#api">API</a>
-  </p>
+
+![GitHub RunnerHub](https://img.shields.io/badge/GitHub-RunnerHub-ff6500?style=for-the-badge&logo=github-actions&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-0a0a0a?style=for-the-badge)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Production-00ff00?style=for-the-badge)
+
+**Enterprise-grade self-hosted GitHub Actions runner infrastructure with auto-scaling, monitoring, and multi-repository support**
+
+[Installation](#-installation) • [Features](#-features) • [Architecture](#-architecture) • [Wiki](https://github.com/anubissbe/GitHub-RunnerHub/wiki) • [Support](#-support)
+
+<a href="https://www.buymeacoffee.com/anubissbe" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60" width="217">
+</a>
+
 </div>
 
-## 🚀 Overview
+---
 
-GitHub RunnerHub is a comprehensive self-hosted GitHub Actions runner management system with intelligent auto-scaling capabilities. It automatically spawns new runners when capacity reaches 80-90%, ensuring your CI/CD pipelines never wait for available resources.
+## 🚀 Features
 
-## ✨ Features
+- **🔄 Auto-Scaling**: Dynamically scales runners based on workload (5-25 runners)
+- **📊 Real-time Dashboard**: Monitor runners, workflows, and metrics at a glance
+- **🏢 Multi-Repository**: Single infrastructure serves all your repositories
+- **🔐 Secure**: Runs in Docker containers with isolated environments
+- **💰 Cost-Effective**: Eliminate GitHub Actions minutes charges
+- **🔡 Token Refresh**: Automatic token renewal prevents runner disconnections
+- **🎨 Beautiful UI**: Black/orange themed dashboard matching your brand
 
-- **🔄 Dynamic Auto-Scaling**: Automatically spawns 5 new runners when 80-90% capacity is reached
-- **📊 Real-Time Monitoring**: Live dashboard showing runner status, active jobs, and utilization metrics
-- **🎨 Modern UI**: Black and orange themed interface matching ProjectHub-Mcp design
-- **🐳 Docker-Based**: Fully containerized for easy deployment and management
-- **🔧 Easy Installation**: One-command setup with interactive configuration
-- **📈 Performance Metrics**: Track runner utilization, job duration, and workflow performance
-- **🔒 Secure**: Token-based authentication with secure storage
-- **🌐 REST API**: Full API for programmatic runner management
+## 📸 Screenshots
 
-## 🏃 Quick Start
+<div align="center">
+  <img src="docs/images/dashboard.png" alt="RunnerHub Dashboard" width="800">
+  <p><i>Real-time monitoring dashboard showing runner status and metrics</i></p>
+</div>
+
+## ⚡ Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+cd GitHub-RunnerHub
+
+# Run the installer (requires only GitHub token)
+./install.sh
+
+# Access the dashboard
+open http://localhost:8080
+```
+
+## 📋 Requirements
+
+- Docker 20.10+
+- Linux server (Ubuntu 20.04+ recommended)
+- GitHub Personal Access Token with `repo` and `admin:org` scopes
+- Minimum 4GB RAM, 20GB storage
+
+## 🏗️ Architecture
 
 ```bash
 # Clone the repository
@@ -51,20 +73,46 @@ cd GitHub-RunnerHub
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  GitHub API     │◄────│  Backend API    │◄────│  Auto-Scaler    │
-│                 │     │  (Node.js)      │     │  Engine         │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                              ▲                          │
-                              │                          ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│                 │     │                 │     │                 │
-│  Monitoring     │────►│  WebSocket      │     │  Runner Pool    │
-│  Dashboard      │     │  Server         │     │  (Docker)       │
-│                 │     │                 │     │                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+```mermaid
+graph TB
+    subgraph "GitHub"
+        GH[GitHub Actions]
+        WF[Workflows]
+    end
+    
+    subgraph "RunnerHub Infrastructure"
+        AS[Auto-Scaler]
+        RM[Runner Manager]
+        TR[Token Refresher]
+        
+        subgraph "Runner Pool"
+            R1[Runner 1]
+            R2[Runner 2]
+            R3[Runner ...]
+            RN[Runner N]
+        end
+        
+        subgraph "Monitoring"
+            API[Backend API]
+            WS[WebSocket]
+            DB[Dashboard]
+        end
+    end
+    
+    GH -->|Register| RM
+    WF -->|Job Request| R1
+    WF -->|Job Request| R2
+    AS -->|Scale Up/Down| RM
+    RM -->|Manage| R1
+    RM -->|Manage| R2
+    RM -->|Manage| R3
+    RM -->|Manage| RN
+    TR -->|Refresh Tokens| RM
+    API -->|Status| DB
+    WS -->|Real-time Updates| DB
+    
+    style AS fill:#ff6500,stroke:#0a0a0a,stroke-width:2px
+    style DB fill:#ff6500,stroke:#0a0a0a,stroke-width:2px
 ```
 
 ### Components
@@ -294,13 +342,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built with React, Node.js, and Docker
 - Powered by GitHub Actions API
 
+## 💬 Support
+
+- 📚 [Documentation Wiki](https://github.com/anubissbe/GitHub-RunnerHub/wiki)
+- 🐛 [Issue Tracker](https://github.com/anubissbe/GitHub-RunnerHub/issues)
+- 💬 [Discussions](https://github.com/anubissbe/GitHub-RunnerHub/discussions)
+- ☕ [Buy Me a Coffee](https://www.buymeacoffee.com/anubissbe)
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ using Docker and Node.js
+- Inspired by the need for cost-effective CI/CD
+- Special thanks to all contributors
+
 ---
 
 <div align="center">
-  <p>Made with ❤️ by the GitHub RunnerHub Team</p>
-  <p>
-    <a href="https://github.com/anubissbe/GitHub-RunnerHub">GitHub</a> •
-    <a href="https://github.com/anubissbe/GitHub-RunnerHub/issues">Issues</a> •
-    <a href="https://github.com/anubissbe/GitHub-RunnerHub/discussions">Discussions</a>
-  </p>
+
+**If you find RunnerHub useful, please consider [buying me a coffee](https://www.buymeacoffee.com/anubissbe) ☕**
+
+Made with 🧡 by [anubissbe](https://github.com/anubissbe)
+
 </div>
