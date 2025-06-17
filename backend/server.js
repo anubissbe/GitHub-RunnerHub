@@ -338,11 +338,16 @@ app.get('/ws', (req, res) => {
   res.status(426).send('Upgrade required');
 });
 
-// Start server
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`GitHub RunnerHub backend running on port ${PORT}`);
-  console.log(`WebSocket available at ws://localhost:${PORT}`);
-  if (autoScaler) {
-    console.log('Auto-scaler is active and monitoring runner utilization');
-  }
-});
+// Export for testing
+module.exports = app;
+
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`GitHub RunnerHub backend running on port ${PORT}`);
+    console.log(`WebSocket available at ws://localhost:${PORT}`);
+    if (autoScaler) {
+      console.log('Auto-scaler is active and monitoring runner utilization');
+    }
+  });
+}
