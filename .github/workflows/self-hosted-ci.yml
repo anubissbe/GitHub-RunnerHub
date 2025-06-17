@@ -1,0 +1,65 @@
+name: CI/CD Self-Hosted
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: [self-hosted, runnerhub]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Auto-detect and run build
+      run: |
+        echo "🔍 Auto-detecting project type..."
+        
+        if [ -f package.json ]; then
+          echo "📦 Node.js project detected"
+          npm ci
+          npm test --if-present
+          npm run build --if-present
+        elif [ -f requirements.txt ] || [ -f pyproject.toml ]; then
+          echo "🐍 Python project detected"
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          elif [ -f pyproject.toml ]; then
+            pip install -e .
+          fi
+          if command -v pytest &> /dev/null; then
+            pytest --continue-on-collection-errors
+          fi
+        elif [ -f go.mod ]; then
+          echo "🐹 Go project detected"
+          go mod tidy
+          go test ./...
+          go build ./...
+        elif [ -f Cargo.toml ]; then
+          echo "🦀 Rust project detected"
+          cargo test
+          cargo build
+        elif [ -f Makefile ]; then
+          echo "🛠️ Makefile detected"
+          make
+        else
+          echo "📁 Generic project - running basic checks"
+          ls -la
+          find . -name "*.sh" -exec chmod +x {} \;
+        fi
+        
+    - name: Build Docker if present
+      run: |
+        if [ -f docker-compose.yml ]; then
+          echo "🐳 Building with Docker Compose"
+          docker-compose build
+        elif [ -f Dockerfile ]; then
+          echo "🐳 Building with Docker"
+          docker build -t ${{ github.repository }}:latest .
+        fi
+      continue-on-error: true
