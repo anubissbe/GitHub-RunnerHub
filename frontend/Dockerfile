@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as build
+FROM node:22-alpine as build
 
 # Accept build arguments
 ARG VITE_API_URL=http://localhost:8300

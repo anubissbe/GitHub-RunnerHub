@@ -17,7 +17,7 @@ jobs:
     - name: Use Node.js 18
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         
     - name: Cache dependencies
       uses: actions/cache@v3
@@ -52,7 +52,7 @@ jobs:
     - name: Use Node.js 18
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         
     - name: Cache dependencies
       uses: actions/cache@v3
