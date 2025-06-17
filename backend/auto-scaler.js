@@ -208,7 +208,8 @@ class AutoScaler extends EventEmitter {
   }
 
   async spawnRunner() {
-    const runnerName = `github-runner-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const runnerId = Math.random().toString(36).substr(2, 6);
+    const runnerName = `runnerhub-${runnerId}`;
     
     try {
       console.log(`Creating runner: ${runnerName}`);

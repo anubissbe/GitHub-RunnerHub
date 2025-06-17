@@ -68,9 +68,10 @@ const RunnerGrid: React.FC<RunnerGridProps> = ({ runners, jobs }) => {
 
       {/* Runners Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
-        {runners.map((runner) => {
+        {runners.map((runner, index) => {
           const job = getRunnerJob(runner.id);
-          const runnerNumber = runner.name.match(/\d+/)?.[0] || runner.id;
+          // Use a consistent numbering system based on array index
+          const runnerNumber = (index + 1).toString().padStart(2, '0');
 
           return (
             <RunnerCard
