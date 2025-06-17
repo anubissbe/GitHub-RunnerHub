@@ -1,6 +1,10 @@
 # Build stage
 FROM node:18-alpine as build
 
+# Accept build arguments
+ARG VITE_API_URL=http://localhost:8300
+ARG VITE_WS_URL=ws://localhost:8300
+
 WORKDIR /app
 
 # Copy package files
@@ -9,6 +13,10 @@ RUN npm install
 
 # Copy source code
 COPY . .
+
+# Set environment variables for build
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_WS_URL=$VITE_WS_URL
 
 # Build the application
 RUN npm run build
