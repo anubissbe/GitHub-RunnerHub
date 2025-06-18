@@ -1,0 +1,59 @@
+name: Long Running Test
+
+on:
+  push:
+    paths:
+      - 'long-test-*.md'
+  workflow_dispatch:
+
+jobs:
+  test-1:
+    runs-on: [self-hosted, docker, runnerhub]
+    steps:
+      - name: Job 1 Start
+        run: echo "Job 1 starting on runner $RUNNER_NAME"
+      
+      - name: Simulate work
+        run: |
+          echo "Simulating 2 minute workload..."
+          for i in {1..12}; do
+            echo "Processing step $i/12..."
+            sleep 10
+          done
+      
+      - name: Complete
+        run: echo "Job 1 complete!"
+
+  test-2:
+    runs-on: [self-hosted, docker, runnerhub]
+    steps:
+      - name: Job 2 Start
+        run: echo "Job 2 starting on runner $RUNNER_NAME"
+      
+      - name: Simulate work
+        run: |
+          echo "Simulating 2 minute workload..."
+          for i in {1..12}; do
+            echo "Processing step $i/12..."
+            sleep 10
+          done
+      
+      - name: Complete
+        run: echo "Job 2 complete!"
+
+  test-3:
+    runs-on: [self-hosted, docker, runnerhub]
+    steps:
+      - name: Job 3 Start
+        run: echo "Job 3 starting on runner $RUNNER_NAME"
+      
+      - name: Simulate work
+        run: |
+          echo "Simulating 2 minute workload..."
+          for i in {1..12}; do
+            echo "Processing step $i/12..."
+            sleep 10
+          done
+      
+      - name: Complete
+        run: echo "Job 3 complete!"
