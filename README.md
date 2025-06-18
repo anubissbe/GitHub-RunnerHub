@@ -21,13 +21,17 @@
 
 ## 🚀 Features
 
-- **🔄 Auto-Scaling**: Dynamically scales runners based on workload (5-25 runners)
+- **🔄 Smart Auto-Scaling**: 1 dedicated runner per repo + dynamic scaling (0-3 extra per repo)
 - **📊 Real-time Dashboard**: Monitor runners, workflows, and metrics at a glance
-- **🏢 Multi-Repository**: Single infrastructure serves all your repositories
+- **🏢 Multi-Repository**: Each repo has dedicated runners with independent scaling
 - **🔐 Secure**: Runs in Docker containers with isolated environments
 - **💰 Cost-Effective**: Eliminate GitHub Actions minutes charges
 - **🔡 Token Refresh**: Automatic token renewal prevents runner disconnections
 - **🎨 Beautiful UI**: Black/orange themed dashboard matching your brand
+- **🧠 Intelligent Resource Management**: 
+  - Spawns runners only when needed (all runners busy)
+  - Removes dynamic runners after 5 minutes idle
+  - Maintains 1 dedicated runner per repo (always ready)
 
 ## 📸 Screenshots
 
@@ -59,60 +63,76 @@ open http://localhost:8080
 
 ## 🏗️ Architecture
 
-```bash
-# Clone the repository
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
-cd GitHub-RunnerHub
-
-# Run the installer
-./install.sh
-
-# Follow the prompts to enter your GitHub token
-# The installer will handle everything else!
-```
-
-## 🏗️ Architecture
-
 ```mermaid
 graph TB
-    subgraph "GitHub"
-        GH[GitHub Actions]
-        WF[Workflows]
-    end
-    
-    subgraph "RunnerHub Infrastructure"
-        AS[Auto-Scaler]
-        RM[Runner Manager]
-        TR[Token Refresher]
+    subgraph "GitHub RunnerHub System"
+        Frontend["🎨 Frontend<br/>(React + Vite)"]
+        Backend["⚙️ Backend<br/>(Node.js + Express)"]
+        AutoScaler["🤖 Smart Auto-Scaler<br/>(Per-Repo Scaling)"]
         
-        subgraph "Runner Pool"
-            R1[Runner 1]
-            R2[Runner 2]
-            R3[Runner ...]
-            RN[Runner N]
+        subgraph "Dedicated Runners (Always Ready)"
+            D1["🏃 ProjectHub-Mcp"]
+            D2["🏃 JarvisAI"]
+            D3["🏃 GitHub-RunnerHub"]
+            DN["🏃 Other Repos<br/>(1 per repo)"]
         end
         
-        subgraph "Monitoring"
-            API[Backend API]
-            WS[WebSocket]
-            DB[Dashboard]
+        subgraph "Dynamic Runners (On-Demand)"
+            Dyn1["⚡ Dynamic 1<br/>(spawned when busy)"]
+            Dyn2["⚡ Dynamic 2<br/>(auto-removed after 5m)"]
+            DynN["⚡ Dynamic N<br/>(max 3 per repo)"]
         end
     end
     
-    GH -->|Register| RM
-    WF -->|Job Request| R1
-    WF -->|Job Request| R2
-    AS -->|Scale Up/Down| RM
-    RM -->|Manage| R1
-    RM -->|Manage| R2
-    RM -->|Manage| R3
-    RM -->|Manage| RN
-    TR -->|Refresh Tokens| RM
-    API -->|Status| DB
-    WS -->|Real-time Updates| DB
+    GitHub["🐙 GitHub API"]
+    Docker["🐳 Docker Engine"]
     
-    style AS fill:#ff6500,stroke:#0a0a0a,stroke-width:2px
-    style DB fill:#ff6500,stroke:#0a0a0a,stroke-width:2px
+    Frontend <--> Backend
+    Backend <--> GitHub
+    Backend <--> Docker
+    Backend <--> AutoScaler
+    AutoScaler --> Docker
+    
+    Docker --> D1
+    Docker --> D2
+    Docker --> D3
+    Docker --> DN
+    Docker -.-> Dyn1
+    Docker -.-> Dyn2
+    Docker -.-> DynN
+    
+    D1 --> GitHub
+    D2 --> GitHub
+    D3 --> GitHub
+    Dyn1 -.-> GitHub
+    Dyn2 -.-> GitHub
+```
+
+### How Auto-Scaling Works
+
+1. **Base Setup**: 1 dedicated runner per repository (always ready, zero cold start)
+2. **Monitoring**: Auto-scaler checks all repos every 30 seconds
+3. **Scale UP**: When a repo has no free runners:
+   - Spawns 1-3 dynamic runners for that specific repo
+   - New runners ready in ~30 seconds
+4. **Scale DOWN**: When dynamic runners are idle for 5 minutes:
+   - Automatically removes them to save resources
+   - Dedicated runner always remains
+5. **Per-Repo Independence**: Each repository scales independently
+
+#### Example Scenario:
+```
+Normal State:
+ProjectHub-Mcp:    [🏃 Dedicated (idle)]
+JarvisAI:          [🏃 Dedicated (idle)]
+
+4 PRs arrive at ProjectHub-Mcp:
+ProjectHub-Mcp:    [🏃 Dedicated (busy)] + [⚡ Dynamic-1 (busy)] + [⚡ Dynamic-2 (busy)] + [⚡ Dynamic-3 (busy)]
+JarvisAI:          [🏃 Dedicated (idle)]
+
+After workflows complete + 5 minutes:
+ProjectHub-Mcp:    [🏃 Dedicated (idle)]  (dynamics auto-removed)
+JarvisAI:          [🏃 Dedicated (idle)]
 ```
 
 ### Components
@@ -188,19 +208,29 @@ The installer will:
 
 ### Auto-Scaling Configuration
 
-Edit `config/scaling.json`:
+The optimal auto-scaling configuration:
 
 ```json
 {
-  "minRunners": 5,
-  "maxRunners": 50,
-  "scaleUpThreshold": 0.8,
-  "scaleDownThreshold": 0.2,
-  "scaleIncrement": 5,
-  "cooldownPeriod": 300,
-  "idleTimeout": 1800
+  "dedicatedRunnersPerRepo": 1,
+  "maxDynamicPerRepo": 3,
+  "scaleUpTrigger": "all runners busy",
+  "scaleDownTrigger": "5 minutes idle",
+  "checkInterval": 30,
+  "repositories": [
+    "ProjectHub-Mcp",
+    "JarvisAI",
+    "GitHub-RunnerHub",
+    "// ... all your repos"
+  ]
 }
 ```
+
+**Key Differences from Traditional Scaling:**
+- **Per-Repository Scaling**: Each repo scales independently
+- **Always Ready**: 1 dedicated runner per repo (never removed)
+- **Smart Spawning**: Only spawns when ALL runners for a repo are busy
+- **Automatic Cleanup**: Removes idle dynamic runners after 5 minutes
 
 ## 🔌 API Reference
 
@@ -301,11 +331,18 @@ docker-compose build
 The dashboard provides:
 
 - **Runner Overview**: Status of all runners (Ready, Busy, Offline)
+- **Per-Repository View**: 
+  - Dedicated runners (always visible)
+  - Dynamic runners (when active)
+  - Current scaling status
 - **Utilization Metrics**: Current usage percentage and trends
 - **Active Workflows**: Real-time view of running workflows
 - **Job Distribution**: Which runners are handling which jobs
-- **Performance Stats**: Average job duration, queue times
-- **Scaling History**: When and why scaling events occurred
+- **Auto-Scaling Events**:
+  - When dynamic runners spawn
+  - Which repository triggered scaling
+  - When runners are removed
+- **Resource Efficiency**: Track dedicated vs dynamic runner usage
 
 ## 🔒 Security
 
@@ -363,4 +400,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Made with 🧡 by [anubissbe](https://github.com/anubissbe)
 
-</div># Test Tue Jun 17 23:07:26 CEST 2025
+</div>## 🚦 Understanding GitHub Runner Limitations
+
+**Important**: GitHub runners are repository-specific on Free/Team plans:
+- Each runner can only work for ONE repository
+- No "organization-level" runners without Enterprise
+- RunnerHub works around this intelligently!
+
+### RunnerHub's Solution:
+1. **Dedicated Runners**: 1 per repo = instant response
+2. **Dynamic Scaling**: Spawn extras only when needed
+3. **Smart Allocation**: Each repo manages its own pool
+4. **Cost Effective**: $0 vs $1,050+/month for Enterprise
+
+This gives you 90% of Enterprise benefits on the Free plan! 🎉
