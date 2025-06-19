@@ -1,373 +1,204 @@
-# 🏃 GitHub RunnerHub
+# 🚧 {{PROJECT_NAME}}
 
-<div align="center">
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+{{TECH_BADGES}}
+[![Status](https://img.shields.io/badge/Status-Under%20Development-orange?style=for-the-badge)](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}})
 
-![GitHub RunnerHub](https://img.shields.io/badge/GitHub-RunnerHub-ff6500?style=for-the-badge&logo=github-actions&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-0a0a0a?style=for-the-badge)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Status](https://img.shields.io/badge/Status-Production-00ff00?style=for-the-badge)
+> 🚀 {{PROJECT_DESCRIPTION}}
 
-**Enterprise-grade self-hosted GitHub Actions runner infrastructure with auto-scaling, monitoring, and multi-repository support**
+## 📊 Project Status
 
-[Installation](#-installation) • [Features](#-features) • [Architecture](#-architecture) • [Wiki](https://github.com/anubissbe/GitHub-RunnerHub/wiki) • [Support](#-support)
-
-<a href="https://www.buymeacoffee.com/anubissbe" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-orange.png" alt="Buy Me A Coffee" height="60" width="217">
-</a>
-
-</div>
-
----
-
-## 🚀 Features
-
-- **🔄 Smart Auto-Scaling**: 1 dedicated runner per repo + dynamic scaling (0-3 extra per repo)
-- **📊 Real-time Dashboard**: Monitor runners, workflows, and metrics at a glance
-- **🏢 Multi-Repository**: Each repo has dedicated runners with independent scaling
-- **🔐 Secure**: Runs in Docker containers with isolated environments
-- **💰 Cost-Effective**: Eliminate GitHub Actions minutes charges
-- **🔡 Token Refresh**: Automatic token renewal prevents runner disconnections
-- **🎨 Beautiful UI**: Black/orange themed dashboard matching your brand
-- **🧠 Intelligent Resource Management**: 
-  - Spawns runners only when needed (all runners busy)
-  - Removes dynamic runners after 5 minutes idle
-  - Maintains 1 dedicated runner per repo (always ready)
-
-## 📸 Screenshots
-
-<div align="center">
-  <img src="docs/images/dashboard.png" alt="RunnerHub Dashboard" width="800">
-  <p><i>Real-time monitoring dashboard showing runner status and metrics</i></p>
-</div>
-
-## ⚡ Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
-cd GitHub-RunnerHub
-
-# Run the installer (requires only GitHub token)
-./install.sh
-
-# Access the dashboard
-open http://localhost:8080
+```
+{{PROGRESS_BARS}}
 ```
 
-## 📋 Requirements
+## 🎯 Overview
 
-- Docker 20.10+
-- Linux server (Ubuntu 20.04+ recommended)
-- GitHub Personal Access Token with `repo` and `admin:org` scopes
-- Minimum 4GB RAM, 20GB storage
+{{PROJECT_OVERVIEW}}
+
+### 🔑 Key Features (Planned)
+
+{{PLANNED_FEATURES}}
 
 ## 🏗️ Architecture
 
 ```mermaid
-graph TB
-    subgraph "GitHub RunnerHub System"
-        Frontend["🎨 Frontend<br/>(React + Vite)"]
-        Backend["⚙️ Backend<br/>(Node.js + Express)"]
-        AutoScaler["🤖 Smart Auto-Scaler<br/>(Per-Repo Scaling)"]
-        
-        subgraph "Dedicated Runners (Always Ready)"
-            D1["🏃 ProjectHub-Mcp"]
-            D2["🏃 JarvisAI"]
-            D3["🏃 GitHub-RunnerHub"]
-            DN["🏃 Other Repos<br/>(1 per repo)"]
-        end
-        
-        subgraph "Dynamic Runners (On-Demand)"
-            Dyn1["⚡ Dynamic 1<br/>(spawned when busy)"]
-            Dyn2["⚡ Dynamic 2<br/>(auto-removed after 5m)"]
-            DynN["⚡ Dynamic N<br/>(max 3 per repo)"]
-        end
-    end
-    
-    GitHub["🐙 GitHub API"]
-    Docker["🐳 Docker Engine"]
-    
-    Frontend <--> Backend
-    Backend <--> GitHub
-    Backend <--> Docker
-    Backend <--> AutoScaler
-    AutoScaler --> Docker
-    
-    Docker --> D1
-    Docker --> D2
-    Docker --> D3
-    Docker --> DN
-    Docker -.-> Dyn1
-    Docker -.-> Dyn2
-    Docker -.-> DynN
-    
-    D1 --> GitHub
-    D2 --> GitHub
-    D3 --> GitHub
-    Dyn1 -.-> GitHub
-    Dyn2 -.-> GitHub
+{{ARCHITECTURE_DIAGRAM}}
 ```
 
-### How Auto-Scaling Works
-
-1. **Base Setup**: 1 dedicated runner per repository (always ready, zero cold start)
-2. **Monitoring**: Auto-scaler checks all repos every 30 seconds
-3. **Scale UP**: When a repo has no free runners:
-   - Spawns 1-3 dynamic runners for that specific repo
-   - New runners ready in ~30 seconds
-4. **Scale DOWN**: When dynamic runners are idle for 5 minutes:
-   - Automatically removes them to save resources
-   - Dedicated runner always remains
-5. **Per-Repo Independence**: Each repository scales independently
-
-#### Example Scenario:
-```
-Normal State:
-ProjectHub-Mcp:    [🏃 Dedicated (idle)]
-JarvisAI:          [🏃 Dedicated (idle)]
-
-4 PRs arrive at ProjectHub-Mcp:
-ProjectHub-Mcp:    [🏃 Dedicated (busy)] + [⚡ Dynamic-1 (busy)] + [⚡ Dynamic-2 (busy)] + [⚡ Dynamic-3 (busy)]
-JarvisAI:          [🏃 Dedicated (idle)]
-
-After workflows complete + 5 minutes:
-ProjectHub-Mcp:    [🏃 Dedicated (idle)]  (dynamics auto-removed)
-JarvisAI:          [🏃 Dedicated (idle)]
-```
-
-### Components
-
-- **Monitoring Dashboard**: React-based UI with real-time updates
-- **Backend API**: Express.js server managing runners and GitHub integration
-- **Auto-Scaling Engine**: Intelligent scaling based on utilization thresholds
-- **Runner Pool**: Docker containers running GitHub Actions runners
-- **WebSocket Server**: Real-time communication for live updates
-
-## 📦 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Docker 20.0.0 or higher
-- Docker Compose 2.0.0 or higher
-- Node.js 18.0.0 or higher (for development)
-- GitHub Personal Access Token with `repo` and `admin:org` scopes
+{{PREREQUISITES}}
 
-### Automated Installation
+### 🐳 Docker Deployment (Recommended)
 
 ```bash
-./install.sh
+# 1. Clone the repository
+git clone https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}.git
+cd {{REPO_NAME}}
+
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your credentials (see configuration section)
+
+# 3. Start all services
+{{DOCKER_START_COMMAND}}
+
+# 4. Access the application
+{{ACCESS_URLS}}
 ```
 
-The installer will:
-1. Check system requirements
-2. Prompt for your GitHub token
-3. Configure the environment
-4. Build Docker images
-5. Start the services
-6. Display the dashboard URL
+### 🛠️ Local Development
 
-### Manual Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/anubissbe/GitHub-RunnerHub.git
-   cd GitHub-RunnerHub
-   ```
-
-2. **Configure environment**
-   ```bash
-   cp .env.example .env
-   # Edit .env and add your GITHUB_TOKEN
-   ```
-
-3. **Build and start services**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Access the dashboard**
-   ```
-   http://localhost:8080
-   ```
+```bash
+{{LOCAL_DEV_COMMANDS}}
+```
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Required Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `GITHUB_TOKEN` | GitHub Personal Access Token | Required |
-| `GITHUB_ORG` | GitHub organization name | Required |
-| `GITHUB_REPO` | Repository name | Required |
-| `MIN_RUNNERS` | Minimum number of runners | 5 |
-| `MAX_RUNNERS` | Maximum number of runners | 50 |
-| `SCALE_THRESHOLD` | Utilization threshold for scaling | 0.8 |
-| `SCALE_INCREMENT` | Number of runners to add | 5 |
-| `API_PORT` | Backend API port | 8300 |
-| `UI_PORT` | Dashboard UI port | 8080 |
-
-### Auto-Scaling Configuration
-
-The optimal auto-scaling configuration:
-
-```json
-{
-  "dedicatedRunnersPerRepo": 1,
-  "maxDynamicPerRepo": 3,
-  "scaleUpTrigger": "all runners busy",
-  "scaleDownTrigger": "5 minutes idle",
-  "checkInterval": 30,
-  "repositories": [
-    "ProjectHub-Mcp",
-    "JarvisAI",
-    "GitHub-RunnerHub",
-    "// ... all your repos"
-  ]
-}
-```
-
-**Key Differences from Traditional Scaling:**
-- **Per-Repository Scaling**: Each repo scales independently
-- **Always Ready**: 1 dedicated runner per repo (never removed)
-- **Smart Spawning**: Only spawns when ALL runners for a repo are busy
-- **Automatic Cleanup**: Removes idle dynamic runners after 5 minutes
-
-## 🔌 API Reference
-
-### Endpoints
-
-#### Get Runner Status
-```http
-GET /api/runners
-```
-
-#### Get Active Workflows
-```http
-GET /api/workflows/active
-```
-
-#### Get Metrics
-```http
-GET /api/metrics
-```
-
-#### Scale Runners
-```http
-POST /api/runners/scale
-{
-  "action": "up" | "down",
-  "count": 5
-}
-```
-
-#### Health Check
-```http
-GET /health
-```
-
-### WebSocket Events
-
-Connect to `ws://localhost:8300` for real-time updates:
-
-- `connected` - Initial connection confirmation
-- `scale` - Auto-scaling events (up/down with details)
-- `update` - Cache updates with runner/workflow counts
-- `runner:status` - Runner status changes
-- `workflow:start` - Workflow started
-- `workflow:complete` - Workflow completed
-- `metrics:update` - Metrics updated
-
-Example WebSocket client:
-```javascript
-const ws = new WebSocket('ws://localhost:8300');
-
-ws.on('message', (data) => {
-  const { event, data: payload } = JSON.parse(data);
-  console.log(`Event: ${event}`, payload);
-});
-```
-
-## 🎨 UI Customization
-
-The UI follows the ProjectHub-Mcp design system:
-
-- **Primary Color**: #ff6500 (Orange)
-- **Background**: #0a0a0a (Near Black)
-- **Surface**: #1a1a1a (Dark Gray)
-- **Text**: #ffffff (White)
-
-To customize, edit `frontend/src/styles/theme.css`.
-
-## 🧪 Development
-
-### Local Development
+Edit `.env` file with your credentials:
 
 ```bash
-# Backend
-cd backend
-npm install
-npm run dev
-
-# Frontend
-cd frontend
-npm install
-npm run dev
+{{ENVIRONMENT_VARIABLES}}
 ```
 
-### Running Tests
+## 📁 Project Structure
+
+```
+{{REPO_NAME}}/
+{{PROJECT_STRUCTURE}}
+```
+
+## 🔧 Technology Stack
+
+### {{TECH_SECTION_1}}
+{{TECH_DETAILS_1}}
+
+### {{TECH_SECTION_2}}
+{{TECH_DETAILS_2}}
+
+### {{TECH_SECTION_3}}
+{{TECH_DETAILS_3}}
+
+## 🌐 {{FEATURE_SECTION}} Features
+
+### {{FEATURE_SUBSECTION_1}}
+{{FEATURE_DETAILS_1}}
+
+### {{FEATURE_SUBSECTION_2}}
+{{FEATURE_DETAILS_2}}
+
+## 🧪 Research & Validation
+
+Our approach is built on extensive research:
+
+### {{RESEARCH_SECTION_1}}
+{{RESEARCH_DETAILS_1}}
+
+### {{RESEARCH_SECTION_2}}
+{{RESEARCH_DETAILS_2}}
+
+See [docs/RESEARCH.md](docs/RESEARCH.md) for comprehensive findings.
+
+## 🛠️ Development
+
+### Available Commands
 
 ```bash
-npm test
+{{DEVELOPMENT_COMMANDS}}
 ```
 
-### Building for Production
+### Development Workflow
 
 ```bash
-docker-compose build
+{{DEVELOPMENT_WORKFLOW}}
 ```
 
-## 📊 Monitoring
+## 🚀 Deployment
 
-The dashboard provides:
+### Production Deployment
 
-- **Runner Overview**: Status of all runners (Ready, Busy, Offline)
-- **Per-Repository View**: 
-  - Dedicated runners (always visible)
-  - Dynamic runners (when active)
-  - Current scaling status
-- **Utilization Metrics**: Current usage percentage and trends
-- **Active Workflows**: Real-time view of running workflows
-- **Job Distribution**: Which runners are handling which jobs
-- **Auto-Scaling Events**:
-  - When dynamic runners spawn
-  - Which repository triggered scaling
-  - When runners are removed
-- **Resource Efficiency**: Track dedicated vs dynamic runner usage
+```bash
+{{PRODUCTION_DEPLOYMENT}}
+```
 
-## 🔒 Security
+### Environment Configuration
 
-- GitHub tokens are stored securely in environment variables
-- WebSocket connections include error handling and timestamps
-- Docker socket access is controlled and monitored
-- Health checks ensure service reliability
-- TLS/SSL support ready for production deployments
+| Variable | Description | Required |
+|----------|-------------|----------|
+{{ENV_TABLE}}
 
-## 📱 Screenshots
+## 📝 Usage Examples
 
-### Dashboard Overview
-- Real-time runner status monitoring
-- Live utilization metrics with charts
-- Active workflow tracking
-- Auto-scaling event history
+### {{USAGE_SECTION_1}}
 
-### Auto-Scaling in Action
-- Automatic runner spawning at 80% utilization
-- Graceful scale-down during low usage
-- Configurable thresholds and increments
+```{{USAGE_LANGUAGE_1}}
+{{USAGE_EXAMPLE_1}}
+```
+
+### {{USAGE_SECTION_2}}
+
+```{{USAGE_LANGUAGE_2}}
+{{USAGE_EXAMPLE_2}}
+```
+
+### {{USAGE_SECTION_3}}
+
+```{{USAGE_LANGUAGE_3}}
+{{USAGE_EXAMPLE_3}}
+```
+
+## 🔒 Security Features
+
+### {{SECURITY_SECTION_1}}
+{{SECURITY_DETAILS_1}}
+
+### {{SECURITY_SECTION_2}}
+{{SECURITY_DETAILS_2}}
+
+### {{SECURITY_SECTION_3}}
+{{SECURITY_DETAILS_3}}
+
+## 📊 Monitoring & Analytics
+
+### Available Dashboards
+
+{{MONITORING_DASHBOARDS}}
+
+### Monitoring Stack
+
+{{MONITORING_STACK}}
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and add tests
+4. Ensure all tests pass: `{{TEST_COMMAND}}`
+5. Submit a pull request
+
+### Code Standards
+
+{{CODE_STANDARDS}}
+
+## 📋 Roadmap
+
+### Current Sprint ({{CURRENT_SPRINT}})
+{{CURRENT_TASKS}}
+
+### Next Release ({{NEXT_RELEASE}})
+{{NEXT_TASKS}}
+
+### Future Plans
+{{FUTURE_TASKS}}
 
 ## 📄 License
 
@@ -375,42 +206,50 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Inspired by [ProjectHub-Mcp](https://github.com/anubissbe/ProjectHub-Mcp) design system
-- Built with React, Node.js, and Docker
-- Powered by GitHub Actions API
+{{ACKNOWLEDGMENTS}}
 
-## 💬 Support
+## 📞 Support
 
-- 📚 [Documentation Wiki](https://github.com/anubissbe/GitHub-RunnerHub/wiki)
-- 🐛 [Issue Tracker](https://github.com/anubissbe/GitHub-RunnerHub/issues)
-- 💬 [Discussions](https://github.com/anubissbe/GitHub-RunnerHub/discussions)
-- ☕ [Buy Me a Coffee](https://www.buymeacoffee.com/anubissbe)
+- 📧 **Email**: [{{SUPPORT_EMAIL}}](mailto:{{SUPPORT_EMAIL}})
+- 🐛 **Issues**: [GitHub Issues](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/discussions)
+- 📚 **Documentation**: [Project Wiki](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/wiki)
 
-## 🙏 Acknowledgments
+## 🔗 Quick Links
 
-- Built with ❤️ using Docker and Node.js
-- Inspired by the need for cost-effective CI/CD
-- Special thanks to all contributors
+{{QUICK_LINKS}}
 
 ---
 
 <div align="center">
+  <strong>Built with ❤️ for {{PROJECT_PURPOSE}}</strong>
+  <br>
+  <em>Powered by {{MAIN_TECHNOLOGIES}}</em>
+</div>
 
-**If you find RunnerHub useful, please consider [buying me a coffee](https://www.buymeacoffee.com/anubissbe) ☕**
+## 📈 Performance Benchmarks
 
-Made with 🧡 by [anubissbe](https://github.com/anubissbe)
+{{PERFORMANCE_BENCHMARKS}}
 
-</div>## 🚦 Understanding GitHub Runner Limitations
+## 🧪 Testing Status
 
-**Important**: GitHub runners are repository-specific on Free/Team plans:
-- Each runner can only work for ONE repository
-- No "organization-level" runners without Enterprise
-- RunnerHub works around this intelligently!
+### Test Coverage
+{{TEST_COVERAGE}}
 
-### RunnerHub's Solution:
-1. **Dedicated Runners**: 1 per repo = instant response
-2. **Dynamic Scaling**: Spawn extras only when needed
-3. **Smart Allocation**: Each repo manages its own pool
-4. **Cost Effective**: $0 vs $1,050+/month for Enterprise
+### Test Results
+{{TEST_RESULTS}}
 
-This gives you 90% of Enterprise benefits on the Free plan! 🎉
+## 🔄 CI/CD Pipeline
+
+This project uses automated CI/CD with:
+- ✅ Automated testing on every commit
+- ✅ Security scanning with multiple tools
+- ✅ Code quality checks
+- ✅ Docker image building
+- ✅ Automated deployment to staging
+
+See [.github/workflows/](/.github/workflows/) for pipeline configuration.
+
+---
+
+**⚠️ Note**: This project is under active development. Features and APIs may change. Please check the [issues](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/issues) and [discussions](https://github.com/{{GITHUB_USERNAME}}/{{REPO_NAME}}/discussions) for current status and roadmap updates.
