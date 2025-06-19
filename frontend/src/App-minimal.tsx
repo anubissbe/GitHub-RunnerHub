@@ -22,42 +22,7 @@ function App() {
   const { isConnected, error } = useWebSocket(WS_URL, {
     onMessage: (data) => {
       console.log('WebSocket message:', data);
-      
-      // Handle README-compliant WebSocket events
-      if (data.event === 'connected') {
-        console.log('✅ Connected to GitHub RunnerHub:', data.data?.message);
-      } else if (data.event === 'scale') {
-        console.log('📊 Auto-scaling event:', data.data);
-        setAlerts(prev => [{
-          id: Date.now(),
-          type: 'scaling',
-          message: `${data.data.event} for ${data.data.repo || 'system'}: ${data.data.count || 0} runners`,
-          timestamp: new Date()
-        }, ...prev.slice(0, 9)]);
-      } else if (data.event === 'update') {
-        console.log('🔄 Cache update:', data.data);
-        if (data.data.metrics) {
-          setMetrics(data.data.metrics);
-        }
-      } else if (data.event === 'runner:status') {
-        console.log('🏃 Runner status change:', data.data);
-        setAlerts(prev => [{
-          id: Date.now(),
-          type: 'runner',
-          message: `Runner ${data.data.name} is now ${data.data.status}`,
-          timestamp: new Date()
-        }, ...prev.slice(0, 9)]);
-      } else if (data.event === 'workflow:start') {
-        console.log('▶️ Workflow started:', data.data);
-      } else if (data.event === 'workflow:complete') {
-        console.log('✅ Workflow completed:', data.data);
-      } else if (data.event === 'metrics:update') {
-        console.log('📈 Metrics updated:', data.data);
-        setMetrics(data.data);
-      }
-      
-      // Legacy support for existing events
-      else if (data.type === 'runners') {
+      if (data.type === 'runners') {
         setRunners(data.data);
       } else if (data.type === 'workflows') {
         setWorkflows(data.data);
@@ -65,8 +30,9 @@ function App() {
         setJobs(data.data);
       } else if (data.type === 'metrics') {
         setMetrics(data.data);
+      } else if (data.type === 'alert') {
+        setAlerts(prev => [data.data, ...prev.slice(0, 9)]);
       }
-      
       setLastUpdate(new Date());
     }
   });

@@ -100,15 +100,38 @@ class AutoScaler extends EventEmitter {
 
   async getRunnerMetrics() {
     try {
-      // Get runners from GitHub
-      const { data: runners } = await this.octokit.rest.actions.listSelfHostedRunnersForRepo({
-        owner: this.config.githubOrg,
-        repo: this.config.githubRepo,
-        per_page: 100
-      });
+      // Get runners from Docker containers instead of GitHub API
+      const containers = await docker.listContainers({ all: true });
+      
+      const runnerContainers = containers.filter(container => 
+        container.Names.some(name => name.includes('runnerhub')) &&
+        !container.Names.some(name => name.includes('frontend') || name.includes('backend'))
+      );
 
-      const totalRunners = runners.runners.filter(r => r.status === 'online').length;
-      const busyRunners = runners.runners.filter(r => r.status === 'online' && r.busy).length;
+      const runners = [];
+      let busyRunners = 0;
+
+      for (const container of runnerContainers) {
+        const containerObj = docker.getContainer(container.Id);
+        const inspect = await containerObj.inspect();
+        
+        // Determine if runner is busy by checking for running processes
+        // or by checking container stats/labels
+        const isBusy = await this.isRunnerBusy(containerObj);
+        if (isBusy) busyRunners++;
+
+        runners.push({
+          id: container.Id.substr(0, 12),
+          name: container.Names[0].replace('/', ''),
+          status: container.State === 'running' ? 'online' : 'offline',
+          busy: isBusy,
+          labels: inspect.Config.Labels || {},
+          created: container.Created,
+          state: container.State
+        });
+      }
+
+      const totalRunners = runners.filter(r => r.status === 'online').length;
       const utilization = totalRunners > 0 ? busyRunners / totalRunners : 0;
 
       return {
@@ -116,10 +139,10 @@ class AutoScaler extends EventEmitter {
         busyRunners,
         idleRunners: totalRunners - busyRunners,
         utilization,
-        runners: runners.runners
+        runners
       };
     } catch (error) {
-      console.error('Error getting runner metrics:', error.message);
+      console.error('Error getting runner metrics from Docker:', error.message);
       // Return empty metrics on error
       return {
         totalRunners: 0,
@@ -128,6 +151,36 @@ class AutoScaler extends EventEmitter {
         utilization: 0,
         runners: []
       };
+    }
+  }
+
+  async isRunnerBusy(containerObj) {
+    try {
+      // Check if the container has any active GitHub Actions processes
+      const exec = await containerObj.exec({
+        Cmd: ['pgrep', '-f', 'Runner.Worker'],
+        AttachStdout: true,
+        AttachStderr: true
+      });
+      
+      const stream = await exec.start();
+      return new Promise((resolve) => {
+        let output = '';
+        stream.on('data', (data) => {
+          output += data.toString();
+        });
+        stream.on('end', () => {
+          // If pgrep finds processes, the runner is busy
+          resolve(output.trim().length > 0);
+        });
+        stream.on('error', () => {
+          // If we can't check, assume not busy
+          resolve(false);
+        });
+      });
+    } catch (error) {
+      // If we can't determine busy state, assume not busy
+      return false;
     }
   }
 

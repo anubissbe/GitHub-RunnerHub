@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Activity, Clock, GitBranch, Monitor, Server, AlertTriangle } from 'lucide-react';
+import { Activity, Clock, GitBranch, Monitor, Server, AlertTriangle, LogOut } from 'lucide-react';
 import RunnerGrid from './components/RunnerGrid';
 import WorkflowTracker from './components/WorkflowTracker';
 import MetricsPanel from './components/MetricsPanel';
 import AlertsPanel from './components/AlertsPanel';
+import { Login } from './components/Login';
 import { useWebSocket } from './hooks/useWebSocket';
 import { Runner, WorkflowRun, Job, Metrics } from './types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8300';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [token, setToken] = useState<string>('');
+  const [user, setUser] = useState<any>(null);
   const [runners, setRunners] = useState<Runner[]>([]);
   const [workflows, setWorkflows] = useState<WorkflowRun[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -17,47 +21,13 @@ function App() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [showLogin, setShowLogin] = useState(false);
 
   const WS_URL = import.meta.env.VITE_WS_URL || API_BASE.replace('http', 'ws') + '/ws';
   const { isConnected, error } = useWebSocket(WS_URL, {
     onMessage: (data) => {
       console.log('WebSocket message:', data);
-      
-      // Handle README-compliant WebSocket events
-      if (data.event === 'connected') {
-        console.log('✅ Connected to GitHub RunnerHub:', data.data?.message);
-      } else if (data.event === 'scale') {
-        console.log('📊 Auto-scaling event:', data.data);
-        setAlerts(prev => [{
-          id: Date.now(),
-          type: 'scaling',
-          message: `${data.data.event} for ${data.data.repo || 'system'}: ${data.data.count || 0} runners`,
-          timestamp: new Date()
-        }, ...prev.slice(0, 9)]);
-      } else if (data.event === 'update') {
-        console.log('🔄 Cache update:', data.data);
-        if (data.data.metrics) {
-          setMetrics(data.data.metrics);
-        }
-      } else if (data.event === 'runner:status') {
-        console.log('🏃 Runner status change:', data.data);
-        setAlerts(prev => [{
-          id: Date.now(),
-          type: 'runner',
-          message: `Runner ${data.data.name} is now ${data.data.status}`,
-          timestamp: new Date()
-        }, ...prev.slice(0, 9)]);
-      } else if (data.event === 'workflow:start') {
-        console.log('▶️ Workflow started:', data.data);
-      } else if (data.event === 'workflow:complete') {
-        console.log('✅ Workflow completed:', data.data);
-      } else if (data.event === 'metrics:update') {
-        console.log('📈 Metrics updated:', data.data);
-        setMetrics(data.data);
-      }
-      
-      // Legacy support for existing events
-      else if (data.type === 'runners') {
+      if (data.type === 'runners') {
         setRunners(data.data);
       } else if (data.type === 'workflows') {
         setWorkflows(data.data);
@@ -65,14 +35,54 @@ function App() {
         setJobs(data.data);
       } else if (data.type === 'metrics') {
         setMetrics(data.data);
+      } else if (data.type === 'alert') {
+        setAlerts(prev => [data.data, ...prev.slice(0, 9)]);
       }
-      
       setLastUpdate(new Date());
     }
   });
 
+  // Check for existing auth on mount
+  useEffect(() => {
+    const storedToken = localStorage.getItem('accessToken');
+    const storedUser = localStorage.getItem('user');
+    
+    if (storedToken && storedUser) {
+      setToken(storedToken);
+      setUser(JSON.parse(storedUser));
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = (newToken: string) => {
+    setToken(newToken);
+    setIsAuthenticated(true);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    setIsAuthenticated(false);
+    setToken('');
+    setUser(null);
+  };
+
+  const fetchWithAuth = async (url: string) => {
+    return fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
   const fetchData = async () => {
-    // Only fetch from public API - no authentication needed
+    // Always try to fetch public runners data first
     try {
       const publicRunnersRes = await fetch(`${API_BASE}/api/public/runners`);
       if (publicRunnersRes.ok) {
@@ -83,16 +93,49 @@ function App() {
     } catch (error) {
       console.error('Failed to fetch public runners:', error);
     }
+    
+    // Only try authenticated endpoints if we have auth
+    if (!isAuthenticated || !token) {
+      return;
+    }
+    
+    try {
+      // Try authenticated endpoints but don't fail if they return 401
+      const [workflowsRes, jobsRes] = await Promise.all([
+        fetchWithAuth(`${API_BASE}/api/workflows/active`).catch(() => null),
+        fetchWithAuth(`${API_BASE}/api/jobs/active`).catch(() => null)
+      ]);
+      
+      if (workflowsRes && workflowsRes.ok) {
+        const data = await workflowsRes.json();
+        setWorkflows(data);
+      }
+      if (jobsRes && jobsRes.ok) {
+        const data = await jobsRes.json();
+        setJobs(data);
+      }
+      
+      setLastUpdate(new Date());
+    } catch (error) {
+      // Silently handle auth errors - we'll get data from WebSocket
+    }
   };
 
   useEffect(() => {
+    // Always try to fetch data, even without auth
     fetchData().finally(() => setLoading(false));
+    
+    // Refresh data every 10 seconds
     const interval = setInterval(fetchData, 10000);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated, token]);
 
   const activeRunners = runners.filter(r => r.status === 'online').length;
   const busyRunners = jobs.filter(j => j.status === 'in_progress').length;
+
+  // Don't force login - show dashboard with available data
+  // Login modal can be shown optionally
 
   if (loading) {
     return (
@@ -113,8 +156,10 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 text-white">
+      {/* Animated background gradient */}
       <div className="fixed inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-blue-500/5 pointer-events-none"></div>
       
+      {/* Header */}
       <header className="relative bg-gray-900/50 backdrop-blur-xl border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
@@ -134,6 +179,34 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-6">
+              {/* User info or Login button */}
+              {isAuthenticated && user ? (
+                <>
+                  <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-sm">
+                        <span className="text-gray-400">Logged in as</span>
+                        <p className="font-medium text-white">{user.username}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50 hover:border-orange-500/50 transition-all flex items-center space-x-2 text-sm"
+                  >
+                    <LogOut className="w-4 h-4 text-orange-400" />
+                    <span className="text-gray-300">Logout</span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50 hover:border-orange-500/50 transition-all flex items-center space-x-2 text-sm"
+                >
+                  <span className="text-gray-300">Login</span>
+                </button>
+              )}
+              
               <div className="bg-gray-800/50 backdrop-blur-xl rounded-xl px-4 py-2 border border-gray-700/50">
                 <div className="flex items-center space-x-2">
                   <div className={`relative ${isConnected ? 'text-green-400' : 'text-red-400'}`}>
@@ -157,6 +230,7 @@ function App() {
         </div>
       </header>
 
+      {/* Stats Bar */}
       <div className="relative bg-gray-900/30 backdrop-blur-xl border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -211,15 +285,20 @@ function App() {
         </div>
       </div>
 
+      {/* Main Content */}
       <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
+          {/* Runners Section */}
           <RunnerGrid runners={runners} jobs={jobs} />
           
+          {/* Bottom Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Workflows - Takes 2 columns on large screens */}
             <div className="lg:col-span-2">
               <WorkflowTracker workflows={workflows} jobs={jobs} />
             </div>
             
+            {/* Metrics & Alerts - Takes 1 column */}
             <div className="space-y-8">
               <MetricsPanel metrics={metrics} />
               <AlertsPanel alerts={alerts} />
@@ -228,11 +307,30 @@ function App() {
         </div>
       </main>
 
+      {/* Error Display */}
       {error && (
         <div className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="w-4 h-4" />
             <span className="text-sm">WebSocket Error: {error}</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="relative">
+            <button
+              onClick={() => setShowLogin(false)}
+              className="absolute -top-12 right-0 text-white/50 hover:text-white"
+            >
+              ✕ Close
+            </button>
+            <Login onLogin={(token) => {
+              handleLogin(token);
+              setShowLogin(false);
+            }} />
           </div>
         </div>
       )}

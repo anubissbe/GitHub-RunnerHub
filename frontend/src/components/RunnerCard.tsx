@@ -5,10 +5,10 @@ import { Runner, Job } from '../types';
 interface RunnerCardProps {
   runner: Runner;
   job?: Job;
-  runnerNumber: string | number;
+  runnerNumber?: string | number;
 }
 
-const RunnerCard: React.FC<RunnerCardProps> = ({ runner, job, runnerNumber }) => {
+const RunnerCard: React.FC<RunnerCardProps> = ({ runner, job }) => {
   const getJobDuration = (job: Job) => {
     if (!job.started_at) return 0;
     const start = new Date(job.started_at);
@@ -63,13 +63,18 @@ const RunnerCard: React.FC<RunnerCardProps> = ({ runner, job, runnerNumber }) =>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-semibold text-white text-base truncate">Runner #{runnerNumber}</h3>
+              <h3 className="font-semibold text-white text-base truncate">
+                {runner.name.replace('runnerhub_', '').replace(/_/g, '-')}
+              </h3>
               <p className="text-xs text-gray-400 flex items-center gap-1">
                 {getStatusIcon()}
                 <span className={
                   runner.status === 'offline' ? 'text-red-400' :
                   job ? 'text-orange-400' : 'text-green-400'
                 }>{getStatusText()}</span>
+                {runner.labels && runner.labels.find(l => l.type === 'repository') && (
+                  <span className="text-gray-500 ml-2">• {runner.labels.find(l => l.type === 'repository')?.name}</span>
+                )}
               </p>
             </div>
           </div>

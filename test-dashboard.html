@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Runner Test Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .runner { background: #2a2a2a; border: 1px solid #444; padding: 15px; margin: 10px 0; border-radius: 8px; }
+        .online { border-left: 4px solid #4caf50; }
+        .offline { border-left: 4px solid #f44336; }
+        .error { background: #ff5252; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #4caf50; color: white; padding: 10px; margin: 10px 0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>GitHub Runners - Direct API Test</h1>
+    <div id="status"></div>
+    <div id="runners"></div>
+    
+    <script>
+        async function loadRunners() {
+            const statusDiv = document.getElementById('status');
+            const runnersDiv = document.getElementById('runners');
+            
+            try {
+                statusDiv.innerHTML = '<div class="success">Fetching runners from public API...</div>';
+                
+                const response = await fetch('http://192.168.1.16:8300/api/public/runners');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const runners = await response.json();
+                
+                statusDiv.innerHTML = `<div class="success">✅ Found ${runners.length} runners</div>`;
+                
+                runnersDiv.innerHTML = runners.map(runner => `
+                    <div class="runner ${runner.status}">
+                        <h3>${runner.displayName || runner.name}</h3>
+                        <p>Repository: ${runner.repository}</p>
+                        <p>Status: <strong>${runner.status}</strong></p>
+                        <p>Container: ${runner.name}</p>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                console.error('Error loading runners:', error);
+            }
+        }
+        
+        // Load immediately and refresh every 5 seconds
+        loadRunners();
+        setInterval(loadRunners, 5000);
+    </script>
+</body>
+</html>
