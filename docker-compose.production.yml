@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: github-runnerhub-backend
+    ports:
+      - "${API_PORT:-8300}:8300"
+    environment:
+      - NODE_ENV=production
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_ORG=${GITHUB_ORG}
+      - RUNNER_LABELS=${RUNNER_LABELS:-self-hosted,docker,runnerhub}
+      - MAX_RUNNERS_PER_REPO=${MAX_RUNNERS_PER_REPO:-4}
+      - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-5}
+      - HEALTH_CHECK_INTERVAL=${HEALTH_CHECK_INTERVAL:-60000}
+      - SCALE_CHECK_INTERVAL=${SCALE_CHECK_INTERVAL:-30000}
+      - RECOVERY_ATTEMPTS=${RECOVERY_ATTEMPTS:-3}
+      - CONTAINER_RESTART_TIMEOUT=${CONTAINER_RESTART_TIMEOUT:-300000}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data:/app/data
+    networks:
+      - runnerhub
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:${API_PORT:-8300}
+    container_name: github-runnerhub-frontend
+    ports:
+      - "${UI_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - runnerhub
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  runnerhub:
+    name: github-runnerhub_runnerhub
+    driver: bridge
+
+volumes:
+  runner_data:
+    driver: local
