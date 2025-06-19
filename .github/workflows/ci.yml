@@ -9,7 +9,7 @@ on:
 jobs:
   backend:
     name: Backend Tests
-    runs-on: [self-hosted, runnerhub]
+    runs-on: self-hosted
     
     steps:
     - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
 
   frontend:
     name: Frontend Tests
-    runs-on: [self-hosted, runnerhub]
+    runs-on: self-hosted
     
     steps:
     - uses: actions/checkout@v4
@@ -84,7 +84,7 @@ jobs:
 
   docker:
     name: Docker Build
-    runs-on: [self-hosted, runnerhub]
+    runs-on: self-hosted
     
     steps:
     - uses: actions/checkout@v4
@@ -122,7 +122,7 @@ jobs:
 
   security:
     name: Security Scan
-    runs-on: [self-hosted, runnerhub]
+    runs-on: self-hosted
     
     steps:
     - uses: actions/checkout@v4
