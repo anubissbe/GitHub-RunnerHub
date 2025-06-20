@@ -33,6 +33,7 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 
 ## Features
 
+### Core Features
 - 🔒 **Complete Job Isolation**: Every job runs in a pristine container
 - 🚀 **Auto-scaling**: Dynamic runner provisioning based on demand
 - 📊 **Real-time Monitoring**: WebSocket-based live status updates
@@ -43,45 +44,148 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 - 📈 **Prometheus Metrics**: Built-in observability
 - 🎯 **Label-based Routing**: Smart job distribution
 
+### High Availability Features ⚡
+- 🏗️ **Enterprise HA Architecture**: Multi-node deployment with automatic failover
+- 👑 **Leader Election**: Redis-based distributed leadership with automatic renewal
+- 💾 **Database Replication**: PostgreSQL primary/replica with streaming replication
+- 🔄 **Redis Sentinel**: Automatic Redis master failover with 3-node cluster
+- ⚖️ **Load Balancing**: HAProxy with health checks and session affinity
+- 🩺 **Health Monitoring**: Comprehensive component health checks with alerting
+- 🔀 **Automated Failover**: Database and Redis failover with minimal downtime
+- 📊 **HA Metrics**: Specialized metrics for cluster health and performance
+
 ## Quick Start
 
-### Prerequisites
+### One-Click Installation 🚀
 
-- Docker and Docker Compose
-- Node.js 20+
-- PostgreSQL 16 (with pgvector extension)
-- Redis 7+
-- GitHub Personal Access Token
+The fastest way to get started:
 
-### Installation
+```bash
+git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+cd GitHub-RunnerHub
+./quick-start.sh
+```
 
-1. Clone the repository:
+This script automatically handles everything from prerequisites checking to service startup in just 5 minutes!
+
+### Installation Verification 🔍
+
+After installation, verify everything is working correctly:
+
+```bash
+./verify-installation.sh
+```
+
+This comprehensive verification script checks:
+- ✅ All prerequisites and dependencies
+- ✅ Configuration files and environment
+- ✅ Docker services and health status
+- ✅ Database connectivity and operations
+- ✅ API endpoints and authentication
+- ✅ Network connectivity and ports
+- ✅ Monitoring services (Prometheus, Grafana)
+- ✅ Integration tests and functionality
+
+### Advanced Installation Options
+
+#### Full Installation Script
+
+For complete control over the installation process:
+
+```bash
+# Interactive installation with configuration prompts
+./install.sh
+
+# Non-interactive installation
+./install.sh --quiet
+
+# Installation with custom options
+./install.sh --install-vault --no-monitoring --log-file custom.log
+```
+
+**Installation script features:**
+- ✅ Prerequisites checking (Docker, Node.js, Git, system resources)
+- ✅ Automatic environment configuration
+- ✅ Secure password generation with OpenSSL
+- ✅ Docker network and service setup
+- ✅ Database migrations and health checks
+- ✅ Vault secrets configuration (optional)
+- ✅ Monitoring stack setup (Prometheus, Grafana)
+- ✅ Initial testing and validation
+- ✅ Comprehensive logging and error handling
+- ✅ Command-line options for customization
+
+#### High Availability Deployment 🏗️
+
+For enterprise production environments with zero-downtime requirements:
+
+```bash
+# Full HA deployment with all components
+docker-compose -f docker-compose.ha.yml up -d
+
+# Setup PostgreSQL replication
+./scripts/setup-postgres-replication.sh --setup-users --init-replica
+
+# Setup Redis Sentinel cluster  
+./scripts/setup-redis-sentinel.sh --setup-master --setup-slave --setup-sentinels
+
+# Verify HA setup
+./scripts/verify-ha-deployment.sh
+```
+
+**HA Deployment Features:**
+- ✅ **3-Node Orchestrator Cluster** with leader election
+- ✅ **PostgreSQL Primary/Replica** with streaming replication
+- ✅ **Redis Sentinel Cluster** with automatic failover
+- ✅ **HAProxy Load Balancer** with health checks
+- ✅ **Automated Setup Scripts** for zero-touch deployment
+- ✅ **Comprehensive Health Monitoring** with real-time alerts
+- ✅ **Failover Testing** and validation procedures
+
+#### Manual Installation
+
+If you prefer manual setup:
+
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/anubissbe/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 ```
 
-3. Copy environment configuration:
+3. **Configure environment:**
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
 ```
 
-4. Start services:
+4. **Start services:**
 ```bash
 docker-compose up -d
 ```
 
-5. Build and start the orchestrator:
+5. **Build and start:**
 ```bash
 npm run build
 npm start
 ```
+
+### Prerequisites
+
+The installation script automatically checks for:
+- Docker 20.10+ and Docker Compose 2.0+
+- Node.js 20+
+- Git
+- Available ports (3000, 3001, 3002, 5432, 6379, 9090)
+- System resources (4GB RAM recommended, 10GB disk space)
+
+**Required for setup:**
+- GitHub Personal Access Token (repo, admin:org, workflow scopes)
+- GitHub Organization name
 
 ## Configuration
 
@@ -184,6 +288,14 @@ Authorization: Bearer <token>
 - `DELETE /api/networks/:id` - Remove network
 - `GET /api/networks/stats` - Network statistics
 
+### High Availability Management
+- `GET /api/system/ha/status` - Get HA cluster status
+- `GET /api/system/ha/health` - Comprehensive HA health check
+- `GET /api/system/ha/database` - Database replication status
+- `GET /api/system/ha/redis` - Redis Sentinel cluster status
+- `GET /api/system/ha/cluster` - Cluster node information
+- `POST /api/system/ha/election/force` - Force leader election (admin)
+
 ### Monitoring
 - `GET /health` - Health check endpoint
 - `GET /api/metrics` - Prometheus metrics
@@ -250,6 +362,52 @@ export LOG_LEVEL=debug
 export ACTIONS_STEP_DEBUG=true
 ```
 
+## Uninstallation
+
+### Complete Removal
+
+To completely remove GitHub-RunnerHub and all associated resources:
+
+```bash
+# Interactive uninstall with backup
+./uninstall.sh
+
+# Force uninstall without confirmation
+./uninstall.sh --force
+
+# Remove all data including volumes
+./uninstall.sh --remove-data --remove-images
+
+# Quiet uninstall
+./uninstall.sh --quiet --remove-data
+```
+
+**Uninstall script features:**
+- 🗑️ Stops all services and removes containers
+- 🧹 Cleans up Docker networks and volumes
+- 💾 Creates backup before removal (optional)
+- 🔧 Removes Docker images (optional)
+- 📋 Preserves source code and configuration
+- 🔒 Safe removal with confirmation prompts
+
+### Manual Cleanup
+
+If you need to manually remove components:
+
+```bash
+# Stop services
+docker-compose down
+
+# Remove volumes (WARNING: This removes all data!)
+docker-compose down -v
+
+# Remove images
+docker rmi $(docker images "*runnerhub*" -q)
+
+# Clean up
+rm -rf node_modules dist logs data
+```
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
@@ -267,6 +425,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Documentation
 
 ### Feature Documentation
+- [High Availability Architecture](docs/features/high-availability.md) - **NEW**: Complete HA setup and operations
 - [Container Security Scanning](docs/features/container-security-scanning.md)
 - [Network Isolation](docs/features/network-isolation.md)
 - [Audit Logging](docs/features/audit-logging.md)

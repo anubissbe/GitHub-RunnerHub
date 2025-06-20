@@ -79,6 +79,43 @@ export interface Config {
     format: string;
     dir: string;
   };
+  ha: {
+    enabled: boolean;
+    nodeId: string;
+    clusterNodes: string[];
+    loadBalancerUrl?: string;
+    leaderElection: {
+      enabled: boolean;
+      lockKey: string;
+      lockTTL: number;
+      renewalInterval: number;
+      retryInterval: number;
+      maxRetries: number;
+    };
+    healthCheck: {
+      interval: number;
+      timeout: number;
+      retryCount: number;
+      alertThreshold: number;
+    };
+    database: {
+      replicaUrl?: string;
+      connectionPoolSize: number;
+      maxConnections: number;
+      enableReadReplica: boolean;
+    };
+    redis: {
+      sentinelHosts: string[];
+      masterName: string;
+      sentinelPassword?: string;
+      enableSentinel: boolean;
+    };
+    storage: {
+      sharedPath: string;
+      nfsServer?: string;
+      nfsMountPoint?: string;
+    };
+  };
 }
 
 const config: Config = {
@@ -155,6 +192,43 @@ const config: Config = {
     level: process.env.LOG_LEVEL || 'info',
     format: process.env.LOG_FORMAT || 'json',
     dir: process.env.LOG_DIR || path.join(process.cwd(), 'logs')
+  },
+  ha: {
+    enabled: process.env.HA_ENABLED === 'true',
+    nodeId: process.env.HA_NODE_ID || `node-${process.pid}`,
+    clusterNodes: process.env.HA_CLUSTER_NODES ? process.env.HA_CLUSTER_NODES.split(',') : [],
+    loadBalancerUrl: process.env.LOAD_BALANCER_URL,
+    leaderElection: {
+      enabled: process.env.LEADER_ELECTION_ENABLED === 'true',
+      lockKey: process.env.LEADER_ELECTION_LOCK_KEY || 'runnerhub:leader:lock',
+      lockTTL: parseInt(process.env.LEADER_ELECTION_TIMEOUT || '30000', 10),
+      renewalInterval: parseInt(process.env.LEADER_ELECTION_RENEWAL || '10000', 10),
+      retryInterval: parseInt(process.env.LEADER_ELECTION_RETRY_INTERVAL || '5000', 10),
+      maxRetries: parseInt(process.env.LEADER_ELECTION_MAX_RETRIES || '5', 10)
+    },
+    healthCheck: {
+      interval: parseInt(process.env.HEALTH_CHECK_INTERVAL || '30000', 10),
+      timeout: parseInt(process.env.HEALTH_CHECK_TIMEOUT || '5000', 10),
+      retryCount: parseInt(process.env.HEALTH_CHECK_RETRIES || '3', 10),
+      alertThreshold: parseInt(process.env.HEALTH_CHECK_ALERT_THRESHOLD || '3', 10)
+    },
+    database: {
+      replicaUrl: process.env.DATABASE_REPLICA_URL,
+      connectionPoolSize: parseInt(process.env.DATABASE_CONNECTION_POOL_SIZE || '20', 10),
+      maxConnections: parseInt(process.env.DATABASE_MAX_CONNECTIONS || '100', 10),
+      enableReadReplica: process.env.DATABASE_ENABLE_READ_REPLICA === 'true'
+    },
+    redis: {
+      sentinelHosts: process.env.REDIS_SENTINEL_HOSTS ? process.env.REDIS_SENTINEL_HOSTS.split(',') : [],
+      masterName: process.env.REDIS_MASTER_NAME || 'github-runnerhub-redis',
+      sentinelPassword: process.env.REDIS_SENTINEL_PASSWORD,
+      enableSentinel: process.env.REDIS_ENABLE_SENTINEL === 'true'
+    },
+    storage: {
+      sharedPath: process.env.SHARED_STORAGE_PATH || '/shared',
+      nfsServer: process.env.NFS_SERVER,
+      nfsMountPoint: process.env.NFS_MOUNT_POINT
+    }
   }
 };
 
@@ -178,3 +252,4 @@ export function validateConfig(): void {
 }
 
 export default config;
+export { config };

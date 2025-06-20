@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-VAULT_ADDR="${VAULT_ADDR:-http://192.168.1.24:8200}"
+VAULT_ADDR="${VAULT_ADDR:-http://${VAULT_HOST:-localhost}:8200}"
 VAULT_TOKEN="${VAULT_TOKEN:-hvs.Qf23PWvczlY4DO1IXAkqI8XL}"
 VAULT_NAMESPACE="${VAULT_NAMESPACE:-}"
 
@@ -89,7 +89,7 @@ echo "2. Setting up database secrets..."
 database_secrets=$(cat <<EOF
 {
   "data": {
-    "host": "${DB_HOST:-192.168.1.24}",
+    "host": "${DB_HOST:-${VAULT_HOST:-localhost}}",
     "port": ${DB_PORT:-5433},
     "database": "${DB_NAME:-github_runnerhub}",
     "username": "${DB_USER:-app_user}",
@@ -108,7 +108,7 @@ echo "3. Setting up Redis secrets..."
 redis_secrets=$(cat <<EOF
 {
   "data": {
-    "host": "${REDIS_HOST:-192.168.1.24}",
+    "host": "${REDIS_HOST:-${VAULT_HOST:-localhost}}",
     "port": ${REDIS_PORT:-6379},
     "password": "${REDIS_PASSWORD:-}",
     "db": ${REDIS_DB:-0},

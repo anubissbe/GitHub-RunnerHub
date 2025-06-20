@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import ServiceManager from '../services/service-manager';
 import VaultService from '../services/vault-service';
+import HAManager from '../services/ha-manager';
+import { config } from '../config';
 
 const logger = createLogger('SystemController');
 
@@ -302,6 +304,307 @@ export class SystemController {
       res.status(500).json({
         success: false,
         error: 'Vault connection test failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get High Availability status
+   */
+  async getHAStatus(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!config.ha.enabled) {
+        res.json({
+          success: true,
+          data: {
+            enabled: false,
+            mode: 'single-node',
+            nodeId: config.ha.nodeId,
+            message: 'High Availability is disabled'
+          }
+        });
+        return;
+      }
+
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      const haStatus = haManager.getStatus();
+
+      res.json({
+        success: true,
+        data: haStatus
+      });
+
+    } catch (error) {
+      logger.error('HA status check failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'HA status check failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get comprehensive HA health status
+   */
+  async getHAHealth(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!config.ha.enabled) {
+        res.json({
+          success: true,
+          data: {
+            enabled: false,
+            status: 'healthy',
+            message: 'Running in single-node mode'
+          }
+        });
+        return;
+      }
+
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      const healthStatus = await haManager.forceHealthCheck();
+
+      const statusCode = healthStatus?.overall.status === 'healthy' ? 200 : 
+                        healthStatus?.overall.status === 'degraded' ? 206 : 503;
+
+      res.status(statusCode).json({
+        success: true,
+        data: healthStatus
+      });
+
+    } catch (error) {
+      logger.error('HA health check failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'HA health check failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get database health with replication status
+   */
+  async getDatabaseHealthHA(_req: Request, res: Response): Promise<void> {
+    try {
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        // Fall back to basic database status
+        return this.getDatabaseStatus(_req, res);
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      const healthStatus = await haManager.forceHealthCheck();
+
+      if (!healthStatus) {
+        res.status(503).json({
+          success: false,
+          error: 'Unable to retrieve database health'
+        });
+        return;
+      }
+
+      const dbHealth = {
+        primary: healthStatus.database.primary,
+        replica: healthStatus.database.replica,
+        replicationLag: healthStatus.database.replicationLag,
+        currentConnection: config.ha.database.enableReadReplica ? 'primary' : 'single'
+      };
+
+      const isHealthy = dbHealth.primary.status === 'healthy';
+      const statusCode = isHealthy ? 200 : 503;
+
+      res.status(statusCode).json({
+        success: isHealthy,
+        data: dbHealth
+      });
+
+    } catch (error) {
+      logger.error('HA database health check failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'HA database health check failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get Redis health with Sentinel status
+   */
+  async getRedisHealthHA(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!config.ha.enabled || !config.ha.redis.enableSentinel) {
+        res.json({
+          success: true,
+          data: {
+            mode: 'single-instance',
+            sentinel: false,
+            status: 'healthy'
+          }
+        });
+        return;
+      }
+
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      const healthStatus = await haManager.forceHealthCheck();
+
+      if (!healthStatus) {
+        res.status(503).json({
+          success: false,
+          error: 'Unable to retrieve Redis health'
+        });
+        return;
+      }
+
+      const redisHealth = {
+        master: healthStatus.redis.master,
+        slave: healthStatus.redis.slave,
+        sentinel: healthStatus.redis.sentinel,
+        mode: 'sentinel-cluster'
+      };
+
+      const isHealthy = redisHealth.master.status === 'healthy';
+      const statusCode = isHealthy ? 200 : 503;
+
+      res.status(statusCode).json({
+        success: isHealthy,
+        data: redisHealth
+      });
+
+    } catch (error) {
+      logger.error('HA Redis health check failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'HA Redis health check failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Force leader election (admin only)
+   */
+  async forceLeaderElection(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!config.ha.enabled || !config.ha.leaderElection.enabled) {
+        res.status(400).json({
+          success: false,
+          error: 'Leader election not enabled'
+        });
+        return;
+      }
+
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      await haManager.forceElection();
+
+      res.json({
+        success: true,
+        message: 'Leader election forced',
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      logger.error('Force leader election failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'Force leader election failed',
+        message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get cluster information
+   */
+  async getClusterInfo(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!config.ha.enabled) {
+        res.json({
+          success: true,
+          data: {
+            mode: 'single-node',
+            nodes: [config.ha.nodeId],
+            currentNode: config.ha.nodeId,
+            clusterSize: 1
+          }
+        });
+        return;
+      }
+
+      const serviceManager = ServiceManager.getInstance();
+      
+      if (!serviceManager.hasService('haManager')) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const haManager = serviceManager.getService<HAManager>('haManager');
+      const haStatus = haManager.getStatus();
+
+      res.json({
+        success: true,
+        data: {
+          mode: 'high-availability',
+          nodes: config.ha.clusterNodes,
+          currentNode: config.ha.nodeId,
+          clusterSize: config.ha.clusterNodes.length,
+          leader: haStatus.currentLeader,
+          isLeader: haStatus.isLeader,
+          services: haStatus.services
+        }
+      });
+
+    } catch (error) {
+      logger.error('Cluster info retrieval failed', { error: (error as Error).message });
+      res.status(500).json({
+        success: false,
+        error: 'Cluster info retrieval failed',
         message: (error as Error).message
       });
     }

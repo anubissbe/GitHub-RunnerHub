@@ -5,7 +5,7 @@
 set -e
 
 # Configuration
-DB_HOST="${DB_HOST:-192.168.1.24}"
+DB_HOST="${DB_HOST:-${DB_HOST:-localhost}}"
 DB_PORT="${DB_PORT:-5433}"
 DB_NAME="${DB_NAME:-github_runnerhub}"
 DB_USER="${DB_USER:-app_user}"

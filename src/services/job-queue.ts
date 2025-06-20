@@ -1,32 +1,17 @@
 import { Queue, Worker, QueueEvents } from 'bullmq';
-import Redis from 'ioredis';
-import config from '../config';
 import { createLogger } from '../utils/logger';
 import { DelegatedJob, JobStatus } from '../types';
 import containerOrchestrator from './container-orchestrator-v2';
 import database from './database';
+import { createBullMQConnection, createQueueEventsConnection } from './redis-connection';
 
 const logger = createLogger('JobQueue');
 
-// Redis connection
-const redisConnection = new Redis({
-  host: config.redis.host,
-  port: config.redis.port,
-  password: config.redis.password,
-  maxRetriesPerRequest: null, // Required by BullMQ
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    logger.warn(`Redis connection retry attempt ${times}, delay ${delay}ms`);
-    return delay;
-  }
-});
+// Redis connections with HA support
+const redisConnection = createBullMQConnection();
+const queueEventsConnection = createQueueEventsConnection();
 
-// Handle Redis errors
-redisConnection.on('error', (err) => {
-  logger.error('Redis connection error', err);
-});
-
-// Create queue
+// Create queue with HA-aware Redis connection
 export const jobQueue = new Queue('github-jobs', {
   connection: redisConnection,
   defaultJobOptions: {
@@ -40,14 +25,9 @@ export const jobQueue = new Queue('github-jobs', {
   }
 });
 
-// Queue events for monitoring
+// Queue events for monitoring with HA-aware connection
 const queueEvents = new QueueEvents('github-jobs', {
-  connection: new Redis({
-    host: config.redis.host,
-    port: config.redis.port,
-    password: config.redis.password,
-    maxRetriesPerRequest: null
-  })
+  connection: queueEventsConnection
 });
 
 

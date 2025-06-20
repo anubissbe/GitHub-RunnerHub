@@ -1,0 +1,428 @@
+# Docker Compose configuration for GitHub RunnerHub High Availability deployment
+# This configuration provides a complete HA stack with load balancing, database replication, and Redis Sentinel
+
+version: '3.8'
+
+networks:
+  runnerhub-ha-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  runnerhub-backend-network:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  postgres_primary_data:
+    driver: local
+  postgres_replica_data:
+    driver: local
+  redis_master_data:
+    driver: local
+  redis_slave_data:
+    driver: local
+  shared_storage:
+    driver: local
+  haproxy_ssl:
+    driver: local
+
+services:
+  # Load Balancer
+  haproxy:
+    image: haproxytech/haproxy-alpine:2.8
+    container_name: runnerhub-haproxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"   # HAProxy stats
+      - "9999:9999"   # Prometheus metrics
+    volumes:
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - haproxy_ssl:/etc/ssl/certs:ro
+      - ./config/haproxy-errors:/etc/haproxy/errors:ro
+    environment:
+      - ORCHESTRATOR_1_HOST=${ORCHESTRATOR_1_HOST:-orchestrator-1}
+      - ORCHESTRATOR_2_HOST=${ORCHESTRATOR_2_HOST:-orchestrator-2}
+      - ORCHESTRATOR_3_HOST=${ORCHESTRATOR_3_HOST:-orchestrator-3}
+      - HAPROXY_STATS_USER=${HAPROXY_STATS_USER:-admin}
+      - HAPROXY_STATS_PASSWORD=${HAPROXY_STATS_PASSWORD:-secure123}
+    networks:
+      - runnerhub-ha-network
+    depends_on:
+      - orchestrator-1
+      - orchestrator-2
+      - orchestrator-3
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Orchestrator Services (3 instances for HA)
+  orchestrator-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runnerhub-orchestrator-1
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - WS_PORT=3002
+      - HA_ENABLED=true
+      - HA_NODE_ID=orchestrator-1
+      - HA_CLUSTER_NODES=orchestrator-1,orchestrator-2,orchestrator-3
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-primary:5432/${DB_NAME}
+      - DATABASE_REPLICA_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-replica:5432/${DB_NAME}
+      - REDIS_SENTINEL_HOSTS=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
+      - REDIS_MASTER_NAME=github-runnerhub-redis
+      - SHARED_STORAGE_PATH=/shared
+      - LEADER_ELECTION_ENABLED=true
+    volumes:
+      - shared_storage:/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  orchestrator-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runnerhub-orchestrator-2
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - WS_PORT=3002
+      - HA_ENABLED=true
+      - HA_NODE_ID=orchestrator-2
+      - HA_CLUSTER_NODES=orchestrator-1,orchestrator-2,orchestrator-3
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-primary:5432/${DB_NAME}
+      - DATABASE_REPLICA_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-replica:5432/${DB_NAME}
+      - REDIS_SENTINEL_HOSTS=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
+      - REDIS_MASTER_NAME=github-runnerhub-redis
+      - SHARED_STORAGE_PATH=/shared
+      - LEADER_ELECTION_ENABLED=true
+    volumes:
+      - shared_storage:/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  orchestrator-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runnerhub-orchestrator-3
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - WS_PORT=3002
+      - HA_ENABLED=true
+      - HA_NODE_ID=orchestrator-3
+      - HA_CLUSTER_NODES=orchestrator-1,orchestrator-2,orchestrator-3
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-primary:5432/${DB_NAME}
+      - DATABASE_REPLICA_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres-replica:5432/${DB_NAME}
+      - REDIS_SENTINEL_HOSTS=redis-sentinel-1:26379,redis-sentinel-2:26379,redis-sentinel-3:26379
+      - REDIS_MASTER_NAME=github-runnerhub-redis
+      - SHARED_STORAGE_PATH=/shared
+      - LEADER_ELECTION_ENABLED=true
+    volumes:
+      - shared_storage:/shared
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Primary
+  postgres-primary:
+    image: postgres:16-alpine
+    container_name: runnerhub-postgres-primary
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_REPLICATION_USER=${REPLICATION_USER:-replicator}
+      - POSTGRES_REPLICATION_PASSWORD=${REPLICATION_PASSWORD}
+    volumes:
+      - postgres_primary_data:/var/lib/postgresql/data
+      - ./config/postgres-primary.conf:/etc/postgresql/postgresql.conf
+      - ./config/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      - runnerhub-backend-network
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL Replica
+  postgres-replica:
+    image: postgres:16-alpine
+    container_name: runnerhub-postgres-replica
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_PRIMARY_HOST=postgres-primary
+      - POSTGRES_REPLICATION_USER=${REPLICATION_USER:-replicator}
+      - POSTGRES_REPLICATION_PASSWORD=${REPLICATION_PASSWORD}
+    volumes:
+      - postgres_replica_data:/var/lib/postgresql/data
+      - ./config/postgres-replica.conf:/etc/postgresql/postgresql.conf
+      - ./scripts/setup-replica.sh:/docker-entrypoint-initdb.d/setup-replica.sh
+    networks:
+      - runnerhub-backend-network
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Master
+  redis-master:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-master
+    restart: unless-stopped
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis_master_data:/data
+      - ./config/redis-master.conf:/etc/redis/redis.conf
+    networks:
+      - runnerhub-backend-network
+    command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Slave
+  redis-slave:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-slave
+    restart: unless-stopped
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT=6379
+      - REDIS_MASTER_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis_slave_data:/data
+      - ./config/redis-slave.conf:/etc/redis/redis.conf
+    networks:
+      - runnerhub-backend-network
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    command: >
+      redis-server /etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD}
+      --slaveof redis-master 6379
+      --masterauth ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Sentinel 1
+  redis-sentinel-1:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-sentinel-1
+    restart: unless-stopped
+    environment:
+      - SENTINEL_ANNOUNCE_IP=${SENTINEL_1_IP:-redis-sentinel-1}
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER:-default}
+    volumes:
+      - ./config/redis-sentinel.conf:/etc/redis/sentinel.conf
+      - ./scripts/redis-notify.sh:/etc/redis/notify.sh
+      - ./scripts/redis-reconfig.sh:/etc/redis/reconfig.sh
+    networks:
+      - runnerhub-backend-network
+    depends_on:
+      - redis-master
+    command: redis-sentinel /etc/redis/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Sentinel 2
+  redis-sentinel-2:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-sentinel-2
+    restart: unless-stopped
+    environment:
+      - SENTINEL_ANNOUNCE_IP=${SENTINEL_2_IP:-redis-sentinel-2}
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER:-default}
+    volumes:
+      - ./config/redis-sentinel.conf:/etc/redis/sentinel.conf
+      - ./scripts/redis-notify.sh:/etc/redis/notify.sh
+      - ./scripts/redis-reconfig.sh:/etc/redis/reconfig.sh
+    networks:
+      - runnerhub-backend-network
+    depends_on:
+      - redis-master
+    command: redis-sentinel /etc/redis/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Sentinel 3
+  redis-sentinel-3:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-sentinel-3
+    restart: unless-stopped
+    environment:
+      - SENTINEL_ANNOUNCE_IP=${SENTINEL_3_IP:-redis-sentinel-3}
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_USER=${REDIS_USER:-default}
+    volumes:
+      - ./config/redis-sentinel.conf:/etc/redis/sentinel.conf
+      - ./scripts/redis-notify.sh:/etc/redis/notify.sh
+      - ./scripts/redis-reconfig.sh:/etc/redis/reconfig.sh
+    networks:
+      - runnerhub-backend-network
+    depends_on:
+      - redis-master
+    command: redis-sentinel /etc/redis/sentinel.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Monitoring Services
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: runnerhub-prometheus-ha
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus-ha.yml:/etc/prometheus/prometheus.yml
+      - ./config/prometheus-rules:/etc/prometheus/rules
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: runnerhub-grafana-ha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres-primary:5432
+      - GF_DATABASE_NAME=${GRAFANA_DB_NAME:-grafana}
+      - GF_DATABASE_USER=${GRAFANA_DB_USER:-grafana}
+      - GF_DATABASE_PASSWORD=${GRAFANA_DB_PASSWORD}
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    depends_on:
+      - postgres-primary
+      - prometheus
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Log aggregation
+  fluentd:
+    image: fluent/fluentd:edge-debian
+    container_name: runnerhub-fluentd
+    restart: unless-stopped
+    volumes:
+      - ./config/fluentd.conf:/fluentd/etc/fluentd.conf
+      - shared_storage:/shared
+    networks:
+      - runnerhub-ha-network
+      - runnerhub-backend-network
+    depends_on:
+      - prometheus

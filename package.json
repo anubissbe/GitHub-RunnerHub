@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Enterprise-grade GitHub Actions proxy runner system with ephemeral container execution",
   "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",

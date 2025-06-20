@@ -28,4 +28,26 @@ router.get('/config', systemController.getSystemConfig.bind(systemController));
 // POST /api/system/secrets/rotate - Rotate system secrets (admin only)
 router.post('/secrets/rotate', systemController.rotateSecrets.bind(systemController));
 
+/**
+ * High Availability routes
+ */
+
+// GET /api/system/ha/status - Get HA status
+router.get('/ha/status', systemController.getHAStatus.bind(systemController));
+
+// GET /api/system/ha/health - Get comprehensive HA health status
+router.get('/ha/health', systemController.getHAHealth.bind(systemController));
+
+// GET /api/system/ha/database - Get database health with replication status
+router.get('/ha/database', systemController.getDatabaseHealthHA.bind(systemController));
+
+// GET /api/system/ha/redis - Get Redis health with Sentinel status
+router.get('/ha/redis', systemController.getRedisHealthHA.bind(systemController));
+
+// GET /api/system/ha/cluster - Get cluster information
+router.get('/ha/cluster', systemController.getClusterInfo.bind(systemController));
+
+// POST /api/system/ha/election/force - Force leader election (admin only)
+router.post('/ha/election/force', systemController.forceLeaderElection.bind(systemController));
+
 export default router;
