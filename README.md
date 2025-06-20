@@ -10,38 +10,47 @@ An enterprise-grade GitHub Actions proxy runner system that provides highly cont
 
 ## Overview
 
-GitHub-RunnerHub implements a proxy runner architecture where lightweight, persistent runners intercept GitHub Actions jobs and delegate them to ephemeral containers. This ensures:
+GitHub-RunnerHub is a comprehensive GitHub Actions management platform that provides real-time monitoring, intelligent runner orchestration, and enterprise-grade security. The system integrates directly with GitHub's API to provide:
 
-- **Perfect isolation** - Each job runs in a fresh, single-use container
-- **Enhanced security** - No state persistence between job executions
-- **Full control** - Complete customization of execution environments
-- **Enterprise scalability** - Separate control and execution planes
+- **Real GitHub Integration** - Live monitoring of actual GitHub Actions jobs and runners
+- **Smart Rate Limiting** - Intelligent API usage staying well under GitHub's 5,000/hour limit
+- **Real-time Dashboard** - Live metrics from your actual GitHub organization
+- **Perfect Isolation** - Each job runs in a fresh, single-use container
+- **Enhanced Security** - No state persistence between job executions
+- **Full Control** - Complete customization of execution environments
+- **Enterprise Scalability** - Handles organizations with hundreds of repositories
 
 ## Architecture
 
 ```
+GitHub API ←→ RunnerHub Dashboard ←→ PostgreSQL Database
+     ↓              ↓                       ↓
 GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Containers
 ```
 
 ### Components
 
-1. **Proxy Runners**: Lightweight runners that receive jobs from GitHub and delegate execution
-2. **Orchestration Service**: Central control plane managing job distribution and container lifecycle
-3. **Ephemeral Containers**: Single-use execution environments that run actual jobs
-4. **Job Queue**: Redis-backed queue for reliable job processing
-5. **State Database**: PostgreSQL for job tracking and metrics
+1. **GitHub API Integration**: Real-time sync with GitHub Actions API (rate-limit optimized)
+2. **Real-time Dashboard**: Live monitoring of actual GitHub jobs and runners
+3. **Smart Sync Engine**: Efficient data synchronization (every 5 minutes, <1% rate limit usage)
+4. **Proxy Runners**: Lightweight runners that receive jobs from GitHub and delegate execution
+5. **Orchestration Service**: Central control plane managing job distribution and container lifecycle
+6. **Ephemeral Containers**: Single-use execution environments that run actual jobs
+7. **PostgreSQL Database**: Stores real GitHub data, job history, and runner metrics
 
 ## Features
 
 ### Core Features
+- 🐙 **Real GitHub Integration**: Live sync with GitHub Actions API (smart rate limiting)
+- 📊 **Live Dashboard**: Real-time monitoring of actual GitHub jobs and runners
+- ⚡ **Smart API Usage**: <1% of GitHub's rate limit (288 requests/day vs 5,000/hour limit)
 - 🔒 **Complete Job Isolation**: Every job runs in a pristine container
 - 🚀 **Auto-scaling**: Dynamic runner provisioning based on demand
-- 📊 **Real-time Monitoring**: WebSocket-based live status updates
+- 📈 **Real Metrics**: Actual job success rates, execution times, and runner health
 - 🔐 **Vault Integration**: Secure secret management
 - 🌐 **Network Isolation**: Per-repository network segmentation
 - 🛡️ **Container Security Scanning**: Automatic vulnerability scanning with Trivy
 - 📝 **Comprehensive Audit Logging**: Full audit trail for all operations
-- 📈 **Prometheus Metrics**: Built-in observability
 - 🎯 **Label-based Routing**: Smart job distribution
 
 ### High Availability Features ⚡
@@ -54,25 +63,40 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 - 🔀 **Automated Failover**: Database and Redis failover with minimal downtime
 - 📊 **HA Metrics**: Specialized metrics for cluster health and performance
 
+### GitHub Integration Features 🐙
+- 📡 **Real-time API Sync**: Live monitoring of GitHub Actions jobs and self-hosted runners
+- 🧠 **Smart Rate Limiting**: Intelligent request queuing staying under 5,000/hour limit
+- ⏱️ **Efficient Polling**: 5-minute sync intervals using <1% of available rate limit
+- 📊 **Live Metrics**: Real job counts, execution times, success rates from actual GitHub data
+- 🔄 **Automatic Sync**: Background synchronization with GitHub organization data
+- 🏷️ **GitHub Labels**: Native support for GitHub runner labels and job routing
+- 📈 **Historical Data**: 24-hour job timeline with real GitHub workflow data
+- 🔍 **Organization-wide**: Monitor all repositories and runners in your GitHub organization
+
 ## Quick Start
 
 ### 🚀 Remote Server Deployment (Production)
 
-Deploy GitHub RunnerHub to a remote server:
+Deploy GitHub RunnerHub with real GitHub integration to a remote server:
 
 ```bash
 git clone https://github.com/anubissbe/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 
-# 1. Generate secure configuration
+# 1. Set up GitHub integration
+export GITHUB_TOKEN="your_github_personal_access_token"
+export GITHUB_ORG="your_github_organization"
+
+# 2. Generate secure configuration with GitHub integration
 ./remote-quick-start.sh
 
-# 2. Deploy to your server
+# 3. Deploy to your server with real GitHub data
 ./deploy-to-remote.sh
 
 # Access your deployment:
-# Dashboard: http://your-server:3001/dashboard
+# Dashboard: http://your-server:3001/dashboard (shows real GitHub data)
 # API: http://your-server:3001/api
+# GitHub Status: http://your-server:3001/api/github/status
 ```
 
 **Remote Deployment Features:**
@@ -221,13 +245,26 @@ The installation script automatically checks for:
 
 ### Environment Variables
 
-Key configuration options:
+Key configuration options for GitHub integration:
 
-- `GITHUB_TOKEN`: GitHub PAT with repo and admin:org permissions
-- `GITHUB_ORG`: Your GitHub organization
+#### GitHub API Integration (Required for real data)
+- `GITHUB_TOKEN`: GitHub Personal Access Token with `repo`, `admin:org`, and `workflow` scopes
+- `GITHUB_ORG`: Your GitHub organization name (e.g., "anubissbe")
+
+#### Infrastructure
 - `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_HOST/PORT`: Redis connection details
+- `REDIS_HOST/PORT`: Redis connection details  
 - `VAULT_ADDR/TOKEN`: HashiCorp Vault configuration
+
+#### GitHub Token Permissions Required
+Your GitHub Personal Access Token needs these scopes:
+- ✅ **repo** - Access to repository data and workflow runs
+- ✅ **admin:org** - Read organization runners and settings
+- ✅ **workflow** - Access to workflow data and job information
+
+### GitHub Integration Status
+- **With Token**: Real-time GitHub data, live runner monitoring, actual job metrics
+- **Without Token**: Sample data only, no live GitHub integration
 
 See `.env.example` for full configuration options.
 
