@@ -1,0 +1,938 @@
+Feasibility Analysis and High-Level Design for a Proxy-Based GitHub Actions Runner Architecture
+Executive Summary
+This report provides a comprehensive feasibility analysis and high-level architectural design for a custom "Proxy Runner" system for GitHub Actions. The core objective of this architecture is to establish a highly controlled, secure, and scalable execution environment where jobs are dynamically delegated to ephemeral Docker containers. This approach addresses the limitations of both standard GitHub-hosted runners and traditional, persistent self-hosted runners, particularly for organizations with stringent security, compliance, or environmental customization requirements.
+
+The proposed architecture is technically feasible and can be implemented by leveraging existing GitHub Actions primitives, including self-hosted runner agents, the workflow_job webhook event, and the Just-in-Time (JIT) runner registration REST API. However, its implementation constitutes a significant internal software engineering project, demanding the creation of a bespoke runner orchestration platform.
+
+The system's design is founded on three key architectural pillars: a lightweight, persistent Proxy Runner that receives jobs from GitHub; a centralized Orchestration Service that acts as the system's brain, managing workloads and state; and an ephemeral Worker Execution Plane, where jobs are executed in pristine, single-use Docker containers.
+
+The primary benefits of this model are unparalleled environmental control, perfect job isolation which guarantees deterministic builds, and a potentially superior security posture when implemented with robust network isolation and a Docker Socket Proxy. Conversely, the principal challenges are the inherent complexity of the system, the significant operational overhead required for maintenance and monitoring, and the total assumption of security responsibility. A misconfiguration in this custom environment could introduce severe vulnerabilities.
+
+This architecture is recommended for organizations with unique and inflexible requirements that cannot be satisfied by existing solutions like GitHub-hosted runners or the official Actions Runner Controller (ARC). It should be approached as a strategic internal platform development initiative, not a simple configuration task. A thorough Total Cost of Ownership (TCO) analysis, weighing engineering and operational costs against infrastructure savings and risk mitigation, is essential before committing to implementation.
+
+Part I: The Modern GitHub Actions Execution Environment
+To evaluate the feasibility of the proposed proxy architecture, it is essential to first establish a foundational understanding of how the GitHub Actions execution environment operates. The system's design does not seek to circumvent the core GitHub Actions model but rather to build a custom orchestration layer upon its existing, well-defined primitives.
+
+1.1 Deconstructing the Runner: Protocol, Lifecycle, and Communication
+A common misconception is that a GitHub Actions runner is a server waiting for inbound connections. The opposite is true: the runner is a client application that actively polls GitHub for work. This client-centric design is a cornerstone of its security model.   
+
+The runner application, once configured and started, initiates a persistent outbound HTTPS long-poll connection to the GitHub Actions service on port 443. It authenticates using a short-lived registration token and then waits for a job assignment. This architecture obviates the need for complex firewall rules to allow inbound traffic from GitHub to the runner machine, simplifying network configuration and reducing the attack surface.   
+
+The lifecycle of a typical job proceeds as follows :   
+
+A workflow is triggered by an event (e.g., a push or pull_request).
+
+GitHub Actions queues the jobs defined within the workflow.
+
+An available runner with matching labels (e.g., ubuntu-latest) polls the service, accepts one of the queued jobs, and receives the job payload.
+
+The runner executes the steps defined in the job, streaming logs and status updates back to GitHub in real-time.   
+
+For each job, GitHub generates a unique, temporary GITHUB_TOKEN that the runner uses to authenticate to the GitHub API for actions like checking out code or interacting with issues.   
+
+Upon completion, the runner reports the final job status (success, failure, etc.) and awaits the next job.
+
+1.2 The Shift to Ephemeralism: JIT Runners and the workflow_job Webhook
+The traditional model of a long-lived, persistent self-hosted runner presents significant challenges for security and build determinism. A runner that executes multiple jobs can retain state, artifacts, or credentials from a previous run, leading to non-deterministic behavior. More critically, a compromised runner could potentially access sensitive information from subsequent jobs.   
+
+To address this, GitHub introduced primitives that enable an ephemeral execution model, which is now considered the best practice for self-hosting.
+
+Ephemeral Runners: By configuring a runner with the --ephemeral flag, the runner application is instructed to accept only one job. After that single job is complete, the runner automatically unregisters itself from GitHub and terminates. This ensures that every job runs in a pristine environment, mirroring the behavior of GitHub-hosted runners.   
+
+The workflow_job Webhook: The key to any autoscaling solution is knowing when a job is ready and what kind of runner it needs. The workflow_job webhook provides exactly this information. It fires events when a job's status changes to queued, in_progress, or completed. The payload for the queued event is particularly critical, as it contains the array of labels from the workflow's runs-on key. This allows an external orchestration service to receive a notification and provision a runner with the correct specifications.   
+
+Just-in-Time (JIT) Runner API: To complete the automation loop, an orchestrator needs a way to programmatically register the newly provisioned ephemeral runner. The GitHub REST API provides endpoints for creating a short-lived registration token for a "Just-in-Time" runner. An autoscaler can call this API, receive a token, and inject it into the new runner instance, which then uses it to configure itself and connect to GitHub for its single job.   
+
+1.3 Survey of Existing Architectures: A Comparative Baseline
+These modern primitives have enabled a spectrum of runner architectures, each with distinct trade-offs.
+
+Model 1: GitHub-Hosted Runners: This is the default, fully managed solution. GitHub provisions a fresh virtual machine for each job, providing excellent security isolation and a wide range of pre-installed software. The primary drawbacks are limited control over the execution environment and networking, and potential costs at scale.   
+
+Model 2: Traditional Self-Hosted Runners: This involves installing the runner agent on a persistent virtual or physical machine. It offers complete control over the hardware, operating system, and installed software, and can easily access private network resources. However, it carries a high maintenance burden and significant security risks from state leakage and potential persistent compromise if not meticulously managed. It also lacks any native autoscaling capability.   
+
+Model 3: Actions Runner Controller (ARC): This is GitHub's official, Kubernetes-native autoscaling solution. ARC is a Kubernetes operator that listens for workflow_job webhooks and uses JIT tokens to dynamically scale ephemeral runner pods within a Kubernetes cluster. It is powerful and leverages the scheduling and resilience of Kubernetes but requires deep expertise in Kubernetes administration and is primarily focused on Linux-based container workloads.   
+
+The existence and mechanics of these models demonstrate a crucial point: the proposed "proxy runner" architecture is not a method to bypass or fundamentally alter the GitHub Actions protocol. Instead, it is a custom implementation of an autoscaling orchestrator. It leverages the same foundational primitives—ephemeral runners, JIT tokens, and a job notification mechanism—that ARC and other solutions use. The key architectural distinction lies in the trigger mechanism. While ARC uses a centralized webhook listener, the proxy model uses a persistent runner's long-poll connection as the trigger. The core challenge remains the same: designing and building the robust orchestration logic that acts on that trigger.
+
+Part II: Architectural Deep Dive: The Proxy Runner Model
+This section presents the high-level design for the Proxy Runner architecture, detailing its core principles, component responsibilities, and a blueprint for a reference implementation.
+
+2.1 Core Principles and Workflow
+The central goal of this architecture is to decouple job reception from job execution. A lightweight, persistent "Proxy Runner" is responsible for receiving a job from GitHub, but instead of executing the job steps itself, it immediately delegates the workload to a dedicated, ephemeral Docker container that is dynamically provisioned for that specific job.
+
+The end-to-end lifecycle of a job in this model is as follows:
+
+A developer's action (e.g., git push) triggers a GitHub Actions workflow. The job within the workflow targets a specific runner label, for example, runs-on: self-hosted-proxy-ubuntu.
+
+The persistent Proxy Runner, registered with this exact label, receives the job notification from GitHub via its standard HTTPS long-poll connection.   
+
+The Proxy Runner, through a customized script, intercepts the job. It does not execute the job's steps. Instead, it packages the essential job context (repository name, run ID, job payload, secrets context) into a JSON object.
+
+The Proxy Runner makes a secure, internal API call (e.g., POST /v1/jobs/delegate) to the central Orchestration Service, sending the JSON payload.
+
+The Orchestration Service validates the request and enqueues a new task in a persistent job queue (e.g., BullMQ backed by Redis). This ensures the request is not lost if the orchestrator restarts and provides a mechanism for managing concurrency and retries.   
+
+A worker process associated with the Orchestration Service dequeues the task. It then communicates with the Docker Host API to begin provisioning.
+
+The Orchestrator requests a Just-in-Time (JIT) registration token from the GitHub API for the specific repository where the job originated.   
+
+The Orchestrator instructs the Docker Host to create and start a new Worker Container from a pre-defined image. It injects the JIT token and the original job context as environment variables into this new container.
+
+The Worker Container's entrypoint script starts. It uses the injected environment variables to:
+a. Download the GitHub Actions runner agent binaries.
+b. Configure the agent using the JIT token, registering itself with GitHub as a new, single-use runner with the --ephemeral flag.   
+
+
+c. Start the runner process, which immediately picks up and executes the job it was created for.
+
+During execution, the Worker Container streams its logs to stdout/stderr, which are captured for central aggregation.
+
+Upon job completion, the runner agent automatically de-registers from GitHub, and the container process exits.
+
+The Orchestration Service, which has been monitoring the container's lifecycle, detects the exit and performs cleanup, removing the stopped container and any associated volumes to ensure no state persists.
+
+2.2 Component Design
+The system is composed of several distinct, specialized components.
+
+The Proxy Runner
+Responsibility: To act as a simple, stable job receiver and delegator. Its sole purpose is to listen for jobs from GitHub and forward them to the Orchestration Service.
+
+Implementation: This is a standard GitHub self-hosted runner installation. The critical customization lies in intercepting job execution. This can be achieved by setting the ACTIONS_RUNNER_CONTAINER_HOOKS environment variable to point to a directory with custom scripts. The    
+
+run_script_step.json and run_container_step.json hooks would be configured to call a script that packages the job context and makes the API call to the Orchestrator, rather than executing the job steps.
+
+The Orchestration Service (The "Brain")
+Responsibility: This is the heart of the custom logic, responsible for managing the entire lifecycle of a delegated job. It must be designed as a resilient and scalable service.
+
+Components:
+
+API Server: Exposes a secure internal REST API (e.g., /v1/jobs/delegate) to receive delegation requests from the fleet of Proxy Runners.
+
+Job Queue: Utilizes a robust, persistent job queue like BullMQ to manage incoming requests asynchronously. This prevents job loss during service restarts and enables features like rate limiting, prioritization, and delayed execution.   
+
+State Database: Employs a relational database (e.g., PostgreSQL) to maintain the state of all active and recent jobs, mapping GitHub Run IDs to container IDs and tracking their status. This is vital for monitoring, cleanup of orphaned resources, and auditing.
+
+Docker Controller: Contains the logic to communicate with the Docker daemon API (ideally via a secure proxy) to manage container lifecycles (create, start, stop, inspect, remove, and stream logs).
+
+GitHub API Client: Manages authenticated communication with the GitHub REST API, specifically for generating JIT runner registration tokens.
+
+The Worker Execution Plane
+Docker Host(s): One or more dedicated servers running the Docker daemon. For scalability and resilience, this should be a fleet of virtual machines (e.g., AWS EC2 instances) managed by an Auto Scaling Group.
+
+Worker Container Image: A custom Dockerfile that serves as the template for all job executions. This image should be based on a trusted, minimal OS (e.g., Ubuntu 22.04) and have all common tools and dependencies (e.g., Node.js, Python, Git, curl, jq) pre-installed. This "baking in" of dependencies is a crucial optimization, as it dramatically reduces the time each job spends on setup, leading to faster overall execution. The image must be versioned, stored in a private registry (e.g., Amazon ECR), and regularly scanned for vulnerabilities.   
+
+2.3 Implementation Blueprint (Node.js Reference)
+A practical implementation could be built using a Node.js-based stack.
+
+Proxy Runner (delegator.js): The hook script would be a simple Node.js file that reads job context from the environment variables provided by the runner agent (e.g., GITHUB_REPOSITORY, GITHUB_RUN_ID) and uses a library like axios to POST a JSON payload to the Orchestrator's API endpoint.
+
+Orchestration Service (Express.js, BullMQ, Dockerode):
+
+An Express.js application would define the API endpoints.
+
+The /v1/jobs/delegate endpoint handler would perform validation and then add the job to a BullMQ queue: await jobQueue.add('execute-job', { jobContext });.   
+
+A BullMQ worker process would be defined to handle the execute-job tasks. This worker function would:   
+
+Fetch a JIT token from the GitHub API.
+
+Instantiate dockerode, a Node.js library for the Docker Remote API.   
+
+Call docker.createContainer() with the appropriate worker image, command, and a comprehensive set of environment variables containing the JIT token and job context.   
+
+Call container.start() to launch the job.
+
+Attach to the container's log stream using container.logs({ follow: true, stdout: true, stderr: true }) and pipe the output to a centralized logging service.   
+
+Worker Container (Dockerfile & entrypoint.sh):
+
+The Dockerfile defines the base environment, installing dependencies and copying the entrypoint script.   
+
+The ENTRYPOINT would be an entrypoint.sh script responsible for bootstrapping the runner agent. A simplified version would look like this:   
+
+Bash
+
+#!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status.
+
+RUNNER_VERSION="2.317.0"
+ARCH="x64"
+RUNNER_URL="https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-${ARCH}-${RUNNER_VERSION}.tar.gz"
+
+# 1. Download and extract the runner agent
+echo "Downloading GitHub Actions Runner v${RUNNER_VERSION}..."
+curl -o actions-runner.tar.gz -L "${RUNNER_URL}"
+tar xzf./actions-runner.tar.gz
+rm actions-runner.tar.gz
+
+# 2. Configure the runner as an ephemeral, JIT runner
+# These variables (GITHUB_REPOSITORY, JIT_RUNNER_TOKEN, GITHUB_RUN_ID)
+# must be passed in by the Orchestration Service.
+echo "Configuring runner..."
+./config.sh 
+
+--url "https://github.com/GITHUB 
+R
+​
+ EPOSITORY" −−token"{JIT_RUNNER_TOKEN}" 
+
+--name "ephemeral-worker-${GITHUB_RUN_ID}" 
+
+--work "_work" 
+
+--ephemeral 
+
+--unattended
+
+# 3. Run the job (this script will exit after one job)
+echo "Starting runner to execute job..."
+./run.sh
+```
+
+This decoupled architecture, where job reception is separated from execution, is a powerful pattern. It allows the execution plane (the Docker hosts) to be scaled independently of the control plane, and it centralizes all complex orchestration logic into a single, manageable service. The success of the entire system, therefore, rests on the resilience and security of this Orchestration Service.
+
+Part III: Security Architecture and Hardening
+Building a custom runner platform means assuming full responsibility for its security. A failure at any layer can expose not only the CI/CD system but also the underlying host infrastructure and sensitive credentials. The following defense-in-depth strategy is not optional; it is a mandatory prerequisite for a production-grade deployment.
+
+3.1 Securing the Control Plane: Authentication and Secrets Management
+The Orchestration Service is a highly privileged component that must be meticulously secured.
+
+GitHub App Authentication: The Orchestrator must authenticate with the GitHub API using a dedicated, purpose-built GitHub App, not a developer's Personal Access Token (PAT). GitHub Apps provide granular, machine-to-machine permissions and are the best practice for service integrations. The app should be configured with the principle of least privilege, requiring only the    
+
+organization_self_hosted_runners: write permission to generate JIT registration tokens.   
+
+Centralized Secrets Management: All sensitive credentials, including the GitHub App's private key, database connection strings, and API keys, must be stored in a dedicated secrets management system. Hardcoding secrets is a critical vulnerability.
+
+Recommended: HashiCorp Vault: For organizations with mature security practices, Vault is the ideal solution. It provides centralized storage, dynamic secret generation, and robust access control. The Orchestrator would authenticate to Vault (e.g., using an AWS IAM Auth Method or AppRole) to retrieve the credentials it needs at runtime, ensuring they are never stored on disk.   
+
+Cloud-Native Alternative: AWS Secrets Manager: A viable and well-integrated alternative within the AWS ecosystem. The Orchestrator's execution role (e.g., an EC2 Instance Profile or ECS Task Role) would be granted a narrow IAM policy allowing it to read specific, named secrets from Secrets Manager.   
+
+Secrets required by the jobs themselves (e.g., deployment keys, API tokens for third-party services) should continue to be managed as encrypted GitHub Actions secrets. They are securely passed into the job context by GitHub and should be handled with care by the workflow scripts to prevent accidental logging.   
+
+3.2 Hardening the Execution Plane: The Docker Host
+The Docker Host is the most critical component to secure, as it is where untrusted code from developers is executed.
+
+The Docker Socket Dilemma and Mandatory Proxy: The single greatest security risk in this architecture is exposing the Docker daemon's control socket (/var/run/docker.sock) to any process. Direct access to this socket is equivalent to granting root access on the host machine. A container with socket access can start new privileged containers, mount host directories, and trivially escape its own boundaries.   
+
+Therefore, the Orchestration Service must not communicate directly with the Docker socket. It must go through a Docker Socket Proxy. This is a dedicated, minimal proxy container that exposes the Docker API over a TCP port but uses a configurable allowlist to restrict which API endpoints are accessible. By using a well-vetted proxy like    
+
+tecnativa/docker-socket-proxy , the attack surface can be drastically reduced. The Orchestrator's    
+
+dockerode client would be configured to connect to tcp://socket-proxy:2375 instead of the local socket.
+
+The proxy must be configured with a strict policy of least privilege. The following table outlines the minimal set of permissions required by the Orchestrator:
+
+API Endpoint Group
+
+Required By Orchestrator?
+
+Justification
+
+GET /info, GET /version
+
+Yes
+
+For health checks and compatibility verification.
+
+GET /images/*, POST /images/create
+
+Yes
+
+To check for and pull the required worker images.
+
+POST /containers/create
+
+Yes
+
+To create the ephemeral worker container.
+
+POST /containers/{id}/start
+
+Yes
+
+To start the worker container.
+
+GET /containers/{id}/logs
+
+Yes
+
+To stream logs for central observability.
+
+POST /containers/{id}/stop
+
+Yes
+
+To gracefully stop a container that has timed out.
+
+DELETE /containers/{id}
+
+Yes
+
+To clean up the container after job completion.
+
+POST /containers/{id}/exec
+
+NO (Critical)
+
+Disallowing exec prevents the orchestrator from being used to run arbitrary commands inside other containers, a common vector for lateral movement.
+
+POST /build
+
+NO (Critical)
+
+Disallowing build prevents the orchestrator from being used to build malicious images on the fly. Image building must be handled in a separate, dedicated, and hardened CI pipeline.
+
+GET /secrets, GET /configs, GET /swarm
+
+No
+
+These endpoints are not required for the described functionality and should be disabled.
+
+
+Exporteren naar Spreadsheets
+Docker Content Trust (DCT): To prevent the execution of tampered or unauthorized worker images, DCT should be enabled on the Docker hosts. This ensures that the daemon will only run images that have been cryptographically signed with a trusted key. The process of signing worker images must be integrated into the secure pipeline that builds them, using a tool like Docker Notary.   
+
+3.3 Network Architecture: Isolation and Egress Control
+A zero-trust network posture is essential.
+
+VPC and Subnet Design: The entire platform, including the Orchestrator and the fleet of Docker hosts, must be deployed within a dedicated, private Virtual Private Cloud (VPC). This VPC should use a multi-Availability Zone architecture for high availability. All components should reside in private subnets with no direct internet access. Public subnets should only contain necessary components like NAT Gateways or Application Load Balancers.   
+
+Egress Control: By default, worker containers in private subnets cannot access the internet. This is a secure starting point. However, many CI jobs legitimately need to download packages from public repositories (npm, pypi, maven). To allow this without granting unrestricted internet access, all outbound traffic must be funneled through a central, filtering egress proxy.
+
+Solution: Squid Proxy Fleet: A scalable fleet of Squid proxy servers can be deployed (e.g., on AWS Fargate for managed scaling). All worker containers are configured via environment variables to use this proxy for all HTTP/S traffic. The Squid configuration can then enforce a strict domain allowlist, permitting connections only to known, trusted package registries and services, while blocking all other outbound traffic. This is a critical control to prevent data exfiltration and command-and-control communication from a compromised job.   
+
+3.4 Runtime Security and Threat Detection
+Even with robust preventative controls, real-time threat detection is necessary.
+
+Integrating Falco: Falco is an open-source runtime security tool that should be deployed as a daemon on every Docker host. It monitors system calls from the kernel and can detect anomalous behavior inside containers based on a flexible rules engine. Falco alerts should be shipped to a central security information and event management (SIEM) system for analysis and response.   
+
+Example Falco Rules for a CI/CD Environment:
+
+Terminal shell in container: Detects if an interactive shell (bash, sh) is unexpectedly spawned inside a worker container.
+
+Unexpected outbound connection: Alerts on any network connection attempt from a worker container to an IP address not on the approved egress list.
+
+Read sensitive file untrusted: Triggers an alert if a process inside a container attempts to read sensitive host files like /etc/shadow or /proc/.   
+
+Launch suspicious network tool in container: Detects the use of network reconnaissance tools like nmap or nc inside a job.
+
+The implementation of this multi-layered security architecture is non-trivial and requires deep expertise. However, for a system that programmatically executes untrusted code, it is an absolute necessity.
+
+Part IV: Operational Readiness and Governance
+Building the proxy runner architecture is only the first step; operating it as a reliable, production-grade service requires a robust framework for observability, resilience, and governance. This system is a critical Tier-1 service, as its failure can halt all software development and deployment activities for the organization.
+
+4.1 The Observability Framework: Seeing Inside the Black Box
+Effective monitoring is essential for debugging issues, understanding performance, and ensuring the health of the platform.
+
+Logging Strategy: A primary challenge with ephemeral execution environments is that logs are lost when the container is destroyed. A centralized logging strategy is therefore mandatory.   
+
+Log Aggregation: The Orchestration Service should be responsible for capturing the stdout and stderr streams from every worker container it launches. Using a library like dockerode, it can attach to the container's log stream and forward it to a log aggregator like Fluentd or directly to a backend such as OpenSearch, Splunk, or Datadog. An alternative approach involves setting the    
+
+ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT=true environment variable on the runner and configuring the Docker daemon on the host to use a logging driver (e.g., awslogs to send logs to CloudWatch).   
+
+Log Correlation: All log entries, regardless of source (Orchestrator, Proxy Runner, Worker Container), must be enriched with structured metadata, including repository_name, workflow_name, github_run_id, and job_id. This allows for powerful filtering and correlation, making it possible to trace the entire lifecycle of a single job across all system components.   
+
+Metrics and Monitoring: To proactively monitor platform health and performance, the Orchestration Service must be instrumented to expose key metrics.
+
+Instrumentation: Using a library like prom-client for Node.js, the Orchestration Service can expose a /metrics endpoint that a Prometheus server can scrape periodically.   
+
+Key Custom Metrics:
+
+job_delegation_requests_total: A counter tracking the total number of jobs received from proxies.
+
+job_queue_size: A gauge showing the number of jobs currently waiting for a worker container to become available.
+
+active_worker_containers: A gauge indicating the current number of running worker containers.
+
+container_creation_duration_seconds: A histogram measuring the latency from when a job is dequeued to when its container is running. This is a key performance indicator (KPI).
+
+job_execution_duration_seconds: A histogram tracking the wall-clock time of jobs, which can be used for performance benchmarking.   
+
+github_api_requests_total: A counter, labeled by endpoint, to monitor API usage and avoid rate limiting.
+
+Visualization and Alerting:
+
+Grafana Dashboards: The collected Prometheus metrics should be visualized in Grafana. A dedicated dashboard should provide an at-a-glance view of platform health, with panels for Job Throughput (jobs/minute), Queue Depth, P95 Container Creation Latency, API Error Rates, and resource utilization (CPU/Memory) of the Docker host fleet.   
+
+Alerting: Prometheus Alertmanager should be configured to send alerts to an on-call rotation for critical conditions, such as:
+
+Job queue depth exceeding a defined threshold for an extended period.
+
+A spike in the container creation latency.
+
+A high rate of failed job delegations or GitHub API errors.
+
+Low disk space or high CPU utilization on the Docker hosts.
+
+4.2 Scalability, Resilience, and Disaster Recovery
+The platform must be designed to scale with demand and recover from failure.
+
+Scaling the Architecture:
+
+Orchestration Service: The Node.js service itself should be stateless, with all state managed in the external database and job queue. This allows it to be containerized and deployed as a scalable service (e.g., an Amazon ECS Service or Kubernetes Deployment) behind a load balancer for high availability.
+
+Docker Host Fleet: The EC2 instances serving as Docker hosts should be managed by an Auto Scaling Group. Scaling policies can be configured to add or remove instances based on custom CloudWatch metrics, such as the job_queue_size gauge published by the Orchestrator. This creates a feedback loop where an increase in waiting jobs automatically provisions more execution capacity.
+
+Disaster Recovery (DR) Plan: A regional outage in the cloud provider could bring the entire CI/CD platform down. A DR plan is essential for business continuity.
+
+Strategy: Pilot Light / Warm Standby: This strategy provides a cost-effective balance between recovery time and complexity for a critical system like this.   
+
+Primary Region (Active): A full deployment of the entire architecture.
+
+DR Region (Passive):
+
+Infrastructure is provisioned via IaC (e.g., Terraform) but largely scaled to zero.
+
+The stateful data is continuously replicated: the PostgreSQL database uses cross-region read replicas, Redis can use global datastores, and the ECR repository containing the worker images is configured for cross-region replication.
+
+The Orchestrator service and Docker Host Auto Scaling Group are configured with a minimum/desired capacity of zero.
+
+Failover Process: In the event of a primary region failure, an automated runbook (e.g., an AWS Step Functions state machine) is triggered. It performs the following actions:
+
+Promotes the database replica in the DR region to become the primary writer.
+
+Updates DNS records (e.g., in Route 53) to point the Orchestrator's API endpoint to the load balancer in the DR region.
+
+Scales up the Orchestrator service and the Docker Host Auto Scaling Group in the DR region.
+
+RTO/RPO: This approach can achieve a Recovery Time Objective (RTO) measured in minutes to an hour, and a Recovery Point Objective (RPO) of seconds to minutes, depending on the replication lag of the database.   
+
+4.3 Governance and Maintenance
+This custom platform is a software product and must be managed as such.
+
+CI/CD for the CI/CD Platform: The entire system—including the Orchestrator source code, worker container Dockerfiles, Terraform infrastructure code, and monitoring configurations—must be stored in Git and managed through its own dedicated, automated CI/CD pipeline. This "meta-pipeline" is crucial for ensuring that changes to the runner platform itself are tested, reviewed, and deployed safely.   
+
+Image and Dependency Management: A separate, automated pipeline should be responsible for building, scanning (e.g., with Trivy or Snyk), signing (with Docker Content Trust), and publishing new versions of the worker container images. Dependency management for both the Orchestrator (npm audit) and the underlying OS packages in the worker images (apt upgrade) must be performed regularly.
+
+Platform Governance Model: A clear governance model is needed to manage how teams interact with the platform.
+
+Area
+
+Policy
+
+Implementation
+
+Infrastructure
+
+All infrastructure changes must be declarative, version-controlled, and peer-reviewed.
+
+All resources defined in Terraform. Enforce pull request reviews with required approvals for the infrastructure repository.
+
+Worker Images
+
+Images must be built from approved, minimal base images and must pass vulnerability scans before being published.
+
+A dedicated CI pipeline with a vulnerability scanning gate. Enforce Docker Content Trust on Docker hosts to prevent unsigned images from running.
+
+Orchestrator Code
+
+All code changes must pass automated linting, unit tests, and integration tests before deployment.
+
+A dedicated CI pipeline for the Orchestrator service, deploying to a staging environment before production.
+
+Access Control
+
+The principle of least privilege must be applied to all human and machine identities.
+
+Strict IAM roles, Vault/Secrets Manager policies, and network Security Groups. Conduct quarterly access reviews.
+
+User Onboarding
+
+Development teams can request new software or dependencies in worker images through a formal, audited process.
+
+A ticketing system (e.g., Jira) or a pull request-based process for modifying the base worker Dockerfile.
+
+
+Exporteren naar Spreadsheets
+Operating this platform requires a dedicated team with skills in software development, cloud infrastructure, and security. The operational cost and effort must be factored into any decision to build.
+
+Part V: Strategic Analysis and Recommendations
+The preceding analysis demonstrates that while the proxy runner architecture is technically sound, its implementation is a complex undertaking with significant security and operational responsibilities. This final section synthesizes these findings into a strategic comparison to help guide the decision-making process.
+
+5.1 Comparative Analysis: Custom Proxy vs. The Alternatives
+The decision to build a custom solution must be weighed against established alternatives. Each approach occupies a different point on the spectrum of control, cost, and complexity.
+
+Feature
+
+Custom Proxy Architecture
+
+Actions Runner Controller (ARC)
+
+Third-Party Providers (e.g., WarpBuild, Buildjet)
+
+Control & Customization
+
+Maximum. Full, granular control over every component of the hardware and software stack, from the OS kernel to the network routing.
+
+High. Full control within the Kubernetes ecosystem, including custom images, volumes, and pod specifications.   
+
+Medium. Control over instance size, OS, and some caching, but the underlying orchestration and control plane are managed by the provider.   
+
+Security Model
+
+Highest Potential, Highest Risk. Enables a bespoke, zero-trust architecture. However, the responsibility is entirely internal, and a single misconfiguration can be catastrophic.
+
+High. Leverages mature Kubernetes security primitives (RBAC, Network Policies, Pod Security Standards), but requires deep K8s security expertise to implement correctly.   
+
+Managed. Security is the provider's responsibility. SOC 2 compliance is a critical indicator of a mature security posture.   
+
+Maintenance Overhead
+
+Very High. The organization is responsible for the entire lifecycle: code development, infrastructure management, security patching, monitoring, and disaster recovery.
+
+High. Requires managing and maintaining a production-grade Kubernetes cluster, which is a significant operational burden in itself.   
+
+Very Low. A fully managed, "as-a-service" offering. The provider handles all maintenance, scaling, and operational tasks.   
+
+Total Cost of Ownership (TCO)
+
+Variable. Potentially the lowest raw compute cost by leveraging spot instances, but this is often outweighed by the high, ongoing engineering and operational personnel costs.
+
+Variable. Kubernetes can be cost-effective at scale, but has its own infrastructure and expertise costs.
+
+Predictable. A pay-per-minute model that is higher than raw compute but includes all management, support, and maintenance, leading to a potentially lower TCO.   
+
+Platform Support
+
+Universal. Can be custom-designed to support any platform, including Linux, Windows, macOS, and specialized hardware like GPUs.
+
+Primarily Linux. While technically possible, Windows and macOS support in Kubernetes is immature and not a primary focus of ARC.   
+
+Varies by Provider. Most support Linux and macOS. Windows and GPU support is available from select providers.   
+
+Time to Value
+
+Slow. Requires a significant, multi-month development and hardening effort before the platform is production-ready.
+
+Medium. Requires setting up a Kubernetes cluster and installing ARC, but can be operational relatively quickly for teams with existing K8s infrastructure.
+
+Fast. Can be integrated into workflows in minutes with a one-line configuration change, providing immediate value.   
+
+5.2 Cost-Benefit Analysis: The Build vs. Buy Decision
+The choice to build this custom platform is fundamentally a strategic investment decision. The Total Cost of Ownership (TCO) must be carefully evaluated.
+
+Costs of Building:
+
+Infrastructure Costs: The monthly bill for all AWS resources, including EC2 instances for Docker hosts (even with spot instance savings), RDS for the database, ElastiCache for Redis, NAT Gateway data transfer fees, and logging/monitoring services.   
+
+Development Costs (CapEx): The fully-loaded cost of the engineering team (e.g., DevOps, Security, Software Engineers) required to design, build, test, and harden the platform. This is a substantial one-time investment.
+
+Operational Costs (OpEx): The ongoing, fully-loaded cost of the personnel required to operate, maintain, patch, upgrade, and provide support for this internal platform. This is a permanent increase in operational expenditure.   
+
+Benefits of Building:
+
+The benefits are primarily non-financial. They relate to achieving specific security, compliance, or integration goals that are impossible with off-the-shelf products. For example, meeting a strict data residency requirement that mandates all compute and data remain within a specific physical location or private network.
+
+When comparing the TCO of the custom solution to the predictable per-minute billing of a third-party provider, the engineering and operational costs of the "build" option often dwarf the potential savings on raw compute, unless the organization operates at an exceptionally large scale or has truly unique, non-negotiable requirements.   
+
+5.3 Final Recommendations and Implementation Roadmap
+The decision to build, use ARC, or buy a managed service depends entirely on the organization's specific context, capabilities, and strategic priorities.
+
+When to Build (The Proxy Architecture)
+This path should only be chosen if one or more of the following conditions are met:
+
+Inflexible Requirements: You are subject to stringent, non-negotiable security, compliance (e.g., FedRAMP, HIPAA), or data residency requirements that cannot be met by any existing commercial or open-source solution.
+
+Deep Proprietary Integration: Your workflows require deep, complex integration with legacy or proprietary on-premise systems that cannot be safely or practically exposed via standard networking patterns.
+
+Existing Platform Engineering Expertise: You have an established platform engineering or SRE team with demonstrated expertise in building, securing, and operating critical, high-availability cloud services.
+
+Massive Scale: Your GitHub Actions usage is so vast that the long-term TCO of a custom-built solution, including all engineering costs, is demonstrably lower than any available commercial offering.
+
+When to Use an Alternative
+Choose Actions Runner Controller (ARC) if: Your organization is "Kubernetes-native" and your CI/CD workloads are predominantly Linux-based. You already possess the in-house expertise to manage and secure a production Kubernetes cluster, and you want to consolidate your CI/CD compute onto that platform.   
+
+Choose a Third-Party Provider (e.g., WarpBuild, Buildjet, RunsOn) if: Your primary goals are to achieve faster and more cost-effective builds than GitHub-hosted runners without incurring the significant operational overhead and security responsibility of self-hosting. This is the recommended path for the vast majority of organizations seeking to optimize their CI/CD.   
+
+Phased Implementation Roadmap (If Building)
+Should the decision be made to proceed with the custom build, a phased approach is recommended to manage risk and deliver value incrementally.
+
+Phase 1: Proof of Concept (Manual Orchestration): Validate the core delegation logic. Set up a single Proxy Runner and manually execute a script that uses dockerode to launch an ephemeral worker container and run a simple job.
+
+Phase 2: Minimum Viable Product (MVP): Build the core Orchestration Service with its API and job queue. Implement the Docker Socket Proxy. Integrate basic logging. The goal is a functioning end-to-end system for a single, non-critical repository.
+
+Phase 3: Production Hardening: Implement the full security architecture outlined in Part III, including the private VPC, egress filtering, and runtime security with Falco. Build out the complete observability stack with metrics and alerting. Develop and test the disaster recovery plan.
+
+Phase 4: Onboarding and Scale-out: Create user documentation and governance policies. Begin onboarding other teams to the platform. Incrementally scale out the Docker host fleet and Orchestrator service as load increases.
+
+
+Bronnen die gebruikt zijn in het rapport
+
+northflank.com
+The best GitHub Actions alternatives for modern CI/CD in 2025 | Blog - Northflank
+Opent in een nieuw venster
+
+docs.github.com
+Managing self-hosted runners with Actions Runner Controller - GitHub Docs
+Opent in een nieuw venster
+
+hyperenv.com
+Alternatives to GitHub-hosted runners - HyperEnv
+Opent in een nieuw venster
+
+getorchestra.io
+Github Actions API: Create config for org (just-in-time runner) | Orchestra
+Opent in een nieuw venster
+
+docs.github.com
+Removing self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+REST API endpoints for self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Using workflow run logs - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Autoscaling with self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Communicating with self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+github.blog
+GitHub Actions: Ephemeral self-hosted runners & new webhooks for auto-scaling
+Opent in een nieuw venster
+
+docs.github.com
+Monitoring your current jobs - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Monitoring and troubleshooting self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Customizing the containers used by jobs - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+Security hardening for GitHub Actions
+Opent in een nieuw venster
+
+aws.amazon.com
+Best practices working with self-hosted GitHub Action runners at scale on AWS
+Opent in een nieuw venster
+
+docs.docker.com
+Use docker logs with remote logging drivers
+Opent in een nieuw venster
+
+datadoghq.com
+Docker logging best practices - Datadog
+Opent in een nieuw venster
+
+github.com
+Send job logs to stdout · Issue #891 · actions/runner - GitHub
+Opent in een nieuw venster
+
+sematext.com
+Docker Logging: 101 Guide to Logs, Best Practices & More - Sematext
+Opent in een nieuw venster
+
+linuxserver.io
+Docker Security Practices - LinuxServer.io
+Opent in een nieuw venster
+
+github.com
+github.com
+Opent in een nieuw venster
+
+docs.github.com
+Keeping your API credentials secure - GitHub Docs
+Opent in een nieuw venster
+
+cheatsheetseries.owasp.org
+Docker Security - OWASP Cheat Sheet Series
+Opent in een nieuw venster
+
+paulsblog.dev
+How To Secure Your Docker Environment By Using a Docker Socket Proxy
+Opent in een nieuw venster
+
+docs.docker.com
+GitHub Actions and Docker - Docker Docs
+Opent in een nieuw venster
+
+docs.github.com
+Publishing Docker images - GitHub Docs
+Opent in een nieuw venster
+
+tilburgsciencehub.com
+Configure a Self-hosted runner for GitHub Actions workflows - Tilburg Science Hub
+Opent in een nieuw venster
+
+github.com
+actions-runner-controller/runner-images - GitHub
+Opent in een nieuw venster
+
+docs.qtorque.io
+AWS Secrets Manager for Git Integration - Quali Torque Documentation!
+Opent in een nieuw venster
+
+docs.aws.amazon.com
+Create and store a token in a Secrets Manager secret - AWS CodeBuild
+Opent in een nieuw venster
+
+docs.aws.amazon.com
+GitHub and GitHub Enterprise Server access token - AWS CodeBuild - AWS Documentation
+Opent in een nieuw venster
+
+developer.hashicorp.com
+Tokens | Vault - HashiCorp Developer
+Opent in een nieuw venster
+
+developer.hashicorp.com
+GitHub - Auth Methods | Vault - HashiCorp Developer
+Opent in een nieuw venster
+
+docs.github.com
+Configuring OpenID Connect in HashiCorp Vault - GitHub Enterprise Server 3.13 Docs
+Opent in een nieuw venster
+
+github.com
+neysofu/awesome-github-actions-runners
+Opent in een nieuw venster
+
+runs-on.com
+Alternatives to GitHub Actions runners - RunsOn
+Opent in een nieuw venster
+
+github.blog
+When to choose GitHub-Hosted runners or self-hosted runners with GitHub Actions
+Opent in een nieuw venster
+
+news.ycombinator.com
+GitHub's runners are a joke. Switching to WarpBuild was the best decision I made... | Hacker News
+Opent in een nieuw venster
+
+buildjet.com
+BuildJet for GitHub Actions | BuildJet for GitHub Actions
+Opent in een nieuw venster
+
+stepsecurity.io
+Introduction to GitHub Actions Runner Controller: A Blog Series - StepSecurity
+Opent in een nieuw venster
+
+warpbuild.com
+BuildJet vs WarpBuild Comparison
+Opent in een nieuw venster
+
+docs.warpbuild.com
+What is WarpBuild?
+Opent in een nieuw venster
+
+reddit.com
+Self-hosted runner vs Github runner - Reddit
+Opent in een nieuw venster
+
+dev.to
+Kubernetes hosted runners for Github Actions with ARC - DEV Community
+Opent in een nieuw venster
+
+blog.digger.dev
+Top self-hosted runner solutions for GitHub Actions. - Digger.dev
+Opent in een nieuw venster
+
+docs.github.com
+About Actions Runner Controller - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+About billing for GitHub Actions
+Opent in een nieuw venster
+
+runs-on.com
+GitHub Actions are slow and expensive, what are the alternatives? - RunsOn
+Opent in een nieuw venster
+
+docs.github.com
+Adding self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+docs.github.com
+About GitHub-hosted runners
+Opent in een nieuw venster
+
+registry.terraform.io
+philips-labs/github-runner/aws | Terraform Registry
+Opent in een nieuw venster
+
+spacelift.io
+CI/CD Best Practices - Top 11 Tips for Successful Pipelines - Spacelift
+Opent in een nieuw venster
+
+cheatsheetseries.owasp.org
+CI CD Security - OWASP Cheat Sheet Series
+Opent in een nieuw venster
+
+dev.to
+Deep dive: optimizing self-hosted GitHub Actions Runners on AWS and GCP for cost efficiency - DEV Community
+Opent in een nieuw venster
+
+stackoverflow.com
+Using ephemeral runners in containers for clean environments on every job - Stack Overflow
+Opent in een nieuw venster
+
+docs.docker.com
+docker container logs
+Opent in een nieuw venster
+
+docs.bullmq.io
+Queues - BullMQ
+Opent in een nieuw venster
+
+github.com
+[SUPPORT] Getting logs from a running container · apocas dockerode · Discussion #678 - GitHub
+Opent in een nieuw venster
+
+stackoverflow.com
+How to get started with dockerode - Stack Overflow
+Opent in een nieuw venster
+
+bullmq.io
+BullMQ - Background Jobs processing and message queue for NodeJS | BullMQ
+Opent in een nieuw venster
+
+trstringer.com
+Create Ephemeral Self-Hosted Runners for GitHub Actions | Thomas Stringer
+Opent in een nieuw venster
+
+github.com
+dockerode/README.md at master - GitHub
+Opent in een nieuw venster
+
+github.com
+myoung34/docker-github-actions-runner: This will run the new self-hosted github actions runners with docker-in-docker - GitHub
+Opent in een nieuw venster
+
+community.n8n.io
+N8n + Grafana Full Node.js Metrics Dashboard (JSON Example Included!) - n8n Community
+Opent in een nieuw venster
+
+grafana.com
+Dashboard JSON model - Grafana documentation
+Opent in een nieuw venster
+
+grafana.com
+NodeJS Application Dashboard | Grafana Labs
+Opent in een nieuw venster
+
+docs.github.com
+Automatic token authentication - GitHub Docs
+Opent in een nieuw venster
+
+dragonflydb.io
+BullMQ - Ultimate Guide + Getting Started Tutorial [2025] - Dragonfly
+Opent in een nieuw venster
+
+docs.bullmq.io
+Workers - BullMQ
+Opent in een nieuw venster
+
+squaredup.com
+Instrument Node.js code: Prometheus custom metrics - SquaredUp
+Opent in een nieuw venster
+
+github.com
+siimon/prom-client: Prometheus client for node.js - GitHub
+Opent in een nieuw venster
+
+dev.to
+Day 4 - Custom Metrics Instrumentation and Scraping using Prom Client - DEV Community
+Opent in een nieuw venster
+
+github.com
+Tecnativa/docker-socket-proxy - GitHub
+Opent in een nieuw venster
+
+falco.org
+Try Falco with Docker
+Opent in een nieuw venster
+
+docs.github.com
+About self-hosted runners - GitHub Docs
+Opent in een nieuw venster
+
+falco.org
+Deploy as a container - Falco
+Opent in een nieuw venster
+
+geeksforgeeks.org
+How to Use Docker Content Trust to Verify Docker Container Images - GeeksforGeeks
+Opent in een nieuw venster
+
+docs.mirantis.com
+Signing Images with Docker Content Trust - Mirantis Container Runtime
+Opent in een nieuw venster
+
+allthingsopen.org
+Introduction to Falco and how to set up rules | We Love Open Source
+Opent in een nieuw venster
+
+jit.io
+SOC 2 Compliance Checklist: A Comprehensive Guide - Jit.io
+Opent in een nieuw venster
+
+qovery.com
+The Ultimate SOC 2 Compliance Checklist & How to Comply - Qovery
+Opent in een nieuw venster
+
+help.sonatype.com
+Docker Content Trust - Sonatype Help
+Opent in een nieuw venster
+
+runs-on.com
+GPU runners for GitHub Actions - RunsOn
+Opent in een nieuw venster
+
+docs.digicert.com
+Sign containers with Docker Notary using PKCS11 library - DigiCert documentation
+Opent in een nieuw venster
+
+aws.amazon.com
+Disaster recovery strategies for Amazon MWAA – Part 1 | AWS Big Data Blog
+Opent in een nieuw venster
+
+docs.aws.amazon.com
+Disaster recovery options in the cloud - AWS Documentation
+Opent in een nieuw venster
+
+axify.io
+Top 17 CI/CD Metrics Every DevOps Team Should Track - Axify
+Opent in een nieuw venster
+
+geeksforgeeks.org
+Best Practices for Disaster Recovery in Jenkins and AWS Workflows - GeeksforGeeks
+Opent in een nieuw venster
+
+cloud.folio3.com
+AWS Disaster Recovery Plan and its Strategies - Folio3 Cloud Services
+Opent in een nieuw venster
+
+zeet.co
+12 Key CI CD Metrics To Track & Guide On Tracking - Zeet.co
+Opent in een nieuw venster
+
+reddit.com
+Using Github Enterprise Cloud with Self-Hosted Runners Securely - Reddit
+Opent in een nieuw venster
+
+github.com
+aws-samples/centralised-egress-proxy - GitHub
+Opent in een nieuw venster
+
+aws.amazon.com
+Providing controlled internet access through centralised proxy servers using AWS Fargate and PrivateLink | Networking & Content Delivery
+Opent in een nieuw venster
+
+docs.aws.amazon.com
+VPC design - Best Practices for Deploying WorkSpaces - AWS Documentation
+Opent in een nieuw venster
+
+dev.to
+Secure Your AWS Pipeline: Step-by-Step Guide to VPC Integration - DEV Community

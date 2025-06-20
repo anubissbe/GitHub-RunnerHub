@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub RunnerHub Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        .metric-card {
+            @apply bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow;
+        }
+        .status-healthy { @apply text-green-500; }
+        .status-warning { @apply text-yellow-500; }
+        .status-critical { @apply text-red-500; }
+        .status-offline { @apply text-gray-500; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">GitHub RunnerHub Dashboard</h1>
+            <p class="text-gray-600">Real-time monitoring of GitHub Actions runners</p>
+        </div>
+
+        <!-- System Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Jobs</h3>
+                <p class="mt-1 text-3xl font-bold text-gray-900" id="totalJobs">-</p>
+                <div class="mt-2 flex text-sm">
+                    <span class="text-green-600 mr-2">
+                        <span id="completedJobs">-</span> completed
+                    </span>
+                    <span class="text-red-600">
+                        <span id="failedJobs">-</span> failed
+                    </span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Active Runners</h3>
+                <p class="mt-1 text-3xl font-bold text-gray-900" id="activeRunners">-</p>
+                <div class="mt-2 text-sm text-gray-600">
+                    <span id="totalRunners">-</span> total runners
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Avg Wait Time</h3>
+                <p class="mt-1 text-3xl font-bold text-gray-900" id="avgWaitTime">-</p>
+                <div class="mt-2 text-sm text-gray-600">seconds</div>
+            </div>
+
+            <div class="metric-card">
+                <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Pool Utilization</h3>
+                <p class="mt-1 text-3xl font-bold text-gray-900" id="avgUtilization">-</p>
+                <div class="mt-2 text-sm text-gray-600">
+                    <span id="scalingEvents">-</span> scaling events/hr
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Job Timeline -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Job Timeline (24h)</h2>
+                <canvas id="jobTimeline" height="200"></canvas>
+            </div>
+
+            <!-- Runner Distribution -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Runner Distribution</h2>
+                <canvas id="runnerDistribution" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Tables Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Jobs -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-800">Recent Jobs</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Repository</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentJobsTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Jobs will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Runner Health -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-800">Runner Health</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Runner</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Health</th>
+                            </tr>
+                        </thead>
+                        <tbody id="runnerHealthTable" class="bg-white divide-y divide-gray-200">
+                            <!-- Runners will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Last Updated -->
+        <div class="mt-8 text-center text-sm text-gray-500">
+            Last updated: <span id="lastUpdated">-</span>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>

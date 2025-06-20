@@ -1,0 +1,164 @@
+version: '3.9'
+
+services:
+  # Redis for BullMQ
+  redis:
+    image: redis:7-alpine
+    container_name: runnerhub-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for state management
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: runnerhub-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-runnerhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-runnerhub_secure_2024}
+      POSTGRES_DB: ${DB_NAME:-github_runnerhub}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-runnerhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Docker Socket Proxy for security
+  docker-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: runnerhub-docker-proxy
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 1
+      IMAGES: 1
+      BUILD: 0
+      EXEC: 0
+      VOLUMES: 0
+      INFO: 1
+      POST: 1
+    ports:
+      - "2375:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+
+  # Orchestration Service
+  orchestrator:
+    build:
+      context: .
+      dockerfile: docker/orchestrator/Dockerfile
+    container_name: runnerhub-orchestrator
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      DATABASE_URL: postgresql://${DB_USER:-runnerhub}:${DB_PASSWORD:-runnerhub_secure_2024}@postgres:5432/${DB_NAME:-github_runnerhub}
+      DOCKER_HOST: tcp://docker-proxy:2375
+      VAULT_ADDR: ${VAULT_ADDR}
+      VAULT_TOKEN: ${VAULT_TOKEN}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+    ports:
+      - "3000:3000"
+      - "3001:3001"  # WebSocket port
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - runnerhub-network
+    depends_on:
+      - redis
+      - postgres
+      - docker-proxy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Proxy Runner (can scale horizontally)
+  proxy-runner:
+    build:
+      context: .
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: runnerhub-proxy-runner-1
+    environment:
+      RUNNER_NAME: proxy-runner-1
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      ORCHESTRATOR_URL: http://orchestrator:3000
+      RUNNER_LABELS: self-hosted-proxy-ubuntu,self-hosted-proxy
+    volumes:
+      - ./runner-data/proxy-1:/home/runner
+    networks:
+      - runnerhub-network
+    depends_on:
+      - orchestrator
+    restart: unless-stopped
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: runnerhub-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: runnerhub-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3002:3000"
+    networks:
+      - runnerhub-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+networks:
+  runnerhub-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:
+  prometheus-data:
+  grafana-data:
