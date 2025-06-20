@@ -12,6 +12,7 @@ import { createLogger } from '../utils/logger';
 import { config } from '../config';
 import LeaderElectionService from './leader-election';
 import HAHealthCheckService from './ha-health-check';
+import DatabaseHAService from './database-ha';
 import { createGeneralConnection } from './redis-connection';
 
 export interface HAStatus {
@@ -48,8 +49,9 @@ export class HAManager extends EventEmitter {
     // HA Services
     private leaderElection?: LeaderElectionService;
     private healthCheck?: HAHealthCheckService;
+    private databaseHA?: DatabaseHAService;
     
-    // Database connections
+    // Database connections (legacy - replaced by DatabaseHAService)
     private primaryDb?: Pool;
     private replicaDb?: Pool;
     private currentDbPool?: Pool;
@@ -97,8 +99,8 @@ export class HAManager extends EventEmitter {
         });
 
         try {
-            // Initialize database connections
-            await this.initializeDatabaseConnections();
+            // Initialize database HA service
+            await this.initializeDatabaseHA();
             
             // Initialize Redis connections
             await this.initializeRedisConnections();
@@ -154,7 +156,22 @@ export class HAManager extends EventEmitter {
     }
 
     /**
-     * Initialize database connections with HA support
+     * Initialize Database HA service
+     */
+    private async initializeDatabaseHA(): Promise<void> {
+        this.logger.info('Initializing Database HA service');
+        
+        this.databaseHA = new DatabaseHAService();
+        await this.databaseHA.initialize();
+        
+        // Keep legacy connections for backward compatibility
+        await this.initializeDatabaseConnections();
+        
+        this.logger.info('Database HA service initialized');
+    }
+
+    /**
+     * Initialize database connections with HA support (legacy)
      */
     private async initializeDatabaseConnections(): Promise<void> {
         this.logger.info('Initializing database connections');
@@ -413,32 +430,28 @@ export class HAManager extends EventEmitter {
      * Handle database failover
      */
     private async handleDatabaseFailover(): Promise<void> {
-        if (!this.replicaDb) {
-            this.logger.error('Database failover requested but no replica configured');
+        if (!this.databaseHA) {
+            this.logger.error('Database failover requested but Database HA service not available');
             return;
         }
         
-        this.logger.warn('Initiating database failover to replica');
+        this.logger.warn('Initiating database failover via Database HA service');
         
         try {
-            // Test replica connection
-            const replicaClient = await this.replicaDb.connect();
-            await replicaClient.query('SELECT 1');
-            replicaClient.release();
+            const failoverEvent = await this.databaseHA.performFailover('replica', 'Primary database health check failed');
             
-            // Switch to replica
-            this.currentDbPool = this.replicaDb;
-            
-            const failoverEvent: FailoverEvent = {
-                type: 'database',
-                from: 'primary',
-                to: 'replica',
-                timestamp: new Date(),
-                reason: 'Primary database health check failed'
-            };
-            
-            this.logger.warn('Database failover completed', failoverEvent);
-            this.emit('ha:failover', failoverEvent);
+            if (failoverEvent.success) {
+                this.logger.warn('Database failover completed successfully', failoverEvent);
+                this.emit('ha:failover', {
+                    type: 'database',
+                    from: failoverEvent.fromPool,
+                    to: failoverEvent.toPool,
+                    timestamp: failoverEvent.timestamp,
+                    reason: failoverEvent.reason
+                });
+            } else {
+                throw new Error(failoverEvent.error || 'Failover failed');
+            }
             
         } catch (error) {
             this.logger.error('Database failover failed', { error });
@@ -484,20 +497,76 @@ export class HAManager extends EventEmitter {
             services: {
                 leaderElection: !!this.leaderElection && config.ha.leaderElection.enabled,
                 healthMonitoring: !!this.healthCheck,
-                databaseHA: !!this.replicaDb && config.ha.database.enableReadReplica,
+                databaseHA: !!this.databaseHA,
                 redisHA: config.ha.redis.enableSentinel
             }
         };
     }
 
     /**
-     * Get database connection pool
+     * Get database connection pool (legacy method - use Database HA service for new code)
      */
     getDatabasePool(): Pool {
+        if (this.databaseHA) {
+            // For compatibility, return the current write pool from Database HA service
+            // This is a synchronous method, so we can't await, use getWriteConnection for new code
+            return (this.databaseHA as any).currentWritePool || this.currentDbPool!;
+        }
+        
         if (!this.currentDbPool) {
             throw new Error('Database not initialized');
         }
         return this.currentDbPool;
+    }
+
+    /**
+     * Get database connection for writes via Database HA service
+     */
+    async getDatabaseWriteConnection() {
+        if (!this.databaseHA) {
+            throw new Error('Database HA service not initialized');
+        }
+        return await this.databaseHA.getWriteConnection();
+    }
+
+    /**
+     * Get database connection for reads via Database HA service
+     */
+    async getDatabaseReadConnection() {
+        if (!this.databaseHA) {
+            throw new Error('Database HA service not initialized');
+        }
+        return await this.databaseHA.getReadConnection();
+    }
+
+    /**
+     * Execute database query via Database HA service
+     */
+    async executeQuery(text: string, params?: any[], useRead = false) {
+        if (!this.databaseHA) {
+            throw new Error('Database HA service not initialized');
+        }
+        return await this.databaseHA.query(text, params, useRead);
+    }
+
+    /**
+     * Get database health status
+     */
+    async getDatabaseHealth() {
+        if (!this.databaseHA) {
+            return null;
+        }
+        return await this.databaseHA.getCurrentHealth();
+    }
+
+    /**
+     * Get database metrics
+     */
+    async getDatabaseMetrics() {
+        if (!this.databaseHA) {
+            return null;
+        }
+        return await this.databaseHA.getMetrics();
     }
 
     /**
@@ -555,7 +624,12 @@ export class HAManager extends EventEmitter {
                 await this.healthCheck.stopMonitoring();
             }
             
-            // Close database connections
+            // Shutdown Database HA service
+            if (this.databaseHA) {
+                await this.databaseHA.shutdown();
+            }
+            
+            // Close legacy database connections (if still in use)
             if (this.primaryDb) {
                 await this.primaryDb.end();
             }

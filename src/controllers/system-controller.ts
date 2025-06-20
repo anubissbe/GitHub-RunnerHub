@@ -8,6 +8,15 @@ import { config } from '../config';
 const logger = createLogger('SystemController');
 
 export class SystemController {
+  private haManager?: HAManager;
+
+  constructor() {
+    // Get HA Manager instance from service manager when needed
+    const serviceManager = ServiceManager.getInstance();
+    if (serviceManager.hasService('haManager')) {
+      this.haManager = serviceManager.getService<HAManager>('haManager');
+    }
+  }
   /**
    * Get overall system health
    */
@@ -606,6 +615,142 @@ export class SystemController {
         success: false,
         error: 'Cluster info retrieval failed',
         message: (error as Error).message
+      });
+    }
+  }
+
+  /**
+   * Get PostgreSQL replication status
+   */
+  async getPostgresReplicationStatus(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!this.haManager) {
+        res.status(503).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+
+      const dbHealth = await this.haManager.getDatabaseHealth();
+      const dbMetrics = await this.haManager.getDatabaseMetrics();
+      
+      res.json({
+        success: true,
+        data: {
+          health: dbHealth,
+          metrics: dbMetrics,
+          timestamp: new Date()
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to get PostgreSQL replication status', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get PostgreSQL replication status'
+      });
+    }
+  }
+
+  /**
+   * Trigger PostgreSQL failover
+   */
+  async triggerPostgresFailover(req: Request, res: Response): Promise<void> {
+    try {
+      const { target, reason } = req.body;
+      
+      if (!target || !['primary', 'replica'].includes(target)) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid failover target. Must be "primary" or "replica"'
+        });
+        return;
+      }
+      
+      if (!this.haManager) {
+        res.status(500).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+      
+      // Get the Database HA service
+      const databaseHA = (this.haManager as any).databaseHA;
+      if (!databaseHA) {
+        res.status(500).json({
+          success: false,
+          error: 'Database HA service not available'
+        });
+        return;
+      }
+      
+      const failoverEvent = await databaseHA.performFailover(
+        target, 
+        reason || `Manual failover triggered via API to ${target}`
+      );
+      
+      res.json({
+        success: true,
+        data: {
+          failover: failoverEvent,
+          timestamp: new Date()
+        }
+      });
+      
+    } catch (error) {
+      logger.error('Failed to trigger PostgreSQL failover', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to trigger PostgreSQL failover'
+      });
+    }
+  }
+
+  /**
+   * Get PostgreSQL connection pool status
+   */
+  async getPostgresPoolStatus(_req: Request, res: Response): Promise<void> {
+    try {
+      if (!this.haManager) {
+        res.status(500).json({
+          success: false,
+          error: 'HA Manager not available'
+        });
+        return;
+      }
+      
+      const metrics = await this.haManager.getDatabaseMetrics();
+      
+      res.json({
+        success: true,
+        data: {
+          pools: {
+            primary: {
+              connections: metrics?.primaryConnections || 0
+            },
+            replica: {
+              connections: metrics?.replicaConnections || 0
+            }
+          },
+          replication: {
+            lagBytes: metrics?.replicationLagBytes || 0,
+            lagSeconds: metrics?.replicationLagSeconds || 0
+          },
+          failover: {
+            count: metrics?.failoverCount || 0,
+            lastFailover: metrics?.lastFailover || null
+          },
+          uptime: metrics?.uptime || 0,
+          timestamp: new Date()
+        }
+      });
+      
+    } catch (error) {
+      logger.error('Failed to get PostgreSQL pool status', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get PostgreSQL pool status'
       });
     }
   }

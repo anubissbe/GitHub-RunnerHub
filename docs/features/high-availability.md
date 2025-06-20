@@ -265,24 +265,268 @@ curl http://localhost:3001/api/system/redis-health-ha
    docker exec redis-sentinel-1 redis-cli -p 26379 SENTINEL MASTERS | grep quorum
    ```
 
-### PostgreSQL Streaming Replication
+## 3. PostgreSQL Replication for Database HA
 
+### Overview
+The system supports comprehensive PostgreSQL replication with automatic failover, providing robust database high availability for mission-critical operations.
+
+### Features
+
+- **Primary-Replica Setup**: Streaming replication between primary and replica
+- **Automatic Failover**: Seamless failover to replica when primary fails
+- **Read Load Balancing**: Read queries distributed to replicas
+- **Connection Pooling**: Efficient database connection management with HA awareness
+- **Health Monitoring**: Continuous monitoring of replication lag and database health
+- **Replication Lag Monitoring**: Real-time tracking of replication status
+- **Point-in-Time Recovery**: WAL-based backup and recovery support
+
+### Architecture
+
+```
+┌─────────────────┐    Streaming     ┌─────────────────┐
+│   Primary DB    │─────────────────>│   Replica DB    │
+│  (Read/Write)   │   Replication    │   (Read Only)   │
+└─────────────────┘                  └─────────────────┘
+         │                                     │
+         │                                     │
+    ┌─────────────────────────────────────────────────────┐
+    │            Database HA Service                      │
+    │  - Connection Management                            │
+    │  - Health Monitoring                                │
+    │  - Automatic Failover                               │
+    │  - Lag Monitoring                                   │
+    └─────────────────────────────────────────────────────┘
+```
+
+### PostgreSQL Configuration Files
+
+The system includes optimized PostgreSQL configurations:
+
+#### Primary Configuration (`config/postgres-primary.conf`)
 ```postgresql
-# Primary postgresql.conf
+# Replication settings
 wal_level = replica
 max_wal_senders = 3
 max_replication_slots = 3
+wal_keep_size = 1GB
+
+# Streaming replication
 hot_standby = on
 archive_mode = on
 archive_command = 'cp %p /var/lib/postgresql/archive/%f'
+
+# Performance settings
+shared_buffers = 256MB
+effective_cache_size = 1GB
+work_mem = 4MB
 ```
 
+#### Replica Configuration (`config/postgres-replica.conf`)
 ```postgresql
-# Replica postgresql.conf
+# Hot standby settings
 hot_standby = on
+max_standby_archive_delay = 30s
 max_standby_streaming_delay = 30s
 wal_receiver_status_interval = 10s
+hot_standby_feedback = on
+wal_retrieve_retry_interval = 5s
+
+# Replication connection
+primary_conninfo = 'host=postgres-primary port=5432 user=replicator application_name=replica1'
+recovery_target_timeline = 'latest'
+
+# Read-only enforcement
+default_transaction_read_only = on
 ```
+
+#### Authentication Configuration (`config/pg_hba.conf`)
+```
+# Replication connections
+host replication replicator 172.20.0.0/16 md5
+host replication replicator 172.21.0.0/16 md5
+
+# Application connections
+host github_runnerhub app_user 172.20.0.0/16 md5
+```
+
+### Database HA Service Implementation
+
+#### Connection Management
+```typescript
+// Get write connection (always primary)
+const writeClient = await haManager.getDatabaseWriteConnection();
+
+// Get read connection (prefer replica)
+const readClient = await haManager.getDatabaseReadConnection();
+
+// Execute query with automatic routing
+const result = await haManager.executeQuery(
+    'SELECT * FROM jobs', 
+    [], 
+    true // Use read connection
+);
+```
+
+#### Health Monitoring
+```typescript
+// Get comprehensive health status
+const health = await haManager.getDatabaseHealth();
+console.log(health);
+// {
+//   primary: { status: 'healthy', isStandby: false, connections: 5 },
+//   replica: { status: 'healthy', isStandby: true, connections: 3, lagSeconds: 0.1 },
+//   overall: 'healthy'
+// }
+```
+
+### Deployment
+
+Deploy PostgreSQL replication using the provided script:
+
+```bash
+# Deploy complete PostgreSQL replication cluster
+./scripts/deploy-postgres-replication.sh --deploy
+
+# Test replication functionality
+./scripts/deploy-postgres-replication.sh --test
+
+# Check replication status
+./scripts/deploy-postgres-replication.sh --status
+
+# Test failover procedures
+./scripts/deploy-postgres-replication.sh --failover-test
+
+# Create backup
+./scripts/deploy-postgres-replication.sh --backup
+
+# Setup monitoring
+./scripts/deploy-postgres-replication.sh --monitoring
+```
+
+### API Endpoints
+
+Monitor and manage PostgreSQL replication via REST API:
+
+```bash
+# Get replication status
+GET /api/system/postgres/replication
+{
+  "success": true,
+  "data": {
+    "health": {
+      "primary": { "status": "healthy", "lagSeconds": 0 },
+      "replica": { "status": "healthy", "lagSeconds": 0.1 }
+    },
+    "metrics": {
+      "primaryConnections": 5,
+      "replicaConnections": 3,
+      "replicationLagBytes": 0,
+      "replicationLagSeconds": 0.1,
+      "failoverCount": 0
+    }
+  }
+}
+
+# Get connection pool status
+GET /api/system/postgres/pools
+
+# Trigger manual failover
+POST /api/system/postgres/failover
+{
+  "target": "replica",
+  "reason": "Planned maintenance"
+}
+```
+
+### Health Monitoring
+
+The Database HA service continuously monitors:
+
+- **Primary/Replica Connectivity**: Connection health and response times
+- **Replication Lag**: Both byte and time-based lag monitoring
+- **Connection Pool Status**: Active connections and pool utilization
+- **Standby Status**: Verification of replica read-only status
+- **WAL Position**: Current and replay WAL positions
+
+### Failover Process
+
+#### Automatic Failover
+Occurs when:
+1. Primary database becomes unhealthy
+2. Replica is healthy and available
+3. Replication lag is within acceptable limits
+
+#### Manual Failover
+Can be triggered via:
+- REST API endpoints
+- Database HA service methods
+- Deployment scripts
+
+#### Failover Steps
+1. **Health Check**: Verify replica is ready
+2. **Promote Replica**: Convert to primary if needed
+3. **Switch Connections**: Route traffic to new primary
+4. **Update Configuration**: Adjust connection strings
+5. **Verify Operations**: Test write operations
+6. **Log Event**: Record failover details
+
+### Performance Metrics
+
+Monitor database performance with:
+
+- **Connection Metrics**: Active/idle connections per pool
+- **Replication Metrics**: Lag bytes/seconds, replay position
+- **Query Performance**: Statement execution times
+- **Pool Utilization**: Connection usage patterns
+- **Failover Events**: History and success rates
+
+### E2E Testing
+
+Comprehensive test suite covers:
+
+```bash
+# Run PostgreSQL replication tests
+npm run test tests/e2e/postgres-replication.e2e.test.js
+
+# Test scenarios include:
+# - Basic connectivity
+# - Data replication
+# - Health monitoring
+# - Failover procedures
+# - Performance under load
+# - Security permissions
+```
+
+### Troubleshooting
+
+#### Common Issues
+
+1. **Replication Lag Too High**
+   ```bash
+   # Check network connectivity
+   docker exec postgres-primary pg_stat_replication
+   
+   # Monitor WAL shipping
+   docker logs postgres-replica | grep "wal receiver"
+   ```
+
+2. **Failover Not Working**
+   ```bash
+   # Check replica promotion status
+   docker exec postgres-replica psql -c "SELECT pg_is_in_recovery();"
+   
+   # Verify connection strings
+   curl http://localhost:3001/api/system/postgres/replication
+   ```
+
+3. **Connection Pool Issues**
+   ```bash
+   # Check pool status
+   curl http://localhost:3001/api/system/postgres/pools
+   
+   # Monitor connection usage
+   docker exec postgres-primary psql -c "SELECT * FROM pg_stat_activity;"
+   ```
 
 ## Environment Configuration
 

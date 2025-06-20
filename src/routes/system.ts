@@ -50,4 +50,17 @@ router.get('/ha/cluster', systemController.getClusterInfo.bind(systemController)
 // POST /api/system/ha/election/force - Force leader election (admin only)
 router.post('/ha/election/force', systemController.forceLeaderElection.bind(systemController));
 
+/**
+ * PostgreSQL Replication routes
+ */
+
+// GET /api/system/postgres/replication - Get PostgreSQL replication status
+router.get('/postgres/replication', systemController.getPostgresReplicationStatus.bind(systemController));
+
+// GET /api/system/postgres/pools - Get PostgreSQL connection pool status
+router.get('/postgres/pools', systemController.getPostgresPoolStatus.bind(systemController));
+
+// POST /api/system/postgres/failover - Trigger PostgreSQL failover (admin only)
+router.post('/postgres/failover', systemController.triggerPostgresFailover.bind(systemController));
+
 export default router;
