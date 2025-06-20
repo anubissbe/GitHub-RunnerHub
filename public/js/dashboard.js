@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(refreshInterval);
     }
     
-    // Refresh data every 10 seconds
+    // Refresh data every 30 seconds (increased from 10)
     refreshInterval = setInterval(() => {
         if (!isLoading) {
             loadDashboardData();
         }
-    }, 10000);
+    }, 30000);
 });
 
 // Initialize WebSocket connection
@@ -60,8 +60,14 @@ function initializeCharts() {
         runnerDistributionChart = null;
     }
     
+    // Fix canvas container height
+    const timelineCanvas = document.getElementById('jobTimeline');
+    const timelineContainer = timelineCanvas.parentElement;
+    timelineContainer.style.position = 'relative';
+    timelineContainer.style.height = '300px';
+    
     // Job Timeline Chart
-    const timelineCtx = document.getElementById('jobTimeline').getContext('2d');
+    const timelineCtx = timelineCanvas.getContext('2d');
     jobTimelineChart = new Chart(timelineCtx, {
         type: 'line',
         data: {
@@ -190,7 +196,10 @@ function updateSystemMetrics(metrics) {
 
 // Update job timeline
 function updateJobTimeline(timeline) {
-    if (!jobTimelineChart || !timeline || timeline.length === 0) return;
+    if (!timeline || timeline.length === 0) return;
+    
+    // Don't recreate the chart, just update the data
+    if (!jobTimelineChart) return;
     
     // Ensure we have exactly 24 data points
     const timelineData = timeline.slice(0, 24);
@@ -198,18 +207,16 @@ function updateJobTimeline(timeline) {
     // Generate consistent labels
     const labels = [];
     for (let i = 23; i >= 0; i--) {
-        labels.push(`${i}h`);
+        labels.push(`-${i}h`);
     }
     
     const completed = timelineData.map(item => parseInt(item.completed) || 0);
     const failed = timelineData.map(item => parseInt(item.failed) || 0);
     
-    // Update chart data by replacing arrays
+    // Update the existing chart data
     jobTimelineChart.data.labels = labels;
     jobTimelineChart.data.datasets[0].data = completed;
     jobTimelineChart.data.datasets[1].data = failed;
-    
-    // Force update with resize check
     jobTimelineChart.update('none');
 }
 
