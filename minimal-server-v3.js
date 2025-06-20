@@ -87,13 +87,22 @@ app.get("/api/monitoring/dashboard", (req, res) => {
                     updatedAt: new Date(Date.now() - 60000).toISOString()
                 }
             ],
-            timeline: Array.from({ length: 24 }, (_, i) => ({
-                hour: new Date(Date.now() - (23 - i) * 3600000).toISOString(),
-                total: Math.floor(Math.random() * 10) + 5,
-                completed: Math.floor(Math.random() * 8) + 3,
-                failed: Math.floor(Math.random() * 2),
-                avg_duration: Math.random() * 60 + 20
-            })),
+            timeline: Array.from({ length: 24 }, (_, i) => {
+                // Create consistent hourly timestamps for the last 24 hours
+                const hourTimestamp = new Date();
+                hourTimestamp.setMinutes(0, 0, 0); // Round to the hour
+                hourTimestamp.setHours(hourTimestamp.getHours() - (23 - i));
+                
+                // Use consistent random values based on the hour
+                const seed = hourTimestamp.getHours();
+                return {
+                    hour: hourTimestamp.toISOString(),
+                    total: 5 + (seed % 10),
+                    completed: 3 + (seed % 8),
+                    failed: seed % 3,
+                    avg_duration: 20 + (seed * 2.5)
+                };
+            }),
             runnerHealth: [
                 {
                     id: "runner-1",
