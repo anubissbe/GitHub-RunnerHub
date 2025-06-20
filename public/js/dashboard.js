@@ -108,8 +108,14 @@ function initializeCharts() {
         }
     });
     
+    // Fix runner distribution container height
+    const distributionCanvas = document.getElementById('runnerDistribution');
+    const distributionContainer = distributionCanvas.parentElement;
+    distributionContainer.style.position = 'relative';
+    distributionContainer.style.height = '300px';
+    
     // Runner Distribution Chart
-    const distributionCtx = document.getElementById('runnerDistribution').getContext('2d');
+    const distributionCtx = distributionCanvas.getContext('2d');
     runnerDistributionChart = new Chart(distributionCtx, {
         type: 'doughnut',
         data: {
