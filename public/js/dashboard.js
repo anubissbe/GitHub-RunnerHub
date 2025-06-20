@@ -163,18 +163,26 @@ function updateSystemMetrics(metrics) {
 
 // Update job timeline
 function updateJobTimeline(timeline) {
-    const labels = timeline.map(item => {
+    const labels = timeline.map((item, index) => {
         const date = new Date(item.hour);
-        return date.getHours() + ':00';
+        // Use index-based labels to ensure consistency
+        return `${23 - index}h ago`;
     });
     
     const completed = timeline.map(item => parseInt(item.completed) || 0);
     const failed = timeline.map(item => parseInt(item.failed) || 0);
     
-    jobTimelineChart.data.labels = labels;
-    jobTimelineChart.data.datasets[0].data = completed;
-    jobTimelineChart.data.datasets[1].data = failed;
-    jobTimelineChart.update();
+    // Clear and reset the chart data completely
+    jobTimelineChart.data.labels.length = 0;
+    jobTimelineChart.data.labels.push(...labels);
+    
+    jobTimelineChart.data.datasets[0].data.length = 0;
+    jobTimelineChart.data.datasets[0].data.push(...completed);
+    
+    jobTimelineChart.data.datasets[1].data.length = 0;
+    jobTimelineChart.data.datasets[1].data.push(...failed);
+    
+    jobTimelineChart.update('none'); // Update without animation
 }
 
 // Update recent jobs table
