@@ -1,17 +1,14 @@
 const { Octokit } = require('@octokit/rest');
 const { Pool } = require('pg');
+const VaultClient = require('./vault-client');
 
 class GitHubAPIService {
     constructor(options = {}) {
-        this.octokit = new Octokit({
-            auth: options.token || process.env.GITHUB_TOKEN,
-            userAgent: 'RunnerHub/1.0.0',
-            retry: {
-                doNotRetry: [400, 401, 403, 422] // Don't retry client errors
-            }
-        });
-
-        this.organization = options.organization || process.env.GITHUB_ORG;
+        this.vault = new VaultClient(options.vault);
+        this.githubToken = null;
+        this.organization = null;
+        this.octokit = null;
+        this.initialized = false;
         
         // Rate limiting
         this.rateLimit = {
@@ -30,7 +27,112 @@ class GitHubAPIService {
             ssl: false
         });
 
-        console.log(`✅ GitHub API Service initialized for organization: ${this.organization}`);
+        // Initialize GitHub credentials from Vault
+        this.initializeFromVault();
+    }
+
+    /**
+     * Initialize GitHub credentials from Vault
+     */
+    async initializeFromVault() {
+        try {
+            console.log('🔐 Initializing GitHub credentials from Vault...');
+            
+            // Test Vault connectivity first
+            const vaultConnected = await this.vault.testConnection();
+            if (!vaultConnected) {
+                console.warn('⚠️ Vault not accessible, checking environment variables...');
+                this.fallbackToEnvironment();
+                return;
+            }
+
+            // Get GitHub secrets from Vault
+            const githubSecrets = await this.vault.getGitHubSecrets();
+            
+            if (githubSecrets && githubSecrets.token) {
+                this.githubToken = githubSecrets.token;
+                this.organization = githubSecrets.org || process.env.GITHUB_ORG || 'anubissbe';
+                
+                // Initialize Octokit with Vault token
+                this.octokit = new Octokit({
+                    auth: this.githubToken,
+                    userAgent: 'RunnerHub/1.0.0',
+                    retry: {
+                        doNotRetry: [400, 401, 403, 422]
+                    }
+                });
+
+                this.initialized = true;
+                console.log(`✅ GitHub API Service initialized from Vault for organization: ${this.organization}`);
+                
+                // Test the token
+                await this.testGitHubConnection();
+            } else {
+                console.warn('⚠️ No GitHub token found in Vault, checking environment variables...');
+                this.fallbackToEnvironment();
+            }
+        } catch (error) {
+            console.error('❌ Failed to initialize from Vault:', error.message);
+            this.fallbackToEnvironment();
+        }
+    }
+
+    /**
+     * Fallback to environment variables if Vault fails
+     */
+    fallbackToEnvironment() {
+        const envToken = process.env.GITHUB_TOKEN;
+        if (envToken) {
+            console.log('🔄 Using GitHub token from environment variables');
+            this.githubToken = envToken;
+            this.organization = process.env.GITHUB_ORG || 'anubissbe';
+            
+            this.octokit = new Octokit({
+                auth: this.githubToken,
+                userAgent: 'RunnerHub/1.0.0',
+                retry: {
+                    doNotRetry: [400, 401, 403, 422]
+                }
+            });
+            
+            this.initialized = true;
+            console.log(`✅ GitHub API Service initialized from environment for organization: ${this.organization}`);
+        } else {
+            console.warn('⚠️ No GitHub token found in Vault or environment variables');
+            console.log('🔧 GitHub integration disabled - running with sample data only');
+        }
+    }
+
+    /**
+     * Test GitHub API connection
+     */
+    async testGitHubConnection() {
+        if (!this.octokit) return false;
+        
+        try {
+            const { data } = await this.octokit.rest.users.getAuthenticated();
+            console.log(`✅ GitHub API connection successful - authenticated as: ${data.login}`);
+            
+            // Test organization access
+            try {
+                await this.octokit.rest.orgs.get({ org: this.organization });
+                console.log(`✅ Organization access confirmed: ${this.organization}`);
+            } catch (orgError) {
+                console.warn(`⚠️ Organization access issue for ${this.organization}:`, orgError.message);
+            }
+            
+            return true;
+        } catch (error) {
+            console.error('❌ GitHub API connection test failed:', error.message);
+            return false;
+        }
+    }
+
+    /**
+     * Check if GitHub integration is enabled
+     */
+    isEnabled() {
+        return this.initialized && this.githubToken && this.octokit;
     }
 
     /**
@@ -78,7 +180,9 @@ class GitHubAPIService {
 
             try {
                 const result = await request.function();
-                this.updateRateLimit(result.headers);
+                if (result && result.headers) {
+                    this.updateRateLimit(result.headers);
+                }
                 request.resolve(result);
             } catch (error) {
                 console.error('GitHub API request failed:', error.message);
@@ -107,16 +211,27 @@ class GitHubAPIService {
      * Get all self-hosted runners for the organization
      */
     async getRunners() {
+        if (!this.isEnabled()) {
+            throw new Error('GitHub integration not enabled');
+        }
+        
         console.log('📡 Fetching GitHub runners...');
         
         return this.makeRequest(async () => {
-            const response = await this.octokit.rest.actions.listSelfHostedRunnersForOrg({
-                org: this.organization,
-                per_page: 100
-            });
-            
-            console.log(`✅ Found ${response.data.runners.length} GitHub runners`);
-            return response;
+            // First try organization (if it's actually an org)
+            try {
+                const response = await this.octokit.rest.actions.listSelfHostedRunnersForOrg({
+                    org: this.organization,
+                    per_page: 100
+                });
+                
+                console.log(`✅ Found ${response.data.runners.length} GitHub org runners`);
+                return response;
+            } catch (error) {
+                // If org fails, it might be a personal account - personal accounts don't have org-level runners
+                console.log('⚠️ No organization runners available (likely personal account)');
+                return { data: { runners: [] } };
+            }
         }, 'high');
     }
 
@@ -124,22 +239,43 @@ class GitHubAPIService {
      * Get workflow runs for the organization (last 24 hours)
      */
     async getRecentWorkflowRuns(repositories = []) {
+        if (!this.isEnabled()) {
+            throw new Error('GitHub integration not enabled');
+        }
+        
         console.log('📡 Fetching recent workflow runs...');
         
         const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const allRuns = [];
 
-        // If no repositories specified, get all org repos
+        // If no repositories specified, get all user repos (handles both orgs and personal accounts)
         if (repositories.length === 0) {
-            const reposResponse = await this.makeRequest(async () => {
-                return await this.octokit.rest.repos.listForOrg({
-                    org: this.organization,
-                    type: 'all',
-                    per_page: 100
-                });
-            }, 'normal');
-            
-            repositories = reposResponse.data.map(repo => repo.name);
+            try {
+                // Try user repos first (works for personal accounts)
+                const reposResponse = await this.makeRequest(async () => {
+                    return await this.octokit.rest.repos.listForUser({
+                        username: this.organization,
+                        type: 'all',
+                        per_page: 100
+                    });
+                }, 'normal');
+                
+                repositories = reposResponse.data.map(repo => repo.name);
+                console.log(`✅ Found ${repositories.length} repositories for user ${this.organization}`);
+            } catch (error) {
+                console.warn('⚠️ Failed to get user repositories, trying authenticated user repos');
+                
+                // Fallback to authenticated user's repos
+                const reposResponse = await this.makeRequest(async () => {
+                    return await this.octokit.rest.repos.listForAuthenticatedUser({
+                        type: 'all',
+                        per_page: 100
+                    });
+                }, 'normal');
+                
+                repositories = reposResponse.data.map(repo => repo.name);
+                console.log(`✅ Found ${repositories.length} repositories for authenticated user`);
+            }
         }
 
         // Get workflow runs for each repository
@@ -184,6 +320,11 @@ class GitHubAPIService {
      * Sync GitHub runners to database
      */
     async syncRunners() {
+        if (!this.isEnabled()) {
+            console.log('⚠️ GitHub integration disabled, skipping runner sync');
+            return 0;
+        }
+        
         try {
             console.log('🔄 Syncing GitHub runners to database...');
             
@@ -227,6 +368,11 @@ class GitHubAPIService {
      * Sync workflow runs and jobs to database
      */
     async syncWorkflowData() {
+        if (!this.isEnabled()) {
+            console.log('⚠️ GitHub integration disabled, skipping workflow sync');
+            return 0;
+        }
+        
         try {
             console.log('🔄 Syncing GitHub workflow data to database...');
             

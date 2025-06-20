@@ -23,10 +23,7 @@ const pool = new Pool({
 });
 
 // Initialize GitHub API service
-const githubService = new GitHubAPIService({
-    token: process.env.GITHUB_TOKEN,
-    organization: process.env.GITHUB_ORG || 'anubissbe'
-});
+const githubService = new GitHubAPIService();
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
@@ -37,13 +34,25 @@ pool.query('SELECT NOW()', (err, res) => {
     }
 });
 
-// Start GitHub API sync
-if (process.env.GITHUB_TOKEN) {
-    console.log('🚀 Starting GitHub API integration...');
-    githubService.startPeriodicSync();
-} else {
-    console.log('⚠️ GITHUB_TOKEN not provided, running with sample data only');
+// Initialize GitHub service and start sync when ready
+async function initializeGitHubIntegration() {
+    try {
+        // Wait for GitHub service to initialize from Vault
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Give Vault time to initialize
+        
+        if (githubService.isEnabled()) {
+            console.log('🚀 Starting GitHub API integration with Vault credentials...');
+            githubService.startPeriodicSync();
+        } else {
+            console.log('⚠️ GitHub integration disabled - no token found in Vault or environment');
+        }
+    } catch (error) {
+        console.error('❌ Failed to initialize GitHub integration:', error.message);
+    }
 }
+
+// Start GitHub initialization
+initializeGitHubIntegration();
 
 // Middleware
 app.use(express.json());
@@ -61,7 +70,8 @@ app.get('/health', async (req, res) => {
             database: 'connected',
             github: {
                 rateLimit: rateLimitStatus,
-                integration: process.env.GITHUB_TOKEN ? 'enabled' : 'disabled'
+                integration: githubService.isEnabled() ? 'enabled' : 'disabled',
+                source: githubService.githubToken ? (process.env.GITHUB_TOKEN ? 'environment' : 'vault') : 'none'
             }
         });
     } catch (error) {
@@ -98,8 +108,9 @@ app.get('/api/github/status', async (req, res) => {
         res.json({
             success: true,
             data: {
-                integration: process.env.GITHUB_TOKEN ? 'enabled' : 'disabled',
-                organization: process.env.GITHUB_ORG || 'anubissbe',
+                integration: githubService.isEnabled() ? 'enabled' : 'disabled',
+                organization: githubService.organization || 'anubissbe',
+                tokenSource: githubService.githubToken ? (process.env.GITHUB_TOKEN ? 'environment' : 'vault') : 'none',
                 rateLimit: rateLimitStatus,
                 sync: {
                     lastSync: syncStats.rows[0].last_sync,
