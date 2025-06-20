@@ -4,13 +4,25 @@ let jobTimelineChart;
 let runnerDistributionChart;
 
 // Initialize dashboard
+let isLoading = false;
+let refreshInterval = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     initializeSocket();
     initializeCharts();
     loadDashboardData();
     
+    // Clear any existing interval
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+    
     // Refresh data every 10 seconds
-    setInterval(loadDashboardData, 10000);
+    refreshInterval = setInterval(() => {
+        if (!isLoading) {
+            loadDashboardData();
+        }
+    }, 10000);
 });
 
 // Initialize WebSocket connection
@@ -38,6 +50,16 @@ function initializeSocket() {
 
 // Initialize charts
 function initializeCharts() {
+    // Destroy existing charts if they exist
+    if (jobTimelineChart) {
+        jobTimelineChart.destroy();
+        jobTimelineChart = null;
+    }
+    if (runnerDistributionChart) {
+        runnerDistributionChart.destroy();
+        runnerDistributionChart = null;
+    }
+    
     // Job Timeline Chart
     const timelineCtx = document.getElementById('jobTimeline').getContext('2d');
     jobTimelineChart = new Chart(timelineCtx, {
@@ -109,6 +131,9 @@ function initializeCharts() {
 
 // Load dashboard data
 async function loadDashboardData() {
+    if (isLoading) return;
+    
+    isLoading = true;
     try {
         const response = await fetch('/api/monitoring/dashboard');
         const result = await response.json();
@@ -118,6 +143,8 @@ async function loadDashboardData() {
         }
     } catch (error) {
         console.error('Failed to load dashboard data:', error);
+    } finally {
+        isLoading = false;
     }
 }
 
@@ -163,26 +190,27 @@ function updateSystemMetrics(metrics) {
 
 // Update job timeline
 function updateJobTimeline(timeline) {
-    const labels = timeline.map((item, index) => {
-        const date = new Date(item.hour);
-        // Use index-based labels to ensure consistency
-        return `${23 - index}h ago`;
-    });
+    if (!jobTimelineChart || !timeline || timeline.length === 0) return;
     
-    const completed = timeline.map(item => parseInt(item.completed) || 0);
-    const failed = timeline.map(item => parseInt(item.failed) || 0);
+    // Ensure we have exactly 24 data points
+    const timelineData = timeline.slice(0, 24);
     
-    // Clear and reset the chart data completely
-    jobTimelineChart.data.labels.length = 0;
-    jobTimelineChart.data.labels.push(...labels);
+    // Generate consistent labels
+    const labels = [];
+    for (let i = 23; i >= 0; i--) {
+        labels.push(`${i}h`);
+    }
     
-    jobTimelineChart.data.datasets[0].data.length = 0;
-    jobTimelineChart.data.datasets[0].data.push(...completed);
+    const completed = timelineData.map(item => parseInt(item.completed) || 0);
+    const failed = timelineData.map(item => parseInt(item.failed) || 0);
     
-    jobTimelineChart.data.datasets[1].data.length = 0;
-    jobTimelineChart.data.datasets[1].data.push(...failed);
+    // Update chart data by replacing arrays
+    jobTimelineChart.data.labels = labels;
+    jobTimelineChart.data.datasets[0].data = completed;
+    jobTimelineChart.data.datasets[1].data = failed;
     
-    jobTimelineChart.update('none'); // Update without animation
+    // Force update with resize check
+    jobTimelineChart.update('none');
 }
 
 // Update recent jobs table
