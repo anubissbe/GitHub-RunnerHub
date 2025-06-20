@@ -4,226 +4,104 @@
 
 ```
 GitHub-RunnerHub/
-├── src/                       # Source code
-│   ├── app.ts                # Express application setup
-│   ├── index.ts              # Application entry point
-│   ├── config/               # Configuration management
-│   │   └── index.ts         # Config loader with defaults
-│   ├── controllers/          # REST API controllers
-│   │   ├── audit-controller.ts
-│   │   ├── auth-controller.ts
-│   │   ├── cleanup-controller.ts
-│   │   ├── container-controller.ts
-│   │   ├── job-controller.ts
-│   │   ├── monitoring-controller.ts
-│   │   ├── network-controller.ts
-│   │   ├── routing-controller.ts
-│   │   ├── runner-controller.ts
-│   │   ├── scaling-controller.ts
-│   │   ├── security-controller.ts
-│   │   ├── system-controller.ts
-│   │   └── webhook-controller.ts
+├── src/                      # Source code
+│   ├── controllers/          # API controllers
 │   ├── middleware/           # Express middleware
-│   │   ├── async-handler.ts
-│   │   ├── auth.ts
-│   │   ├── error-handler.ts
-│   │   ├── rate-limiter.ts
-│   │   ├── request-logger.ts
-│   │   └── webhook-middleware.ts
-│   ├── routes/               # API route definitions
-│   │   ├── audit.ts
-│   │   ├── auth.ts
-│   │   ├── cleanup.ts
-│   │   ├── containers.ts
-│   │   ├── health.ts
-│   │   ├── jobs.ts
-│   │   ├── metrics.ts
-│   │   ├── monitoring.ts
-│   │   ├── networks.ts
-│   │   ├── routing.ts
-│   │   ├── runners.ts
-│   │   ├── scaling.ts
-│   │   ├── security.ts
-│   │   ├── system.ts
-│   │   └── webhook-routes.ts
-│   ├── services/             # Business logic services
-│   │   ├── audit-logger.ts
-│   │   ├── auto-scaler.ts
-│   │   ├── container-cleanup.ts
-│   │   ├── container-lifecycle.ts
-│   │   ├── container-orchestrator-v2.ts
-│   │   ├── container-orchestrator.ts
-│   │   ├── database.ts
-│   │   ├── github-api.ts
-│   │   ├── github-webhook.ts
-│   │   ├── job-queue.ts
-│   │   ├── job-router.ts
-│   │   ├── monitoring.ts
-│   │   ├── network-isolation.ts
-│   │   ├── proxy-runner.ts
-│   │   ├── runner-pool-manager.ts
-│   │   ├── security-scanner.ts
-│   │   ├── service-manager.ts
-│   │   └── vault-service.ts
-│   ├── types/                # TypeScript type definitions
-│   │   └── index.ts
-│   └── utils/                # Utility functions
-│       ├── errors.ts
-│       └── logger.ts
+│   ├── routes/               # API routes
+│   ├── services/             # Business logic
+│   ├── types/                # TypeScript definitions
+│   ├── utils/                # Utility functions
+│   ├── app.ts               # Express application
+│   └── index.ts             # Entry point
 │
-├── tests/                    # Test suites
-│   ├── e2e/                 # End-to-end tests
-│   │   ├── audit-logging.e2e.test.js
-│   │   ├── complete-workflow.e2e.test.js
-│   │   ├── network-isolation.e2e.test.js
-│   │   └── security-scanning.test.ts
-│   ├── services/            # Service unit tests
-│   │   ├── auto-scaler.test.ts
-│   │   ├── container-cleanup.test.ts
-│   │   ├── container-lifecycle.test.ts
-│   │   ├── github-webhook.test.ts
-│   │   ├── job-router.test.ts
-│   │   └── monitoring.test.ts
-│   └── unit/                # Unit tests
-│       ├── auth-controller.test.ts
-│       └── auth-middleware.test.ts
+├── dist/                     # Compiled JavaScript
 │
-├── migrations/               # Database migrations
-│   ├── 001_initial_schema.sql
-│   ├── 002_add_containers_table.sql
-│   ├── 003_create_users_table.sql
-│   ├── 004_create_network_isolation_table.sql
-│   ├── 005_create_audit_logs_table.sql
-│   └── 006_create_security_scanning_tables.sql
+├── public/                   # Static files
+│   ├── index.html           # Dashboard HTML
+│   └── js/                  # Client-side JavaScript
 │
 ├── docker/                   # Docker configurations
-│   ├── orchestrator/        # Orchestrator Dockerfile
-│   │   └── Dockerfile
-│   ├── postgres/            # PostgreSQL initialization
-│   │   └── init.sql
-│   └── proxy-runner/        # Proxy runner container
-│       ├── Dockerfile
-│       └── entrypoint.sh
+│   ├── postgres/            # PostgreSQL init scripts
+│   ├── redis/               # Redis configuration
+│   └── nginx/               # Nginx configuration
 │
-├── infrastructure/          # Infrastructure configurations
-│   └── postgres/           # Database infrastructure
-│       └── migrations/     # Additional migrations
+├── scripts/                  # Utility scripts
+│   ├── ha/                  # High availability scripts
+│   ├── monitoring/          # Monitoring scripts
+│   └── setup-*.sh           # Setup scripts
 │
-├── scripts/                 # Utility scripts
-│   ├── run-e2e-tests.sh
-│   ├── run-migrations.sh
-│   ├── setup-vault-secrets.sh
-│   ├── test-auth.sh
-│   ├── test-cleanup.sh
-│   ├── test-security-scanning.ts
-│   ├── test-startup.js
-│   ├── test-webhook-integration.sh
-│   └── verify-build.sh
+├── config/                   # Configuration files
+│   ├── haproxy.cfg         # HAProxy configuration
+│   └── redis-sentinel.conf  # Redis Sentinel config
 │
-├── hooks/                   # GitHub Actions hooks
-│   ├── job-completed.sh
-│   └── job-started.sh
+├── docs/                     # Documentation
+│   ├── api/                 # API documentation
+│   ├── features/            # Feature documentation
+│   ├── ARCHITECTURE.md      # Architecture overview
+│   └── DEPLOYMENT_GUIDE.md  # Deployment guide
 │
-├── public/                  # Static web assets
-│   ├── index.html          # Dashboard HTML
-│   └── js/
-│       └── dashboard.js    # Dashboard JavaScript
+├── test/                     # Test files
+│   ├── unit/                # Unit tests
+│   ├── integration/         # Integration tests
+│   └── e2e/                 # End-to-end tests
 │
-├── docs/                    # Documentation
-│   ├── features/           # Feature documentation
-│   │   ├── audit-logging.md
-│   │   ├── container-security-scanning.md
-│   │   └── network-isolation.md
-│   ├── API_REFERENCE.md
-│   ├── AUDIT_LOGGING.md
-│   ├── AUTO_SCALING.md
-│   ├── CONTAINER_CLEANUP.md
-│   ├── CONTAINER_LIFECYCLE_MANAGEMENT.md
-│   ├── DEVELOPMENT_GUIDE.md
-│   ├── GITHUB_WEBHOOK_INTEGRATION.md
-│   ├── JOB_ROUTING.md
-│   ├── MONITORING_DASHBOARD.md
-│   ├── NETWORK_ISOLATION.md
-│   ├── PROJECT_STRUCTURE.md
-│   ├── PROXY_RUNNER_HOOKS.md
-│   └── RUNNER_POOL_MANAGEMENT.md
+├── infrastructure/           # Infrastructure code
+│   └── postgres/            # Database schemas
 │
-├── logs/                    # Application logs
-│   └── .gitkeep
+├── .github/                  # GitHub specific files
+│   └── workflows/           # GitHub Actions
 │
-├── .env.example            # Example environment configuration
-├── .gitignore             # Git ignore rules
-├── ARCHITECTURE.md        # System architecture
-├── docker-compose.yml     # Docker compose configuration
-├── eslint.config.js       # ESLint configuration
-├── jest.config.js         # Jest test configuration
-├── package.json           # Node.js dependencies
-├── package-lock.json      # Dependency lock file
-├── PROJECT_STATE.md       # Project state tracking
-├── PROJECT_STATE_FINAL.md # Final project summary
-├── README.md              # Project documentation
-├── TODO.md                # Task tracking
-└── tsconfig.json          # TypeScript configuration
+├── docker-compose.yml        # Standard deployment
+├── docker-compose.ha.yml     # HA deployment
+├── docker-compose.remote.yml # Remote deployment
+├── package.json             # Node.js dependencies
+├── tsconfig.json            # TypeScript config
+├── .env.example             # Environment template
+├── .gitignore               # Git ignore rules
+├── LICENSE                  # MIT license
+└── README.md                # Project documentation
 ```
 
-## Key Directories
+## Key Files
 
-### `/src`
-Contains all source code organized by function:
-- **controllers**: Handle HTTP requests and responses
-- **services**: Business logic and external integrations
-- **middleware**: Request processing pipeline
-- **routes**: API endpoint definitions
-- **types**: Shared TypeScript interfaces
-- **utils**: Helper functions
+### Configuration Files
+- `.env.example` - Environment variable template
+- `tsconfig.json` - TypeScript compiler configuration
+- `docker-compose.yml` - Docker service definitions
+- `config/` - Various service configurations
 
-### `/tests`
-Organized test suites:
-- **e2e**: End-to-end integration tests
-- **services**: Service-level unit tests
-- **unit**: Individual component tests
+### Entry Points
+- `src/index.ts` - Main application entry point
+- `src/app.ts` - Express application setup
+- `public/index.html` - Dashboard UI entry point
 
-### `/migrations`
-Database schema evolution:
-- Sequential SQL files
-- Applied in order during setup
+### Scripts
+- `quick-start.sh` - Local development setup
+- `remote-quick-start.sh` - Remote deployment configuration
+- `deploy-to-remote.sh` - Automated remote deployment
+- `install.sh` - Full installation script
+- `verify-installation.sh` - Installation verification
 
-### `/docker`
-Container definitions:
-- Each service has its own directory
-- Includes Dockerfiles and entry scripts
+### Documentation
+- `README.md` - Main project documentation
+- `docs/ARCHITECTURE.md` - System architecture
+- `docs/DEPLOYMENT_GUIDE.md` - Deployment instructions
+- `docs/api/` - API documentation
+- `docs/features/` - Feature-specific guides
 
-### `/docs`
-Comprehensive documentation:
-- Feature-specific guides in `/features`
-- API and development documentation
+## Development Workflow
 
-### `/scripts`
-Automation and utility scripts:
-- Testing helpers
-- Migration runners
-- Setup utilities
+1. **Source Code**: All TypeScript source in `src/`
+2. **Compilation**: TypeScript compiles to `dist/`
+3. **Static Files**: Dashboard UI in `public/`
+4. **Configuration**: Environment variables in `.env`
+5. **Deployment**: Docker Compose orchestration
+6. **Testing**: Comprehensive test suite in `test/`
 
-## File Naming Conventions
+## Best Practices
 
-- **Controllers**: `<feature>-controller.ts`
-- **Services**: `<feature>-service.ts` or `<feature>.ts`
-- **Routes**: `<feature>.ts`
-- **Tests**: `<file>.test.ts` or `<file>.e2e.test.js`
-- **Migrations**: `<number>_<description>.sql`
-
-## Configuration Files
-
-- `.env.example`: Template for environment variables
-- `tsconfig.json`: TypeScript compiler options
-- `jest.config.js`: Test runner configuration
-- `eslint.config.js`: Code style rules
-- `docker-compose.yml`: Multi-container setup
-
-## Build Artifacts
-
-The following directories are generated and should not be committed:
-- `/dist`: Compiled JavaScript output
-- `/node_modules`: NPM dependencies
-- `/coverage`: Test coverage reports
-- `/logs/*.log`: Application log files
+1. **Keep secrets out of version control** - Use `.env.example` as template
+2. **Document new features** - Add to `docs/features/`
+3. **Test before committing** - Run `npm test`
+4. **Update deployment scripts** - Maintain compatibility
+5. **Follow TypeScript conventions** - Strict mode enabled

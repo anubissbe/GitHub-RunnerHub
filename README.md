@@ -56,13 +56,43 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 
 ## Quick Start
 
-### One-Click Installation 🚀
+### 🚀 Remote Server Deployment (Production)
 
-The fastest way to get started:
+Deploy GitHub RunnerHub to a remote server:
 
 ```bash
 git clone https://github.com/anubissbe/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
+
+# 1. Generate secure configuration
+./remote-quick-start.sh
+
+# 2. Deploy to your server
+./deploy-to-remote.sh
+
+# Access your deployment:
+# Dashboard: http://your-server:3001/dashboard
+# API: http://your-server:3001/api
+```
+
+**Remote Deployment Features:**
+- ✅ Automated deployment via SSH
+- ✅ Docker-based containerization
+- ✅ Secure credential generation
+- ✅ Production-ready defaults
+- ✅ Complete guide: [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)
+
+**Documentation:**
+- 📚 [Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Detailed deployment instructions
+- 🏗️ [Architecture](docs/ARCHITECTURE.md) - System architecture overview
+- 📁 [Project Structure](docs/PROJECT_STRUCTURE.md) - Directory layout and organization
+- 🔐 [Security Features](docs/features/) - Security and feature documentation
+
+### 💻 Local Development
+
+The fastest way to get started locally:
+
+```bash
 ./quick-start.sh
 ```
 

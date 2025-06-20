@@ -6,7 +6,7 @@ set -e
 
 # Configuration
 VAULT_ADDR="${VAULT_ADDR:-http://${VAULT_HOST:-localhost}:8200}"
-VAULT_TOKEN="${VAULT_TOKEN:-hvs.Qf23PWvczlY4DO1IXAkqI8XL}"
+VAULT_TOKEN="${VAULT_TOKEN:-your-vault-token}"
 VAULT_NAMESPACE="${VAULT_NAMESPACE:-}"
 
 echo "🔐 Setting up GitHub RunnerHub secrets in Vault"
