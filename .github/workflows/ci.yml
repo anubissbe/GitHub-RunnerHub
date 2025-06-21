@@ -8,36 +8,11 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, docker, runnerhub]
     
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
-    
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: github_runnerhub_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
+        node-version: [20.x]
     
     steps:
     - uses: actions/checkout@v4
@@ -73,7 +48,7 @@ jobs:
       run: npm run build
 
   docker:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, docker, runnerhub]
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
