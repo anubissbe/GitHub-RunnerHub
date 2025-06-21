@@ -25,7 +25,8 @@ export default [
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',
-        clearInterval: 'readonly'
+        clearInterval: 'readonly',
+        NodeJS: 'readonly'
       }
     },
     rules: {
@@ -58,7 +59,8 @@ export default [
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         setInterval: 'readonly',
-        clearInterval: 'readonly'
+        clearInterval: 'readonly',
+        NodeJS: 'readonly'
       }
     },
     plugins: {

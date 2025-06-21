@@ -91,7 +91,7 @@ class VaultClient {
      */
     async testConnection() {
         try {
-            const response = await this.client.get('/v1/sys/health');
+            await this.client.get('/v1/sys/health');
             console.log('✅ Vault connectivity test successful');
             return true;
         } catch (error) {
@@ -103,7 +103,7 @@ class VaultClient {
     /**
      * List available secrets (for debugging)
      */
-    async listSecrets(path = '') {
+    async listSecrets(_path = '') {
         try {
             const response = await this.client.get(`/v1/secret/metadata`, {
                 params: { list: true }

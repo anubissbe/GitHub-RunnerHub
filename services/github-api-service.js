@@ -227,7 +227,7 @@ class GitHubAPIService {
                 
                 console.log(`✅ Found ${response.data.runners.length} GitHub org runners`);
                 return response;
-            } catch (error) {
+            } catch (_error) {
                 // If org fails, try repository-level runners (for personal accounts)
                 console.log('⚠️ No organization runners available, checking repository runners...');
                 return await this.getRepositoryRunners();
@@ -286,7 +286,7 @@ class GitHubAPIService {
                 
                 repositories = reposResponse.data.map(repo => repo.name);
                 console.log(`✅ Found ${repositories.length} repositories for user ${this.organization}`);
-            } catch (error) {
+            } catch (_error) {
                 console.warn('⚠️ Failed to get user repositories, trying authenticated user repos');
                 
                 // Fallback to authenticated user's repos
