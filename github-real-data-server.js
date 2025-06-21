@@ -61,7 +61,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Health check endpoint
 app.get('/health', async (req, res) => {
     try {
-        const dbResult = await pool.query('SELECT 1');
+        await pool.query('SELECT 1');
         const rateLimitStatus = githubService.getRateLimitStatus();
         
         res.json({ 
