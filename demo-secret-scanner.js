@@ -18,7 +18,7 @@ const API_BASE = `${BASE_URL}/api`;
 const sampleJobLogs = {
   "github-deployment": `2023-12-01T10:00:00Z [INFO] Starting GitHub deployment job
 2023-12-01T10:00:01Z [DEBUG] Setting up environment variables
-2023-12-01T10:00:02Z [DEBUG] GITHUB_TOKEN=ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
+2023-12-01T10:00:02Z [DEBUG] GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 2023-12-01T10:00:03Z [INFO] Cloning repository...
 2023-12-01T10:00:04Z [DEBUG] git clone https://github.com/user/repo.git
 2023-12-01T10:00:05Z [INFO] Repository cloned successfully
@@ -191,7 +191,7 @@ function detectSecretsDemo(logContent) {
   const patterns = [
     {
       name: 'GitHub Token',
-      regex: /ghp_[a-zA-Z0-9]{36}/g,
+      regex: /YOUR_GITHUB_TOKEN[a-zA-Z0-9]{36}/g,
       severity: 'CRITICAL',
       category: 'TOKEN'
     },
@@ -316,7 +316,7 @@ async function showSecretScannerConfig() {
     notifyOnDetection: true,
     blockJobOnSecrets: false,
     supportedPatterns: [
-      'GitHub Tokens (ghp_*, github_pat_*)',
+      'GitHub Tokens (YOUR_GITHUB_TOKEN*, github_pat_*)',
       'AWS Access Keys (AKIA*)',
       'AWS Secret Keys',
       'Generic API Keys',

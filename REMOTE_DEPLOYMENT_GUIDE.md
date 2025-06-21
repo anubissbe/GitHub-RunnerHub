@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide helps you deploy GitHub RunnerHub on a remote server (192.168.1.16 or any other server).
+This guide helps you deploy GitHub RunnerHub on a remote server (YOUR_DOCKER_HOST or any other server).
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@ This guide helps you deploy GitHub RunnerHub on a remote server (192.168.1.16 or
 - Git installed
 - The GitHub RunnerHub repository cloned
 
-### On the Remote Server (192.168.1.16)
+### On the Remote Server (YOUR_DOCKER_HOST)
 - Ubuntu 20.04+ or similar Linux distribution
 - Root or sudo access
 - At least 4GB RAM
@@ -36,7 +36,7 @@ This will:
 
 ```bash
 # Create directory on remote server
-ssh root@192.168.1.16 "mkdir -p /opt/github-runnerhub"
+ssh root@YOUR_DOCKER_HOST "mkdir -p /opt/github-runnerhub"
 
 # Copy files (excluding unnecessary ones)
 rsync -av \
@@ -45,7 +45,7 @@ rsync -av \
   --exclude='dist' \
   --exclude='logs' \
   --exclude='coverage' \
-  ./ root@192.168.1.16:/opt/github-runnerhub/
+  ./ root@YOUR_DOCKER_HOST:/opt/github-runnerhub/
 ```
 
 ### 3. Setup Remote Server
@@ -53,7 +53,7 @@ rsync -av \
 SSH to the server and run the setup:
 
 ```bash
-ssh root@192.168.1.16
+ssh root@YOUR_DOCKER_HOST
 cd /opt/github-runnerhub
 
 # Install Docker if not present
@@ -152,7 +152,7 @@ Key variables in `.env`:
 # Change these for your setup
 GITHUB_TOKEN=your_github_token
 GITHUB_ORG=your_organization
-EXTERNAL_HOST=192.168.1.16
+EXTERNAL_HOST=YOUR_DOCKER_HOST
 
 # Database settings (auto-generated passwords)
 DB_PASSWORD=secure_password
@@ -225,7 +225,7 @@ htop
 ### Health Checks
 ```bash
 # API health
-curl http://192.168.1.16:3001/health
+curl http://YOUR_DOCKER_HOST:3001/health
 
 # Database health
 docker-compose -f docker-compose.remote.yml exec postgres pg_isready
@@ -270,10 +270,10 @@ rsync -av \
   --exclude='node_modules' \
   --exclude='.git' \
   --exclude='.env' \
-  ./ root@192.168.1.16:/opt/github-runnerhub/
+  ./ root@YOUR_DOCKER_HOST:/opt/github-runnerhub/
 
 # On remote server
-ssh root@192.168.1.16
+ssh root@YOUR_DOCKER_HOST
 cd /opt/github-runnerhub
 docker-compose -f docker-compose.remote.yml down
 docker-compose -f docker-compose.remote.yml up -d

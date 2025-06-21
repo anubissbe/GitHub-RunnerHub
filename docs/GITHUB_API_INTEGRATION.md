@@ -61,7 +61,7 @@ The GitHub-RunnerHub project now includes an enhanced GitHub API integration wit
 ### Environment Variables
 ```bash
 # Required - GitHub API Access
-GITHUB_TOKEN=ghp_xxxxxxxxxxxx                    # Personal Access Token or GitHub App JWT
+GITHUB_TOKEN=YOUR_GITHUB_TOKEN                    # Personal Access Token or GitHub App JWT
 GITHUB_ORG=your-organization                     # Organization name (optional for personal repos)
 GITHUB_APP_ID=123456                            # GitHub App ID (if using GitHub App)
 GITHUB_APP_PRIVATE_KEY=/path/to/private-key.pem # GitHub App private key
@@ -149,13 +149,13 @@ The system automatically retrieves GitHub credentials from HashiCorp Vault:
 ```bash
 # Vault paths for secrets
 vault kv put secret/api-keys \
-  GITHUB_TOKEN="ghp_xxxxxxxxxxxx" \
+  GITHUB_TOKEN="YOUR_GITHUB_TOKEN" \
   GITHUB_ORG="your-organization" \
   GITHUB_APP_ID="123456" \
   GITHUB_WEBHOOK_SECRET="your_webhook_secret"
 
 # Alternative: Store as separate secrets
-vault kv put secret/github/token value="ghp_xxxxxxxxxxxx"
+vault kv put secret/github/token value="YOUR_GITHUB_TOKEN"
 vault kv put secret/github/org value="your-organization"
 vault kv put secret/github/app-id value="123456"
 vault kv put secret/github/webhook-secret value="your_webhook_secret"

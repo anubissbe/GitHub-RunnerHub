@@ -66,7 +66,7 @@ The task to implement secret scanning for job logs has been **successfully compl
 ## 🛡️ Security Features
 
 ### Secret Detection Capabilities
-- **GitHub Tokens**: `ghp_*`, `github_pat_*` patterns
+- **GitHub Tokens**: `YOUR_GITHUB_TOKEN*`, `github_pat_*` patterns
 - **AWS Credentials**: Access keys, secret keys with entropy validation
 - **API Keys**: Generic API key patterns with configurable formats
 - **Database URLs**: PostgreSQL, MySQL, MongoDB, Redis connection strings

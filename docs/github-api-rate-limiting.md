@@ -132,7 +132,7 @@ if (rateLimit.remaining < 1000) {
 ### Environment Variables
 ```bash
 # GitHub API Token (required)
-GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+GITHUB_TOKEN=YOUR_GITHUB_TOKEN
 
 # Redis Configuration (optional)
 REDIS_HOST=localhost

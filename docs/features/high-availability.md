@@ -98,9 +98,9 @@ frontend github_runnerhub_frontend
 backend github_runnerhub_backend
     balance roundrobin
     option httpchk GET /health
-    server orchestrator1 192.168.1.10:3001 check
-    server orchestrator2 192.168.1.11:3001 check
-    server orchestrator3 192.168.1.12:3001 check
+    server orchestrator1 YOUR_DOCKER_HOST:3001 check
+    server orchestrator2 YOUR_DOCKER_HOST:3001 check
+    server orchestrator3 YOUR_DOCKER_HOST:3001 check
 
 frontend websocket_frontend
     bind *:3001
@@ -109,9 +109,9 @@ frontend websocket_frontend
 backend websocket_backend
     balance source
     option httpchk GET /health
-    server ws1 192.168.1.10:3002 check
-    server ws2 192.168.1.11:3002 check
-    server ws3 192.168.1.12:3002 check
+    server ws1 YOUR_DOCKER_HOST:3002 check
+    server ws2 YOUR_DOCKER_HOST:3002 check
+    server ws3 YOUR_DOCKER_HOST:3002 check
 ```
 
 ### Redis Sentinel Configuration
@@ -536,7 +536,7 @@ npm run test tests/e2e/postgres-replication.e2e.test.js
 # High Availability Configuration
 HA_ENABLED=true
 HA_NODE_ID=orchestrator-1
-HA_CLUSTER_NODES=192.168.1.10,192.168.1.11,192.168.1.12
+HA_CLUSTER_NODES=YOUR_DOCKER_HOST,YOUR_DOCKER_HOST,YOUR_DOCKER_HOST
 
 # Load Balancer
 LOAD_BALANCER_URL=https://runnerhub.example.com
@@ -549,13 +549,13 @@ DATABASE_CONNECTION_POOL_SIZE=20
 DATABASE_MAX_CONNECTIONS=100
 
 # Redis HA
-REDIS_SENTINEL_HOSTS=192.168.1.20:26379,192.168.1.21:26379,192.168.1.22:26379
+REDIS_SENTINEL_HOSTS=YOUR_DOCKER_HOST:26379,YOUR_DOCKER_HOST:26379,YOUR_DOCKER_HOST:26379
 REDIS_MASTER_NAME=github-runnerhub-redis
 REDIS_SENTINEL_PASSWORD=your_sentinel_password
 
 # Shared Storage
 SHARED_STORAGE_PATH=/mnt/shared/runnerhub
-NFS_SERVER=192.168.1.30
+NFS_SERVER=YOUR_DOCKER_HOST
 NFS_MOUNT_POINT=/exports/runnerhub
 
 # Leader Election

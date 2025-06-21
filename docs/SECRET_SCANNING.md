@@ -35,7 +35,7 @@ The GitHub-RunnerHub system includes a comprehensive secret scanning feature tha
 
 | Category | Examples | Severity |
 |----------|----------|----------|
-| **GitHub Tokens** | `ghp_*`, `github_pat_*` | Critical |
+| **GitHub Tokens** | `YOUR_GITHUB_TOKEN*`, `github_pat_*` | Critical |
 | **AWS Credentials** | Access Keys, Secret Keys | Critical |
 | **API Keys** | Generic API keys, Service keys | High |
 | **Database URLs** | PostgreSQL, MySQL, MongoDB | High |

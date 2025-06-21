@@ -227,7 +227,7 @@ Key configuration in `.env`:
 
 ```bash
 # GitHub API Configuration (Required)
-GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx         # Personal Access Token with required scopes
+GITHUB_TOKEN=YOUR_GITHUB_TOKEN         # Personal Access Token with required scopes
 GITHUB_ORG=your_organization                  # Organization name (optional for personal repos)
 GITHUB_APP_ID=123456                         # GitHub App ID (if using GitHub App)
 GITHUB_APP_PRIVATE_KEY_PATH=/secrets/app.pem # GitHub App private key path
@@ -282,7 +282,7 @@ SESSION_SECRET=random_session_secret
 
 # HashiCorp Vault Configuration (Production)
 VAULT_ADDR=https://vault.your-domain.com:8200
-VAULT_TOKEN=hvs.YOUR_VAULT_TOKEN
+VAULT_TOKEN=YOUR_VAULT_TOKEN
 VAULT_MOUNT_PATH=secret
 VAULT_GITHUB_PATH=api-keys
 ```
@@ -622,7 +622,7 @@ docker-compose up -d
 #### Token Security Best Practices
 ```bash
 # 1. Store tokens securely in HashiCorp Vault
-vault kv put secret/github/token value="ghp_xxxxxxxxxxxx"
+vault kv put secret/github/token value="YOUR_GITHUB_TOKEN"
 
 # 2. Use environment variable injection (never hardcode)
 export GITHUB_TOKEN=$(vault kv get -field=value secret/github/token)
@@ -735,7 +735,7 @@ server {
 ```bash
 # 1. Store all secrets in Vault
 vault kv put secret/github/api \
-  token="ghp_xxxxxxxxxxxx" \
+  token="YOUR_GITHUB_TOKEN" \
   webhook_secret="webhook_secret_32_chars" \
   app_id="123456" \
   app_private_key="@/path/to/private-key.pem"
