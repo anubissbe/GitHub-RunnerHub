@@ -1,0 +1,317 @@
+version: '3.9'
+
+# Load Testing Environment for GitHub-RunnerHub
+# This environment runs a simplified version of the system optimized for load testing
+
+services:
+  # Redis for BullMQ (optimized for load testing)
+  redis-loadtest:
+    image: redis:7-alpine
+    container_name: loadtest-redis
+    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru --save ""
+    ports:
+      - "6380:6379"
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL for state management (optimized for load testing)
+  postgres-loadtest:
+    image: postgres:16-alpine
+    container_name: loadtest-postgres
+    environment:
+      POSTGRES_USER: loadtest
+      POSTGRES_PASSWORD: loadtest_secure_2024
+      POSTGRES_DB: github_runnerhub_loadtest
+      POSTGRES_INITDB_ARGS: "--auth-host=md5"
+    ports:
+      - "5433:5432"
+    volumes:
+      - loadtest-postgres-data:/var/lib/postgresql/data
+      - ./sql/init-loadtest.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loadtest"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    # Optimize PostgreSQL for load testing
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+
+  # Docker Socket Proxy for security
+  docker-proxy-loadtest:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: loadtest-docker-proxy
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 1
+      IMAGES: 1
+      BUILD: 0
+      EXEC: 0
+      VOLUMES: 0
+      INFO: 1
+      POST: 1
+    ports:
+      - "2376:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+
+  # Orchestration Service (optimized for load testing)
+  orchestrator-loadtest:
+    build:
+      context: ..
+      dockerfile: docker/orchestrator/Dockerfile
+    container_name: loadtest-orchestrator
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      REDIS_HOST: redis-loadtest
+      REDIS_PORT: 6379
+      DATABASE_URL: postgresql://loadtest:loadtest_secure_2024@postgres-loadtest:5432/github_runnerhub_loadtest
+      DOCKER_HOST: tcp://docker-proxy-loadtest:2375
+      # Load testing optimizations
+      MAX_CONCURRENT_JOBS: 200
+      JOB_QUEUE_CONCURRENCY: 20
+      AUTO_SCALING_ENABLED: true
+      AUTO_SCALING_MIN_RUNNERS: 1
+      AUTO_SCALING_MAX_RUNNERS: 50
+      AUTO_SCALING_SCALE_UP_THRESHOLD: 5
+      AUTO_SCALING_SCALE_DOWN_THRESHOLD: 2
+      LOG_LEVEL: warn
+    ports:
+      - "3100:3000"
+      - "3101:3001"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - loadtest-network
+    depends_on:
+      redis-loadtest:
+        condition: service_healthy
+      postgres-loadtest:
+        condition: service_healthy
+      docker-proxy-loadtest:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  # Load Testing Proxy Runners (scaled for load testing)
+  proxy-runner-loadtest-1:
+    build:
+      context: ..
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: loadtest-proxy-runner-1
+    environment:
+      RUNNER_NAME: loadtest-proxy-runner-1
+      ORCHESTRATOR_URL: http://orchestrator-loadtest:3000
+      RUNNER_LABELS: self-hosted,docker,loadtest,ubuntu
+      POLL_INTERVAL: 1
+      MAX_PARALLEL_JOBS: 5
+    volumes:
+      - ./runner-data/proxy-1:/home/runner
+    networks:
+      - loadtest-network
+    depends_on:
+      orchestrator-loadtest:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  proxy-runner-loadtest-2:
+    build:
+      context: ..
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: loadtest-proxy-runner-2
+    environment:
+      RUNNER_NAME: loadtest-proxy-runner-2
+      ORCHESTRATOR_URL: http://orchestrator-loadtest:3000
+      RUNNER_LABELS: self-hosted,docker,loadtest,ubuntu
+      POLL_INTERVAL: 1
+      MAX_PARALLEL_JOBS: 5
+    volumes:
+      - ./runner-data/proxy-2:/home/runner
+    networks:
+      - loadtest-network
+    depends_on:
+      orchestrator-loadtest:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  proxy-runner-loadtest-3:
+    build:
+      context: ..
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: loadtest-proxy-runner-3
+    environment:
+      RUNNER_NAME: loadtest-proxy-runner-3
+      ORCHESTRATOR_URL: http://orchestrator-loadtest:3000
+      RUNNER_LABELS: self-hosted,docker,loadtest,ubuntu
+      POLL_INTERVAL: 1
+      MAX_PARALLEL_JOBS: 5
+    volumes:
+      - ./runner-data/proxy-3:/home/runner
+    networks:
+      - loadtest-network
+    depends_on:
+      orchestrator-loadtest:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+
+  # Load Testing Metrics Collection
+  prometheus-loadtest:
+    image: prom/prometheus:latest
+    container_name: loadtest-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1h'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.wal-compression'
+    volumes:
+      - ./prometheus/prometheus-loadtest.yml:/etc/prometheus/prometheus.yml
+      - loadtest-prometheus-data:/prometheus
+    ports:
+      - "9091:9090"
+    networks:
+      - loadtest-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Grafana for real-time monitoring during load tests
+  grafana-loadtest:
+    image: grafana/grafana:latest
+    container_name: loadtest-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: loadtest123
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/loadtest-dashboard.json
+    volumes:
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+      - loadtest-grafana-data:/var/lib/grafana
+    ports:
+      - "3102:3000"
+    networks:
+      - loadtest-network
+    depends_on:
+      prometheus-loadtest:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Load Testing Dashboard
+  loadtest-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: loadtest-dashboard
+    environment:
+      ORCHESTRATOR_URL: http://orchestrator-loadtest:3000
+      GRAFANA_URL: http://grafana-loadtest:3000
+      PROMETHEUS_URL: http://prometheus-loadtest:9090
+    ports:
+      - "3103:3000"
+    networks:
+      - loadtest-network
+    depends_on:
+      - orchestrator-loadtest
+      - grafana-loadtest
+    restart: unless-stopped
+
+  # Load Test Execution Container
+  loadtest-executor:
+    build:
+      context: .
+      dockerfile: Dockerfile.executor
+    container_name: loadtest-executor
+    environment:
+      ORCHESTRATOR_URL: http://orchestrator-loadtest:3000
+      CONCURRENCY: 100
+      DURATION: 300
+      THROUGHPUT_TARGET: 1000
+    volumes:
+      - ./results:/app/results
+      - ./scripts:/app/scripts
+    networks:
+      - loadtest-network
+    depends_on:
+      orchestrator-loadtest:
+        condition: service_healthy
+    profiles:
+      - executor
+    command: tail -f /dev/null  # Keep container running for manual execution
+
+networks:
+  loadtest-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+
+volumes:
+  loadtest-postgres-data:
+    driver: local
+  loadtest-prometheus-data:
+    driver: local
+  loadtest-grafana-data:
+    driver: local

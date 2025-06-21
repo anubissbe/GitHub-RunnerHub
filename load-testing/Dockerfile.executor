@@ -1,0 +1,63 @@
+# Load Test Executor Container
+FROM node:18-alpine
+
+# Install system dependencies for load testing tools
+RUN apk add --no-cache \
+    curl \
+    apache2-utils \
+    bash \
+    jq \
+    python3 \
+    py3-pip \
+    procps \
+    sysstat \
+    && rm -rf /var/cache/apk/*
+
+# Install Python load testing tools
+RUN pip3 install --no-cache-dir \
+    locust \
+    requests \
+    psutil \
+    prometheus_client
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install Node.js dependencies
+RUN npm ci --only=production
+
+# Copy load testing framework and scripts
+COPY load-test-framework.js ./
+COPY scripts/ ./scripts/
+COPY config/ ./config/
+
+# Create results directory
+RUN mkdir -p /app/results /app/logs
+
+# Install additional load testing tools
+RUN npm install -g \
+    artillery \
+    clinic \
+    0x
+
+# Copy entrypoint script
+COPY docker-entrypoint-executor.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose metrics port
+EXPOSE 8080
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV LOAD_TEST_MODE=true
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Use entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["node", "load-test-framework.js"]

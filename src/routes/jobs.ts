@@ -22,4 +22,10 @@ router.post('/:id/proxy-complete', jobController.proxyComplete.bind(jobControlle
 // Get job logs
 router.get('/:id/logs', jobController.getJobLogs.bind(jobController));
 
+// Get secret scan results for a job
+router.get('/:id/secret-scans', jobController.getJobSecretScanResults.bind(jobController));
+
+// Trigger manual secret scan for job logs
+router.post('/:id/scan-secrets', jobController.scanJobLogs.bind(jobController));
+
 export default router;

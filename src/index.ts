@@ -9,6 +9,7 @@ import containerOrchestrator from './services/container-orchestrator-v2';
 import autoScaler from './services/auto-scaler';
 import containerCleanup from './services/container-cleanup';
 import githubWebhook from './services/github-webhook';
+import jobLogSecretScanner from './services/job-log-secret-scanner';
 
 // Load environment variables
 dotenvConfig();
@@ -43,6 +44,9 @@ async function shutdown(signal: string) {
 
     // Shutdown GitHub webhook service
     await githubWebhook.shutdown();
+
+    // Shutdown job log secret scanner
+    await jobLogSecretScanner.shutdown();
 
     // Shutdown container orchestrator
     await containerOrchestrator.shutdown();
@@ -97,6 +101,10 @@ async function startServer() {
     // Initialize GitHub webhook service
     await githubWebhook.initialize();
     logger.info('GitHub webhook service initialized');
+
+    // Initialize job log secret scanner
+    await jobLogSecretScanner.initialize();
+    logger.info('Job log secret scanner initialized');
 
     // Create and start Express app
     app = new App();

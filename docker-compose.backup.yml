@@ -1,0 +1,116 @@
+# Docker Compose Override for Backup and Disaster Recovery
+# Use: docker-compose -f docker-compose.yml -f docker-compose.backup.yml up
+
+version: '3.9'
+
+services:
+  # Enhanced Redis configuration for backup
+  redis:
+    volumes:
+      - redis-data:/data
+      - ./backup/config/redis-persistence.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./backup/logs/redis:/var/log/redis
+    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Enhanced PostgreSQL configuration for backup
+  postgres:
+    environment:
+      POSTGRES_USER: ${DB_USER:-runnerhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-runnerhub_secure_2024}
+      POSTGRES_DB: ${DB_NAME:-github_runnerhub}
+      # Enable WAL archiving for point-in-time recovery
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backup/config/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./backup/logs/postgres:/var/log/postgresql
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=3
+      -c wal_keep_segments=64
+      -c archive_mode=on
+      -c archive_command='cp %p /var/lib/postgresql/data/archive/%f'
+      -c log_destination=stderr
+      -c logging_collector=on
+      -c log_directory=/var/log/postgresql
+      -c log_filename=postgresql-%Y-%m-%d_%H%M%S.log
+      -c log_rotation_age=1d
+      -c log_rotation_size=100MB
+      -c log_min_duration_statement=1000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backup monitoring service
+  backup-monitor:
+    image: alpine:latest
+    container_name: runnerhub-backup-monitor
+    volumes:
+      - ./backup/scripts:/backup/scripts:ro
+      - ./backup/logs:/backup/logs
+      - ./backup/config:/backup/config:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - BACKUP_SCHEDULE=0 */6 * * *
+      - MONITOR_INTERVAL=300
+    command: >
+      sh -c "
+        apk add --no-cache dcron curl bash docker-cli postgresql-client redis &&
+        echo '$${BACKUP_SCHEDULE} /backup/scripts/backup-manager.sh >> /backup/logs/monitor.log 2>&1' | crontab - &&
+        crond -f -l 2 -L /backup/logs/cron.log
+      "
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+
+  # Backup storage service (optional - for local NFS/CIFS mounts)
+  backup-storage:
+    image: alpine:latest
+    container_name: runnerhub-backup-storage
+    volumes:
+      - backup-storage:/mnt/backup
+      - ./backup/scripts:/backup/scripts:ro
+    environment:
+      - STORAGE_TYPE=${BACKUP_STORAGE_TYPE:-local}
+      - NFS_SERVER=${BACKUP_NFS_SERVER:-}
+      - NFS_PATH=${BACKUP_NFS_PATH:-}
+      - CIFS_SERVER=${BACKUP_CIFS_SERVER:-}
+      - CIFS_SHARE=${BACKUP_CIFS_SHARE:-}
+      - CIFS_USERNAME=${BACKUP_CIFS_USERNAME:-}
+      - CIFS_PASSWORD=${BACKUP_CIFS_PASSWORD:-}
+    command: >
+      sh -c "
+        if [ '$${STORAGE_TYPE}' = 'nfs' ] && [ -n '$${NFS_SERVER}' ]; then
+          apk add --no-cache nfs-utils &&
+          mount -t nfs $${NFS_SERVER}:$${NFS_PATH} /mnt/backup
+        elif [ '$${STORAGE_TYPE}' = 'cifs' ] && [ -n '$${CIFS_SERVER}' ]; then
+          apk add --no-cache cifs-utils &&
+          mount -t cifs //$${CIFS_SERVER}/$${CIFS_SHARE} /mnt/backup -o username=$${CIFS_USERNAME},password=$${CIFS_PASSWORD}
+        fi &&
+        tail -f /dev/null
+      "
+    networks:
+      - runnerhub-network
+    restart: unless-stopped
+    privileged: true
+
+volumes:
+  backup-storage:
+    driver: local

@@ -23,7 +23,7 @@ class GitHubAPIService {
         
         // Database connection
         this.db = new Pool({
-            connectionString: 'postgresql://app_user:app_secure_2024@192.168.1.24:5433/github_runnerhub',
+            connectionString: 'postgresql://user:password@host:5432/database
             ssl: false
         });
 

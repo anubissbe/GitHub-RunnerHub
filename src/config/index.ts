@@ -14,8 +14,10 @@ export interface Config {
     token: string;
     org: string;
     runnerVersion: string;
+    repositories?: string[];
   };
   redis: {
+    url?: string;
     host: string;
     port: number;
     password?: string;
@@ -127,9 +129,11 @@ const config: Config = {
   github: {
     token: process.env.GITHUB_TOKEN || '',
     org: process.env.GITHUB_ORG || '',
-    runnerVersion: process.env.GITHUB_RUNNER_VERSION || '2.311.0'
+    runnerVersion: process.env.GITHUB_RUNNER_VERSION || '2.311.0',
+    repositories: process.env.GITHUB_REPOSITORIES ? process.env.GITHUB_REPOSITORIES.split(',') : undefined
   },
   redis: {
+    url: process.env.REDIS_URL,
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     password: process.env.REDIS_PASSWORD,

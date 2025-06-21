@@ -537,6 +537,41 @@ export class MonitoringService extends EventEmitter {
       logger.error('Failed to update repository stats', { repository, conclusion, error });
     }
   }
+
+  /**
+   * Record webhook processing metrics
+   */
+  async recordWebhookProcessed(
+    eventType: string,
+    success: boolean,
+    processingTimeMs: number
+  ): Promise<void> {
+    logger.debug('Recording webhook processing metrics', {
+      eventType,
+      success,
+      processingTimeMs
+    });
+
+    try {
+      // Emit event for real-time monitoring
+      this.emit('webhook-processed', {
+        eventType,
+        success,
+        processingTimeMs,
+        timestamp: new Date()
+      });
+
+      // Could store in database if needed
+      // For now, just emit the event
+    } catch (error) {
+      logger.error('Failed to record webhook metrics', {
+        eventType,
+        success,
+        processingTimeMs,
+        error
+      });
+    }
+  }
 }
 
 export default MonitoringService.getInstance();

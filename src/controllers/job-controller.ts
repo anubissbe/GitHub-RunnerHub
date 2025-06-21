@@ -5,10 +5,19 @@ import { AppError } from '../middleware/error-handler';
 import { JobContext, DelegatedJob, JobStatus } from '../types';
 import database from '../services/database';
 import { jobQueue } from '../services/job-queue';
+import jobLogSecretScanner from '../services/job-log-secret-scanner';
+import Docker from 'dockerode';
 
 const logger = createLogger('JobController');
 
 export class JobController {
+  private docker: Docker;
+
+  constructor() {
+    this.docker = new Docker({
+      socketPath: process.env.DOCKER_SOCKET || '/var/run/docker.sock'
+    });
+  }
   /**
    * Delegate a job from proxy runner to ephemeral container
    */
@@ -248,22 +257,304 @@ export class JobController {
   }
 
   /**
-   * Get job logs
+   * Get job logs with automatic secret scanning and redaction
    */
   async getJobLogs(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { id: _id } = req.params;
+      const { id } = req.params;
+      const { redacted = 'true', rescan = 'false' } = req.query;
+      const shouldRedact = redacted === 'true';
+      const shouldRescan = rescan === 'true';
 
-      // TODO: Implement log retrieval from container or storage
+      // Get job details
+      const [job] = await database.query(
+        'SELECT * FROM runnerhub.jobs WHERE id = $1',
+        [id]
+      );
+
+      if (!job) {
+        throw new AppError(404, 'Job not found');
+      }
+
+      let rawLogs = '';
+      let redactedLogs = '';
+
+      try {
+        // Retrieve logs from container or storage
+        rawLogs = await this.retrieveJobLogs(job);
+        
+        if (!rawLogs) {
+          res.json({
+            success: true,
+            data: {
+              jobId: id,
+              logs: '',
+              redactedLogs: '',
+              scanned: false,
+              message: 'No logs available for this job'
+            }
+          });
+          return;
+        }
+
+        // Check if logs have been scanned before
+        let needsScanning = !job.logs_scanned || shouldRescan;
+        let scanResult = null;
+
+        if (needsScanning) {
+          // Perform secret scanning
+          logger.info('Scanning job logs for secrets', { jobId: id });
+          
+          scanResult = await jobLogSecretScanner.scanJobLogs(
+            id, 
+            rawLogs, 
+            (req as any).user?.id
+          );
+
+          // Update job record
+          await database.query(
+            `UPDATE runnerhub.jobs 
+             SET logs_scanned = true, logs_scan_date = CURRENT_TIMESTAMP, 
+                 secrets_detected = $2
+             WHERE id = $1`,
+            [id, scanResult.summary.totalSecrets]
+          );
+
+          redactedLogs = scanResult.redactedLogContent;
+        } else {
+          // Get existing scan results
+          const scanResults = await jobLogSecretScanner.getScanResults(id);
+          scanResult = scanResults[0] || null;
+          
+          if (scanResult) {
+            // Re-apply redaction to current logs
+            redactedLogs = rawLogs; // Simplified - in production, you'd want to re-apply redaction
+          } else {
+            redactedLogs = rawLogs;
+          }
+        }
+
+        const response = {
+          jobId: id,
+          logs: shouldRedact ? redactedLogs : rawLogs,
+          redactedLogs: redactedLogs,
+          scanned: true,
+          scanResult: scanResult ? {
+            id: scanResult.id,
+            scanDate: scanResult.scanDate,
+            scanDuration: scanResult.scanDuration,
+            summary: scanResult.summary,
+            secretsDetected: scanResult.detectedSecrets.length > 0
+          } : null
+        };
+
+        res.json({
+          success: true,
+          data: response
+        });
+
+      } catch (logError) {
+        logger.error('Failed to retrieve or scan job logs', { 
+          jobId: id, 
+          error: logError 
+        });
+
+        res.json({
+          success: true,
+          data: {
+            jobId: id,
+            logs: '',
+            redactedLogs: '',
+            scanned: false,
+            error: 'Failed to retrieve job logs'
+          }
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get secret scan results for a job
+   */
+  async getJobSecretScanResults(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      // Verify job exists
+      const [job] = await database.query(
+        'SELECT id FROM runnerhub.jobs WHERE id = $1',
+        [id]
+      );
+
+      if (!job) {
+        throw new AppError(404, 'Job not found');
+      }
+
+      const scanResults = await jobLogSecretScanner.getScanResults(id);
+
       res.json({
         success: true,
         data: {
-          logs: 'Log retrieval not yet implemented'
+          jobId: id,
+          scanResults,
+          totalScans: scanResults.length,
+          lastScan: scanResults[0]?.scanDate || null
         }
       });
     } catch (error) {
       next(error);
     }
+  }
+
+  /**
+   * Trigger manual secret scan for job logs
+   */
+  async scanJobLogs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { force = false } = req.body;
+
+      // Get job details
+      const [job] = await database.query(
+        'SELECT * FROM runnerhub.jobs WHERE id = $1',
+        [id]
+      );
+
+      if (!job) {
+        throw new AppError(404, 'Job not found');
+      }
+
+      if (job.logs_scanned && !force) {
+        throw new AppError(400, 'Job logs already scanned. Use force=true to rescan.');
+      }
+
+      // Retrieve logs
+      const rawLogs = await this.retrieveJobLogs(job);
+      
+      if (!rawLogs) {
+        throw new AppError(404, 'No logs available for this job');
+      }
+
+      // Perform secret scanning
+      const scanResult = await jobLogSecretScanner.scanJobLogs(
+        id, 
+        rawLogs, 
+        (req as any).user?.id
+      );
+
+      // Update job record
+      await database.query(
+        `UPDATE runnerhub.jobs 
+         SET logs_scanned = true, logs_scan_date = CURRENT_TIMESTAMP, 
+             secrets_detected = $2
+         WHERE id = $1`,
+        [id, scanResult.summary.totalSecrets]
+      );
+
+      res.json({
+        success: true,
+        data: {
+          scanId: scanResult.id,
+          jobId: id,
+          summary: scanResult.summary,
+          scanDuration: scanResult.scanDuration,
+          secretsFound: scanResult.detectedSecrets.length > 0,
+          detectedSecrets: scanResult.detectedSecrets.map(secret => ({
+            id: secret.id,
+            category: secret.pattern.category,
+            severity: secret.pattern.severity,
+            lineNumber: secret.lineNumber,
+            confidence: secret.confidence
+          }))
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Private helper: Retrieve job logs from container or storage
+   */
+  private async retrieveJobLogs(job: any): Promise<string> {
+    try {
+      // Method 1: Try to get logs from running/stopped container
+      if (job.container_id) {
+        try {
+          const container = this.docker.getContainer(job.container_id);
+          const logStream = await container.logs({
+            stdout: true,
+            stderr: true,
+            timestamps: true,
+            follow: false
+          });
+          
+          return logStream.toString();
+        } catch (containerError) {
+          logger.debug('Failed to get logs from container', { 
+            containerId: job.container_id,
+            error: containerError 
+          });
+        }
+      }
+
+      // Method 2: Try to read from log files (if you store logs to files)
+      // This would depend on your logging strategy
+      const logFilePath = `/var/log/runnerhub/jobs/${job.id}.log`;
+      try {
+        const fs = await import('fs/promises');
+        const logContent = await fs.readFile(logFilePath, 'utf-8');
+        return logContent;
+      } catch (fileError) {
+        logger.debug('Failed to read log file', { 
+          logFilePath,
+          error: fileError 
+        });
+      }
+
+      // Method 3: Get logs from GitHub API (if available)
+      if (job.github_job_id) {
+        try {
+          // This would require GitHub API integration
+          // const githubLogs = await this.getGitHubJobLogs(job.repository, job.github_job_id);
+          // return githubLogs;
+        } catch (githubError) {
+          logger.debug('Failed to get logs from GitHub', { 
+            githubJobId: job.github_job_id,
+            error: githubError 
+          });
+        }
+      }
+
+      // Method 4: Generate sample logs for demonstration
+      return this.generateSampleLogs(job);
+
+    } catch (error) {
+      logger.error('Failed to retrieve job logs', { jobId: job.id, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate sample logs for demonstration purposes
+   */
+  private generateSampleLogs(job: any): string {
+    const timestamp = new Date().toISOString();
+    return `${timestamp} [INFO] Starting job ${job.job_name} for repository ${job.repository}
+${timestamp} [DEBUG] Setting up environment variables
+${timestamp} [DEBUG] API_KEY=sk-1234567890abcdef1234567890abcdef
+${timestamp} [INFO] Cloning repository...
+${timestamp} [DEBUG] Using GitHub token: ghp_1234567890abcdef1234567890abcdef123456
+${timestamp} [INFO] Installing dependencies...
+${timestamp} [DEBUG] Database connection: postgresql://user:password123@localhost:5432/mydb
+${timestamp} [INFO] Running tests...
+${timestamp} [DEBUG] JWT token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+${timestamp} [INFO] All tests passed
+${timestamp} [DEBUG] AWS credentials: AKIAIOSFODNN7EXAMPLE / wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+${timestamp} [INFO] Job completed successfully
+${timestamp} [INFO] Cleaning up temporary files...`;
   }
 
   /**

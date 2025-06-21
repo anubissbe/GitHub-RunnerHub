@@ -1,0 +1,47 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GitHub-RunnerHub Performance Dashboard",
+    "tags": ["performance", "optimization"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Response Time Optimization",
+        "type": "graph",
+        "targets": [
+          {"expr": "histogram_quantile(0.95, job_response_time_seconds_bucket)", "legendFormat": "P95 Response Time"},
+          {"expr": "avg(job_response_time_seconds)", "legendFormat": "Average Response Time"}
+        ],
+        "yAxes": [{"label": "Response Time (seconds)", "min": 0}],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Throughput Optimization",
+        "type": "graph",
+        "targets": [
+          {"expr": "rate(jobs_completed_total[1m])", "legendFormat": "Job Completion Rate"},
+          {"expr": "rate(jobs_created_total[1m])", "legendFormat": "Job Creation Rate"}
+        ],
+        "yAxes": [{"label": "Jobs per Second", "min": 0}],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Resource Utilization",
+        "type": "graph",
+        "targets": [
+          {"expr": "cpu_utilization_percent", "legendFormat": "CPU Utilization"},
+          {"expr": "memory_utilization_percent", "legendFormat": "Memory Utilization"},
+          {"expr": "db_connection_pool_utilization", "legendFormat": "DB Pool Utilization"}
+        ],
+        "yAxes": [{"label": "Utilization %", "min": 0, "max": 100}],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "5s"
+  }
+}

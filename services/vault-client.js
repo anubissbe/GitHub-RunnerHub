@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class VaultClient {
     constructor(options = {}) {
-        this.vaultAddr = options.addr || process.env.VAULT_ADDR || 'http://192.168.1.24:8200';
+        this.vaultAddr = options.addr || process.env.VAULT_ADDR || 'http://YOUR_SERVER_IP:8200';
         this.vaultToken = options.token || process.env.VAULT_TOKEN;
         
         this.client = axios.create({

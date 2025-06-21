@@ -543,8 +543,8 @@ LOAD_BALANCER_URL=https://runnerhub.example.com
 LOAD_BALANCER_HEALTH_CHECK=/health
 
 # Database HA
-DATABASE_PRIMARY_URL=postgresql://app_user:password@192.168.1.20:5432/github_runnerhub
-DATABASE_REPLICA_URL=postgresql://app_user:password@192.168.1.21:5432/github_runnerhub
+DATABASE_PRIMARY_URL=postgresql://user:password@host:5432/database
+DATABASE_REPLICA_URL=postgresql://user:password@host:5432/database
 DATABASE_CONNECTION_POOL_SIZE=20
 DATABASE_MAX_CONNECTIONS=100
 

@@ -22,4 +22,9 @@ router.get('/health', monitoringController.getRunnerHealth.bind(monitoringContro
 // Dashboard data (aggregated)
 router.get('/dashboard', monitoringController.getDashboardData.bind(monitoringController));
 
+// Repository tracking management
+router.get('/repositories', monitoringController.getTrackedRepositories.bind(monitoringController));
+router.post('/repositories', monitoringController.addTrackedRepository.bind(monitoringController));
+router.delete('/repositories/:repository', monitoringController.removeTrackedRepository.bind(monitoringController));
+
 export default router;

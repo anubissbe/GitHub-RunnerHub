@@ -2,6 +2,7 @@
 let socket;
 let jobTimelineChart;
 let runnerDistributionChart;
+let trackedRepositories = [];
 
 // Initialize dashboard
 let isLoading = false;
@@ -10,6 +11,7 @@ let refreshInterval = null;
 document.addEventListener('DOMContentLoaded', () => {
     initializeSocket();
     initializeCharts();
+    loadTrackedRepositories();
     loadDashboardData();
     
     // Clear any existing interval
@@ -177,6 +179,11 @@ function updateDashboard(data) {
     // Update runner health
     updateRunnerHealth(data.runnerHealth);
     
+    // Update GitHub integration status
+    if (data.githubIntegration) {
+        updateGitHubStatus(data.githubIntegration);
+    }
+    
     // Update last updated time
     document.getElementById('lastUpdated').textContent = new Date(data.lastUpdated).toLocaleString();
 }
@@ -234,29 +241,62 @@ function updateRecentJobs(jobs) {
     const tbody = document.getElementById('recentJobsTable');
     tbody.innerHTML = '';
     
+    if (jobs.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                    No recent jobs found. Jobs will appear here once GitHub Actions workflows are triggered.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     jobs.forEach(job => {
         const row = document.createElement('tr');
         
         const duration = job.completedAt && job.startedAt
             ? ((new Date(job.completedAt) - new Date(job.startedAt)) / 1000).toFixed(0) + 's'
-            : '-';
+            : job.startedAt ? 'Running...' : 'Queued';
         
         const statusClass = {
             'completed': 'text-green-600',
             'failed': 'text-red-600',
             'running': 'text-blue-600',
-            'pending': 'text-yellow-600'
+            'in_progress': 'text-blue-600',
+            'pending': 'text-yellow-600',
+            'queued': 'text-yellow-600'
         }[job.status] || 'text-gray-600';
         
+        const statusIcon = {
+            'completed': '✓',
+            'failed': '✗',
+            'running': '⟳',
+            'in_progress': '⟳',
+            'pending': '○',
+            'queued': '○'
+        }[job.status] || '?';
+        
+        // Extract repository from job data or use provided repository
+        const repoMatch = job.repository && job.repository.includes('/') ? job.repository : 
+                         job.id && job.id.startsWith('github-') ? 'GitHub Job' : 'Local Job';
+        
         row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                ${job.workflow || 'Unknown'}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${job.repository || '-'}
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">${job.workflow || job.name || 'Unknown'}</div>
+                ${job.labels && job.labels.length > 0 ? 
+                    `<div class="text-xs text-gray-500 mt-1">Labels: ${job.labels.slice(0, 3).join(', ')}</div>` : 
+                    ''}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm ${statusClass}">${job.status}</span>
+                <div class="text-sm text-gray-900">${repoMatch}</div>
+                ${job.head_branch ? `<div class="text-xs text-gray-500">${job.head_branch}</div>` : ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm ${statusClass}">
+                    <span class="inline-block">${statusIcon}</span>
+                    ${job.status}
+                </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 ${duration}
@@ -344,4 +384,142 @@ function addRefreshIndicator() {
     
     updateCountdown();
     setInterval(updateCountdown, 1000);
+}
+
+// Load tracked repositories
+async function loadTrackedRepositories() {
+    try {
+        const response = await fetch('/api/monitoring/repositories');
+        const result = await response.json();
+        
+        if (result.success) {
+            trackedRepositories = result.data;
+            updateRepositoryList();
+        }
+    } catch (error) {
+        console.error('Failed to load tracked repositories:', error);
+    }
+}
+
+// Update repository list UI
+function updateRepositoryList() {
+    const listElement = document.getElementById('repositoryList');
+    listElement.innerHTML = '';
+    
+    if (trackedRepositories.length === 0) {
+        listElement.innerHTML = '<span class="text-gray-500 text-sm">No repositories tracked. Add one to get started.</span>';
+        return;
+    }
+    
+    trackedRepositories.forEach(repo => {
+        const tag = document.createElement('div');
+        tag.className = 'inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full';
+        tag.innerHTML = `
+            <span>${repo}</span>
+            <button onclick="removeRepository('${repo}')" class="ml-2 text-blue-600 hover:text-blue-800">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        `;
+        listElement.appendChild(tag);
+    });
+}
+
+// Add repository
+async function addRepository() {
+    const input = document.getElementById('newRepository');
+    const repository = input.value.trim();
+    
+    if (!repository || !repository.includes('/')) {
+        alert('Please enter a valid repository in the format: owner/repo');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/monitoring/repositories', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ repository })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            trackedRepositories.push(repository);
+            updateRepositoryList();
+            input.value = '';
+            
+            // Reload dashboard data
+            loadDashboardData();
+        } else {
+            alert(result.message || 'Failed to add repository');
+        }
+    } catch (error) {
+        console.error('Failed to add repository:', error);
+        alert('Failed to add repository');
+    }
+}
+
+// Remove repository
+async function removeRepository(repository) {
+    if (!confirm(`Remove ${repository} from tracking?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/monitoring/repositories/${repository.replace('/', '_')}`, {
+            method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            trackedRepositories = trackedRepositories.filter(r => r !== repository);
+            updateRepositoryList();
+            
+            // Reload dashboard data
+            loadDashboardData();
+        } else {
+            alert(result.message || 'Failed to remove repository');
+        }
+    } catch (error) {
+        console.error('Failed to remove repository:', error);
+        alert('Failed to remove repository');
+    }
+}
+
+// Update GitHub status
+function updateGitHubStatus(integration) {
+    const statusElement = document.getElementById('githubStatus');
+    const rateLimitElement = document.getElementById('rateLimitInfo');
+    
+    if (integration.enabled) {
+        const percentUsed = (integration.rateLimitStatus.used / integration.rateLimitStatus.limit) * 100;
+        let statusColor = 'bg-green-500';
+        let statusText = 'Connected';
+        
+        if (percentUsed > 80) {
+            statusColor = 'bg-red-500';
+            statusText = 'Rate Limited';
+        } else if (percentUsed > 60) {
+            statusColor = 'bg-yellow-500';
+            statusText = 'Limited';
+        }
+        
+        statusElement.innerHTML = `
+            <span class="inline-block w-2 h-2 ${statusColor} rounded-full mr-1"></span>
+            ${statusText}
+        `;
+        
+        rateLimitElement.textContent = `${integration.rateLimitStatus.remaining}/${integration.rateLimitStatus.limit} (${Math.round(percentUsed)}% used)`;
+    } else {
+        statusElement.innerHTML = `
+            <span class="inline-block w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+            Disconnected
+        `;
+        rateLimitElement.textContent = 'N/A';
+    }
 }

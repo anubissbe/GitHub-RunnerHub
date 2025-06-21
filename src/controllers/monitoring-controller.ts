@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import monitoringService from '../services/monitoring';
+import monitoringServiceEnhancedEnhanced from '../services/monitoring-enhanced';
 import { AppError } from '../middleware/error-handler';
 
 export class MonitoringController {
@@ -8,7 +8,7 @@ export class MonitoringController {
    */
   async getSystemMetrics(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const metrics = await monitoringService.getSystemMetrics();
+      const metrics = await monitoringServiceEnhancedEnhanced.getSystemMetrics();
       
       res.json({
         success: true,
@@ -25,7 +25,7 @@ export class MonitoringController {
   async getRepositoryMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const repository = req.params.repository.replace('_', '/');
-      const metrics = await monitoringService.getRepositoryMetrics(repository);
+      const metrics = await monitoringServiceEnhancedEnhanced.getRepositoryMetrics(repository);
       
       res.json({
         success: true,
@@ -47,7 +47,7 @@ export class MonitoringController {
         throw new AppError(400, 'Limit must be between 1 and 100');
       }
       
-      const jobs = await monitoringService.getRecentJobs(limit);
+      const jobs = await monitoringServiceEnhanced.getRecentJobs(limit);
       
       res.json({
         success: true,
@@ -69,7 +69,7 @@ export class MonitoringController {
         throw new AppError(400, 'Hours must be between 1 and 168');
       }
       
-      const timeline = await monitoringService.getJobTimeline(hours);
+      const timeline = await monitoringServiceEnhanced.getJobTimeline(hours);
       
       res.json({
         success: true,
@@ -85,7 +85,7 @@ export class MonitoringController {
    */
   async getRunnerHealth(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const health = await monitoringService.getRunnerHealth();
+      const health = await monitoringServiceEnhanced.getRunnerHealth();
       
       res.json({
         success: true,
@@ -101,7 +101,7 @@ export class MonitoringController {
    */
   async getPrometheusMetrics(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const metrics = await monitoringService.getPrometheusMetrics();
+      const metrics = await monitoringServiceEnhanced.getPrometheusMetrics();
       
       res.set('Content-Type', 'text/plain');
       res.send(metrics);
@@ -117,10 +117,10 @@ export class MonitoringController {
     try {
       // Aggregate data for dashboard
       const [systemMetrics, recentJobs, timeline, runnerHealth] = await Promise.all([
-        monitoringService.getSystemMetrics(),
-        monitoringService.getRecentJobs(10),
-        monitoringService.getJobTimeline(24),
-        monitoringService.getRunnerHealth()
+        monitoringServiceEnhanced.getSystemMetrics(),
+        monitoringServiceEnhanced.getRecentJobs(10),
+        monitoringServiceEnhanced.getJobTimeline(24),
+        monitoringServiceEnhanced.getRunnerHealth()
       ]);
 
       res.json({
@@ -132,6 +132,62 @@ export class MonitoringController {
           runnerHealth,
           lastUpdated: new Date()
         }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get tracked repositories
+   */
+  async getTrackedRepositories(_req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const repositories = monitoringServiceEnhanced.getTrackedRepositories();
+      
+      res.json({
+        success: true,
+        data: repositories
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Add tracked repository
+   */
+  async addTrackedRepository(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { repository } = req.body;
+      
+      if (!repository || !repository.includes('/')) {
+        throw new AppError(400, 'Invalid repository format. Use "owner/repo" format');
+      }
+      
+      await monitoringServiceEnhanced.addTrackedRepository(repository);
+      
+      res.json({
+        success: true,
+        message: `Repository ${repository} added to tracking`
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Remove tracked repository
+   */
+  async removeTrackedRepository(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const repository = req.params.repository.replace('_', '/');
+      
+      monitoringServiceEnhanced.removeTrackedRepository(repository);
+      
+      res.json({
+        success: true,
+        message: `Repository ${repository} removed from tracking`
       });
     } catch (error) {
       next(error);

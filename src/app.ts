@@ -25,7 +25,7 @@ import networkRoutes from './routes/networks';
 import auditRoutes from './routes/audit';
 import securityRoutes from './routes/security';
 import { MonitoringController } from './controllers/monitoring-controller';
-import monitoringService from './services/monitoring';
+import monitoringServiceEnhancedEnhanced from './services/monitoring-enhanced';
 import path from 'path';
 
 const logger = createLogger('App');
@@ -182,25 +182,25 @@ export class App {
     const port = config.app.port;
 
     // Start monitoring service
-    await monitoringService.start();
+    await monitoringServiceEnhanced.start();
 
     // Connect monitoring events to WebSocket
-    monitoringService.on('metrics', (metrics) => {
+    monitoringServiceEnhanced.on('metrics', (metrics) => {
       this.io.emit('metrics', metrics);
     });
 
-    monitoringService.on('job-event', (event) => {
+    monitoringServiceEnhanced.on('job-event', (event) => {
       this.io.emit('job-event', event);
       if (event.data?.repository) {
         this.io.to(`repo:${event.data.repository}`).emit('job-event', event);
       }
     });
 
-    monitoringService.on('runner-event', (event) => {
+    monitoringServiceEnhanced.on('runner-event', (event) => {
       this.io.emit('runner-event', event);
     });
 
-    monitoringService.on('scaling-event', (event) => {
+    monitoringServiceEnhanced.on('scaling-event', (event) => {
       this.io.emit('scaling-event', event);
       if (event.repository) {
         this.io.to(`repo:${event.repository}`).emit('scaling-event', event);
@@ -217,7 +217,7 @@ export class App {
   public async stop(): Promise<void> {
     return new Promise((resolve) => {
       // Stop monitoring service
-      monitoringService.stop();
+      monitoringServiceEnhanced.stop();
       
       this.io.close();
       this.server.close(() => {

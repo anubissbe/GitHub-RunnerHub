@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // PostgreSQL connection - force external database
 const pool = new Pool({
-    connectionString: 'postgresql://app_user:app_secure_2024@192.168.1.24:5433/github_runnerhub',
+    connectionString: 'postgresql://user:password@host:5432/database
     ssl: false
 });
 
@@ -307,5 +307,5 @@ process.on('SIGTERM', async () => {
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ GitHub RunnerHub real data server running on port ${PORT}`);
     console.log(`📊 Dashboard available at http://localhost:${PORT}/dashboard`);
-    console.log(`🗄️  Connected to PostgreSQL at 192.168.1.24:5433`);
+    console.log(`🗄️  Connected to PostgreSQL at YOUR_SERVER_IP:5433`);
 });

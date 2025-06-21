@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 
 // Connect to default database first to create our database
 const setupPool = new Pool({
-    host: '192.168.1.24',
+    host: 'YOUR_SERVER_IP',
     port: 5433,
     user: 'app_user',
     password: 'app_secure_2024',
@@ -32,7 +32,7 @@ async function setupDatabase() {
         
         // Now connect to the new database
         const pool = new Pool({
-            connectionString: 'postgresql://app_user:app_secure_2024@192.168.1.24:5433/github_runnerhub',
+            connectionString: 'postgresql://user:password@host:5432/database
             ssl: false
         });
         

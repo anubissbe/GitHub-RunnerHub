@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub RunnerHub - Enhanced Dashboard</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        /* Enhanced styles for webhook features */
+        .webhook-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .webhook-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h4 {
+            margin: 0 0 10px 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #212529;
+        }
+        
+        .stat-value.success {
+            color: #28a745;
+        }
+        
+        .stat-value.error {
+            color: #dc3545;
+        }
+        
+        .webhook-events-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        .webhook-event {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+        
+        .webhook-event:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .event-type {
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .event-action {
+            background: #e9ecef;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .event-time {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .event-details {
+            display: flex;
+            gap: 10px;
+            font-size: 14px;
+        }
+        
+        .event-repo {
+            color: #495057;
+        }
+        
+        .event-status {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .event-status.processed {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .event-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .event-duration {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+        }
+        
+        .connection-status.connected {
+            background: #28a745;
+            color: white;
+        }
+        
+        .connection-status.disconnected {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .notifications-container {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            z-index: 999;
+            max-width: 350px;
+        }
+        
+        .notification {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateX(400px);
+            transition: transform 0.3s;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-info {
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .notification-success {
+            border-left: 4px solid #28a745;
+        }
+        
+        .notification-warning {
+            border-left: 4px solid #ffc107;
+        }
+        
+        .notification-error {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .activity-feed {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .activity-event {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .event-icon {
+            font-size: 20px;
+        }
+        
+        .event-desc {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .security-alerts {
+            background: #fff5f5;
+            border: 1px solid #ffdddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .security-alert {
+            background: white;
+            border-left: 4px solid #dc3545;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .alert-type {
+            font-weight: bold;
+            color: #dc3545;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab.active {
+            border-bottom-color: #0066cc;
+            color: #0066cc;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GitHub RunnerHub - Enhanced Dashboard</h1>
+            <div id="connection-status" class="connection-status disconnected">Disconnected</div>
+        </header>
+
+        <nav class="tabs">
+            <div class="tab active" data-tab="overview">Overview</div>
+            <div class="tab" data-tab="webhooks">Webhooks</div>
+            <div class="tab" data-tab="jobs">Jobs</div>
+            <div class="tab" data-tab="runners">Runners</div>
+            <div class="tab" data-tab="activity">Activity</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </nav>
+
+        <!-- Overview Tab -->
+        <div id="overview-tab" class="tab-content active">
+            <div class="controls">
+                <select id="repo-filter" class="form-control">
+                    <option value="">All Repositories</option>
+                </select>
+                <button id="refresh-btn" class="btn btn-primary">Refresh</button>
+                <button id="test-webhook-btn" class="btn btn-secondary">Test Webhook</button>
+            </div>
+
+            <!-- Security Alerts -->
+            <div id="security-alerts" class="security-alerts" style="display: none;">
+                <h3>🔒 Security Alerts</h3>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <h3>Active Jobs</h3>
+                    <p class="stat-number" data-metric="jobs.running">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Total Runners</h3>
+                    <p class="stat-number" data-metric="runners.total">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Busy Runners</h3>
+                    <p class="stat-number" data-metric="runners.busy">0</p>
+                </div>
+                <div class="stat-box">
+                    <h3>Queue Size</h3>
+                    <p class="stat-number" data-metric="jobs.pending">0</p>
+                </div>
+            </div>
+
+            <!-- Real-time Activity Feed -->
+            <section class="section">
+                <h2>Real-time Activity</h2>
+                <div id="activity-feed" class="activity-feed">
+                    <!-- Activity events will be added here -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Webhooks Tab -->
+        <div id="webhooks-tab" class="tab-content">
+            <section class="webhook-section">
+                <h2>Webhook Statistics (Last Hour)</h2>
+                <div id="webhook-summary" class="webhook-summary">
+                    <!-- Stats will be populated here -->
+                </div>
+
+                <h3>Event Breakdown</h3>
+                <div id="webhook-breakdown" class="webhook-breakdown">
+                    <!-- Event breakdown will be populated here -->
+                </div>
+            </section>
+
+            <section class="webhook-section">
+                <h2>Recent Webhook Events</h2>
+                <div id="webhook-events-list" class="webhook-events-list">
+                    <!-- Webhook events will be populated here -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Jobs Tab -->
+        <div id="jobs-tab" class="tab-content">
+            <section class="section">
+                <h2>Jobs</h2>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Repository</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Conclusion</th>
+                                <th>Runner</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobs-table-body">
+                            <!-- Jobs will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Runners Tab -->
+        <div id="runners-tab" class="tab-content">
+            <section class="section">
+                <h2>Runners</h2>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Current Job</th>
+                                <th>Labels</th>
+                                <th>Last Seen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="runners-table-body">
+                            <!-- Runners will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- Activity Tab -->
+        <div id="activity-tab" class="tab-content">
+            <section class="section">
+                <h2>System Activity</h2>
+                <div id="system-activity">
+                    <!-- System activity will be populated here -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings-tab" class="tab-content">
+            <section class="section">
+                <h2>Settings</h2>
+                <div class="settings-form">
+                    <h3>Webhook Configuration</h3>
+                    <div class="form-group">
+                        <label>Webhook URL:</label>
+                        <input type="text" class="form-control" value="http://localhost:3000/api/webhooks/github" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Supported Events:</label>
+                        <div id="supported-events">
+                            <!-- Supported events will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/dashboard-enhanced.js"></script>
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.dataset.tab + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Load supported events
+        fetch('/api/webhooks/events/types')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const eventsEl = document.getElementById('supported-events');
+                    eventsEl.innerHTML = data.data.events.map(event => 
+                        `<div class="event-type-item">
+                            <strong>${event.value}</strong>: ${event.description}
+                        </div>`
+                    ).join('');
+                }
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+{
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "10m",
+    "max-file": "3"
+  },
+  "storage-driver": "overlay2",
+  "storage-opts": [
+    "overlay2.override_kernel_check=true"
+  ],
+  "default-runtime": "runc",
+  "runtimes": {
+    "runc": {
+      "path": "runc"
+    }
+  },
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "default-ulimits": {
+    "nofile": {
+      "name": "nofile",
+      "hard": 65536,
+      "soft": 65536
+    },
+    "nproc": {
+      "name": "nproc",
+      "hard": 8192,
+      "soft": 8192
+    }
+  },
+  "max-concurrent-downloads": 10,
+  "max-concurrent-uploads": 10,
+  "max-download-attempts": 5,
+  "features": {
+    "buildkit": true
+  },
+  "builder": {
+    "gc": {
+      "defaultKeepStorage": "20GB",
+      "policy": [
+        {
+          "keepStorage": "10GB",
+          "filter": ["unused-for=168h"]
+        },
+        {
+          "keepStorage": "50GB",
+          "all": true
+        }
+      ]
+    }
+  },
+  "experimental": false,
+  "metrics-addr": "127.0.0.1:9323",
+  "userland-proxy": false,
+  "icc": false,
+  "iptables": true,
+  "ip-forward": true,
+  "ip-masq": true,
+  "ipv6": false,
+  "fixed-cidr-v6": "",
+  "bridge": "",
+  "bip": "",
+  "mtu": 1500,
+  "default-gateway": "",
+  "default-gateway-v6": "",
+  "selinux-enabled": false,
+  "userns-remap": "",
+  "group": "",
+  "cgroup-parent": "",
+  "pidfile": "/var/run/docker.pid",
+  "data-root": "/var/lib/docker",
+  "hosts": ["unix:///var/run/docker.sock"],
+  "tls": false,
+  "tlsverify": false,
+  "tlscert": "",
+  "tlskey": "",
+  "tlscacert": "",
+  "debug": false,
+  "raw-logs": false,
+  "disable-legacy-registry": true
+}

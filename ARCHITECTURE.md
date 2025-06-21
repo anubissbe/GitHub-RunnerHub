@@ -57,6 +57,90 @@ GitHub-RunnerHub is a custom proxy runner system that provides a highly controll
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+## GitHub API Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                           GitHub Platform                            │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐    │
+│  │  Repositories   │  │    Workflows    │  │     Runners     │    │
+│  │     REST API    │  │    REST API     │  │    REST API     │    │
+│  └─────────┬───────┘  └─────────┬───────┘  └─────────┬───────┘    │
+│            │                    │                    │              │
+│  ┌─────────┴─────────┬─────────┴──────────┬─────────┴───────┐    │
+│  │                   │                    │                 │    │
+│  │              Webhook Events             │                 │    │
+│  │         (workflow_run, workflow_job,    │                 │    │
+│  │          push, pull_request, etc.)      │                 │    │
+│  └─────────────────┬─────────────────────┬─────────────────┘    │
+└────────────────────┼─────────────────────┼─────────────────────────┘
+                     │                     │
+                     ▼ HTTPS Webhooks     ▼ HTTPS API Requests
+┌─────────────────────────────────────────────────────────────────────┐
+│                    RunnerHub Integration Layer                       │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                  GitHub API Gateway                         │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │ Rate Limiter │  │    Retry     │  │  Auth Token  │    │   │
+│  │  │  (Adaptive)  │  │   Handler    │  │   Manager    │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                    Data Sync Engine                         │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │ Repositories │  │   Workflows  │  │    Runners   │    │   │
+│  │  │    Sync      │  │     Sync     │  │     Sync     │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                   Webhook Processor                         │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │   Payload    │  │  Signature   │  │    Event     │    │   │
+│  │  │  Validation  │  │ Verification │  │   Routing    │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                   Caching Layer                             │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │   Redis      │  │  PostgreSQL  │  │   In-Memory  │    │   │
+│  │  │   Cache      │  │    Cache     │  │    Cache     │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└────────────────────────┬────────────────────────────────────────────┘
+                         │
+                         ▼ Processed Data & Events
+┌─────────────────────────────────────────────────────────────────────┐
+│                      RunnerHub Core System                           │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                  Orchestration Service                      │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │ Job Queue    │  │   Job        │  │  Container   │    │   │
+│  │  │ (BullMQ)     │  │ Scheduler    │  │ Orchestrator │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                     Dashboard & API                         │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │   │
+│  │  │ Real-time    │  │  REST API    │  │  WebSocket   │    │   │
+│  │  │ Dashboard    │  │  Endpoints   │  │   Updates    │    │   │
+│  │  └──────────────┘  └──────────────┘  └──────────────┘    │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### GitHub Integration Data Flow
+
+1. **Real-time Webhook Events**: GitHub sends instant notifications for workflow/job state changes
+2. **Intelligent API Polling**: Smart sync engine polls GitHub APIs with rate limit awareness
+3. **Multi-tier Caching**: Redis for hot data, PostgreSQL for persistent cache, in-memory for ultra-fast access
+4. **Event Processing**: Webhook events trigger immediate cache updates and job routing decisions
+5. **Rate Limit Management**: Distributed rate limiting prevents API exhaustion across multiple instances
+
 ## Component Details
 
 ### 1. Proxy Runner Layer
@@ -92,10 +176,17 @@ GitHub-RunnerHub is a custom proxy runner system that provides a highly controll
 - Metrics and analytics
 - Configuration storage
 
-**GitHub API Client**
-- JIT runner token generation
-- Repository access validation
-- Workflow status updates
+**GitHub API Client (Enhanced)**
+- Smart rate limiting with adaptive strategies (conservative/aggressive/adaptive)
+- Distributed rate tracking via Redis for HA deployments
+- Real-time repository, workflow, and runner synchronization
+- Webhook event processing for instant updates
+- Advanced caching layer with configurable TTLs
+- Multiple authentication methods (PAT, GitHub App)
+- Comprehensive monitoring and metrics collection
+- Automatic retry with exponential backoff
+- Repository access validation and permission checking
+- JIT runner token generation and management
 
 #### Worker Processes:
 - Poll job queue for work

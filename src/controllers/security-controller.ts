@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import securityScanner, { ScanRequest } from '../services/security-scanner';
+import jobLogSecretScanner from '../services/job-log-secret-scanner';
 import auditLogger, { AuditEventType, AuditCategory, AuditSeverity } from '../services/audit-logger';
 
 const logger = createLogger('SecurityController');
@@ -414,6 +415,335 @@ export class SecurityController {
       res.status(500).json({
         success: false,
         error: 'Failed to export scan results'
+      });
+    }
+  }
+
+  // ========== SECRET SCANNER ENDPOINTS ==========
+
+  /**
+   * Get secret scanner configuration
+   * GET /api/security/secret-scanner/config
+   */
+  async getSecretScannerConfig(_req: Request, res: Response): Promise<void> {
+    try {
+      // For now, return a basic config response
+      // In the future, you could expose configuration settings
+      res.json({
+        success: true,
+        data: {
+          enabled: true,
+          message: 'Secret scanner is operational'
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to get secret scanner config', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get secret scanner configuration'
+      });
+    }
+  }
+
+  /**
+   * Update secret scanner configuration
+   * PUT /api/security/secret-scanner/config
+   */
+  async updateSecretScannerConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const configUpdate = req.body;
+
+      // Validate configuration update
+      const allowedFields = [
+        'enabled', 'autoRedact', 'whitelistRepositories', 'minimumEntropy',
+        'confidenceThreshold', 'preserveFormatting', 'notifyOnDetection',
+        'blockJobOnSecrets', 'allowedFileExtensions'
+      ];
+
+      const invalidFields = Object.keys(configUpdate).filter(
+        field => !allowedFields.includes(field)
+      );
+
+      if (invalidFields.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: `Invalid configuration fields: ${invalidFields.join(', ')}`
+        });
+        return;
+      }
+
+      await jobLogSecretScanner.updateConfiguration(configUpdate);
+
+      // Audit log
+      await auditLogger.log({
+        eventType: AuditEventType.SYSTEM_CONFIG_CHANGED,
+        category: AuditCategory.SECURITY,
+        severity: AuditSeverity.INFO,
+        userId: (req as any).user?.id,
+        username: (req as any).user?.username,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        resource: 'secret_scanner_config',
+        resourceId: 'default',
+        action: 'Updated secret scanner configuration',
+        details: configUpdate,
+        result: 'success'
+      });
+
+      res.json({
+        success: true,
+        data: {
+          message: 'Secret scanner configuration updated successfully',
+          updatedFields: Object.keys(configUpdate)
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to update secret scanner config', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update secret scanner configuration'
+      });
+    }
+  }
+
+  /**
+   * Add custom secret pattern
+   * POST /api/security/secret-scanner/patterns
+   */
+  async addSecretPattern(req: Request, res: Response): Promise<void> {
+    try {
+      const patternData = req.body;
+
+      // Validate required fields
+      const requiredFields = ['name', 'description', 'regex', 'severity', 'category'];
+      const missingFields = requiredFields.filter(field => !patternData[field]);
+
+      if (missingFields.length > 0) {
+        res.status(400).json({
+          success: false,
+          error: `Missing required fields: ${missingFields.join(', ')}`
+        });
+        return;
+      }
+
+      // Validate regex pattern
+      try {
+        new RegExp(patternData.regex);
+      } catch (regexError) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid regex pattern'
+        });
+        return;
+      }
+
+      // Convert string regex to RegExp object
+      const pattern = {
+        ...patternData,
+        regex: new RegExp(patternData.regex, patternData.regexFlags || 'gi'),
+        whitelistPatterns: patternData.whitelistPatterns?.map((p: string) => new RegExp(p, 'gi'))
+      };
+
+      const savedPattern = await jobLogSecretScanner.addCustomPattern(pattern);
+
+      // Audit log
+      await auditLogger.log({
+        eventType: AuditEventType.SYSTEM_CONFIG_CHANGED,
+        category: AuditCategory.SECURITY,
+        severity: AuditSeverity.INFO,
+        userId: (req as any).user?.id,
+        username: (req as any).user?.username,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        resource: 'secret_pattern',
+        resourceId: savedPattern.id,
+        action: 'Added custom secret pattern',
+        details: { patternName: savedPattern.name, category: savedPattern.category },
+        result: 'success'
+      });
+
+      res.status(201).json({
+        success: true,
+        data: {
+          pattern: {
+            id: savedPattern.id,
+            name: savedPattern.name,
+            description: savedPattern.description,
+            severity: savedPattern.severity,
+            category: savedPattern.category,
+            enabled: savedPattern.enabled
+          },
+          message: 'Custom secret pattern added successfully'
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to add secret pattern', { error });
+      res.status(500).json({
+        success: false,
+        error: `Failed to add secret pattern: ${(error as Error).message}`
+      });
+    }
+  }
+
+  /**
+   * Get secret scanning statistics
+   * GET /api/security/secret-scanner/stats
+   */
+  async getSecretScanningStats(req: Request, res: Response): Promise<void> {
+    try {
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      
+      if (days < 1 || days > 365) {
+        res.status(400).json({
+          success: false,
+          error: 'Days parameter must be between 1 and 365'
+        });
+        return;
+      }
+
+      const stats = await jobLogSecretScanner.getStatistics(days);
+
+      res.json({
+        success: true,
+        data: {
+          ...stats,
+          period: `${days} days`
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to get secret scanning stats', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get secret scanning statistics'
+      });
+    }
+  }
+
+  /**
+   * Test secret pattern
+   * POST /api/security/secret-scanner/test-pattern
+   */
+  async testSecretPattern(req: Request, res: Response): Promise<void> {
+    try {
+      const { regex, testText, regexFlags } = req.body;
+
+      if (!regex || !testText) {
+        res.status(400).json({
+          success: false,
+          error: 'Both regex and testText are required'
+        });
+        return;
+      }
+
+      // Validate and test regex
+      let regexPattern: RegExp;
+      try {
+        regexPattern = new RegExp(regex, regexFlags || 'gi');
+      } catch (regexError) {
+        res.status(400).json({
+          success: false,
+          error: 'Invalid regex pattern'
+        });
+        return;
+      }
+
+      // Test the pattern
+      const matches = Array.from(testText.matchAll(regexPattern));
+      const matchResults = matches.map((match: RegExpMatchArray, index: number) => ({
+        index,
+        match: match[0],
+        position: match.index || 0,
+        groups: match.slice(1)
+      }));
+
+      res.json({
+        success: true,
+        data: {
+          matches: matchResults,
+          matchCount: matches.length,
+          pattern: regex,
+          flags: regexFlags || 'gi',
+          testPassed: matches.length > 0
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to test secret pattern', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to test secret pattern'
+      });
+    }
+  }
+
+  /**
+   * Export secret scanning results
+   * GET /api/security/secret-scanner/export
+   */
+  async exportSecretScanResults(req: Request, res: Response): Promise<void> {
+    try {
+      const { days = '30', format = 'json' } = req.query;
+      const daysNum = parseInt(days as string);
+
+      if (daysNum < 1 || daysNum > 365) {
+        res.status(400).json({
+          success: false,
+          error: 'Days parameter must be between 1 and 365'
+        });
+        return;
+      }
+
+      const stats = await jobLogSecretScanner.getStatistics(daysNum);
+
+      // Audit log export
+      await auditLogger.log({
+        eventType: AuditEventType.DATA_EXPORTED,
+        category: AuditCategory.SECURITY,
+        severity: AuditSeverity.INFO,
+        userId: (req as any).user?.id,
+        username: (req as any).user?.username,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        resource: 'secret_scan_results',
+        resourceId: 'export',
+        action: 'Exported secret scanning results',
+        details: { format, days: daysNum },
+        result: 'success'
+      });
+
+      if (format === 'csv') {
+        // Convert to CSV
+        const headers = ['Date', 'Total Scans', 'Secrets Detected'];
+        const rows = stats.scansByDay.map(day => [
+          day.date.toISOString().split('T')[0],
+          day.scans.toString(),
+          day.secrets.toString()
+        ]);
+
+        const csv = [
+          headers.join(','),
+          ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 
+          `attachment; filename="secret-scan-stats-${daysNum}d.csv"`);
+        res.send(csv);
+      } else {
+        // JSON format
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', 
+          `attachment; filename="secret-scan-stats-${daysNum}d.json"`);
+        res.json({
+          exportDate: new Date().toISOString(),
+          period: `${daysNum} days`,
+          data: stats
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to export secret scan results', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export secret scanning results'
       });
     }
   }

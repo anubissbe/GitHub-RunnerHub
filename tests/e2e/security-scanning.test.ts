@@ -1,8 +1,4 @@
 import axios from 'axios';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-// const execAsync = promisify(exec); // Not used in current tests
 
 // Configuration
 const API_BASE_URL = 'http://localhost:3001/api';

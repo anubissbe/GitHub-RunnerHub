@@ -23,7 +23,7 @@ sed -i 's/192\.168\.1\.24/${VAULT_HOST:-localhost}/g' "$PROJECT_DIR/scripts/setu
 find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/ghp_[a-zA-Z0-9]*/ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/g' || true
 
 # Clean up any vault tokens
-find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/hvs\.[a-zA-Z0-9]*/hvs.XXXXXXXXXXXXXXXXXXXX/g' || true
+find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/hvs\.[a-zA-Z0-9]*/hvs.YOUR_VAULT_TOKEN/g' || true
 
 echo "✅ Replaced sensitive data with placeholders"
 

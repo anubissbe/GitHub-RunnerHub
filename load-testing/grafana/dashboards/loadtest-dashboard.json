@@ -1,0 +1,318 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "GitHub-RunnerHub Load Testing Dashboard",
+    "tags": ["load-testing", "github-runnerhub"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Test Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "job_creation_rate",
+            "legendFormat": "Jobs Created/sec"
+          },
+          {
+            "expr": "job_completion_rate", 
+            "legendFormat": "Jobs Completed/sec"
+          },
+          {
+            "expr": "error_rate_percent",
+            "legendFormat": "Error Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Response Time Distribution",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "job_response_time_p50",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "job_response_time_p95",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "job_response_time_p99",
+            "legendFormat": "P99"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Response Time (seconds)",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Throughput Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "job_creation_rate",
+            "legendFormat": "Created"
+          },
+          {
+            "expr": "job_completion_rate",
+            "legendFormat": "Completed"
+          },
+          {
+            "expr": "job_failure_rate",
+            "legendFormat": "Failed"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Jobs per Second",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "id": 4,
+        "title": "Runner Scaling",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "total_runners",
+            "legendFormat": "Total Runners"
+          },
+          {
+            "expr": "active_runners",
+            "legendFormat": "Active Runners"
+          },
+          {
+            "expr": "idle_runners",
+            "legendFormat": "Idle Runners"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Number of Runners",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      },
+      {
+        "id": 5,
+        "title": "Queue Depth",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "job_queue_depth",
+            "legendFormat": "Queue Depth"
+          },
+          {
+            "expr": "queued_jobs_total",
+            "legendFormat": "Queued Jobs"
+          },
+          {
+            "expr": "processing_jobs_total",
+            "legendFormat": "Processing Jobs"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Number of Jobs",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "System Resources",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "cpu_utilization_percent",
+            "legendFormat": "CPU %"
+          },
+          {
+            "expr": "memory_utilization_percent",
+            "legendFormat": "Memory %"
+          },
+          {
+            "expr": "db_connection_pool_utilization",
+            "legendFormat": "DB Connections %"
+          },
+          {
+            "expr": "redis_memory_utilization",
+            "legendFormat": "Redis Memory %"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Utilization %",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
+        "id": 7,
+        "title": "Error Breakdown",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (error_type) (errors_total)",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 8,
+        "title": "Database Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "db_query_duration_p95",
+            "legendFormat": "Query Duration P95"
+          },
+          {
+            "expr": "rate(db_queries_total[1m])",
+            "legendFormat": "Queries/sec"
+          },
+          {
+            "expr": "db_connections_active",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        }
+      },
+      {
+        "id": 9,
+        "title": "Container Metrics",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "container_cpu_utilization",
+            "legendFormat": "{{container_name}} CPU"
+          },
+          {
+            "expr": "container_memory_utilization",
+            "legendFormat": "{{container_name}} Memory"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 40
+        }
+      },
+      {
+        "id": 10,
+        "title": "Network Throughput",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "network_throughput_mbps",
+            "legendFormat": "Network Throughput (Mbps)"
+          },
+          {
+            "expr": "rate(http_requests_total[1m])",
+            "legendFormat": "HTTP Requests/sec"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Throughput",
+            "min": 0
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 48
+        }
+      },
+      {
+        "id": 11,
+        "title": "Scaling Events",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"github-runnerhub-orchestrator\"} |= \"scaling\"",
+            "legendFormat": ""
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 48
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s",
+    "schemaVersion": 16,
+    "version": 0
+  }
+}

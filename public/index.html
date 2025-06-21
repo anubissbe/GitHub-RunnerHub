@@ -12,8 +12,45 @@
     <div class="container mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">GitHub RunnerHub Dashboard</h1>
-            <p class="text-gray-600">Real-time monitoring of GitHub Actions runners</p>
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">GitHub RunnerHub Dashboard</h1>
+                    <p class="text-gray-600">Real-time monitoring of GitHub Actions runners</p>
+                </div>
+                <div class="text-right">
+                    <!-- GitHub Integration Status -->
+                    <div class="mb-2">
+                        <span class="text-sm text-gray-600">GitHub API Status:</span>
+                        <span id="githubStatus" class="ml-2 text-sm font-medium">
+                            <span class="inline-block w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                            Connecting...
+                        </span>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        Rate Limit: <span id="rateLimitInfo">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Repository Selector -->
+        <div class="mb-6 bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 mr-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Tracked Repositories</label>
+                    <div id="repositoryList" class="flex flex-wrap gap-2">
+                        <!-- Repository tags will be inserted here -->
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="newRepository" placeholder="owner/repo" 
+                           class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="addRepository()" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        Add Repo
+                    </button>
+                </div>
+            </div>
         </div>
 
         <!-- System Metrics -->

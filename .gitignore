@@ -1,41 +1,89 @@
-# Node
+# Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
 # TypeScript
 dist/
 *.tsbuildinfo
 
-# Environment
+# Environment files
 .env
 .env.local
 .env.development
+.env.test
 .env.production
+*.env
 
-# IDE
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build output
+.nuxt
+
+# Vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Logs
-logs/
-*.log
-
-# Testing
-coverage/
-.nyc_output
 
 # Docker
 docker-compose.override.yml
 .docker/
+docker-volumes/
 
 # GitHub Runner
 _diag/
@@ -49,180 +97,65 @@ data/
 temp/
 cache/
 sessions/
-uploads/.env
-*.env
-# Sensitive environment files
-
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-*.env
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Dependency directories
-node_modules/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# Docker volumes
-docker-volumes/
+uploads/
 
 # Test results
 test-results/
 junit.xml
 
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Sensitive data
+# Sensitive data and secrets
 secrets/
 vault-keys/
 certificates/
 *.key
 *.pem
 *.crt
+*.p12
 
+# Backup files
+*.bak
+*.backup
+*.sql.gz
+backup-*.tar.gz
 
-# Environment files
-.env
-.env.local
-.env.development
-.env.test
-.env.production
-*.env
+# Load testing results
+load-testing/load-test-results/
+load-testing/performance-*.csv
+load-testing/load-test-report-*.json
+load-testing/load-test-report-*.md
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+pg_data/
+dump.rdb
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Vault data (if running locally)
+vault-data/
 
-# Coverage directory used by tools like istanbul
-coverage/
+# Installation logs
+install.log
+setup.log
 
-# Dependency directories
-node_modules/
+# SSH keys
+id_rsa*
+id_ed25519*
+known_hosts
 
-# Optional npm cache directory
-.npm
+# Temporary files
+*.tmp
+*.temp
 
-# Optional REPL history
-.node_repl_history
+# Build outputs
+build/
 
-# Output of 'npm pack'
-*.tgz
+# Configuration files with potential secrets
+config/production.json
+config/staging.json
 
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# Docker volumes
-docker-volumes/
-
-# Test results
-test-results/
-junit.xml
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Sensitive data
-secrets/
-vault-keys/
-certificates/
-*.key
-*.pem
-*.crt
-
+# Private and sensitive files (naming convention)
+**/private-*
+**/sensitive-*
+**/*-private.*
+**/*-sensitive.*

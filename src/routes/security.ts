@@ -66,4 +66,42 @@ router.get('/export/:scanId',
   securityController.exportScanResult.bind(securityController)
 );
 
+// ========== SECRET SCANNER ROUTES ==========
+
+// GET /api/security/secret-scanner/config - Get secret scanner config (viewer+)
+router.get('/secret-scanner/config',
+  authMiddleware.authorize(['admin', 'operator', 'viewer']),
+  securityController.getSecretScannerConfig.bind(securityController)
+);
+
+// PUT /api/security/secret-scanner/config - Update secret scanner config (admin only)
+router.put('/secret-scanner/config',
+  authMiddleware.authorize('admin'),
+  securityController.updateSecretScannerConfig.bind(securityController)
+);
+
+// POST /api/security/secret-scanner/patterns - Add custom secret pattern (admin only)
+router.post('/secret-scanner/patterns',
+  authMiddleware.authorize('admin'),
+  securityController.addSecretPattern.bind(securityController)
+);
+
+// GET /api/security/secret-scanner/stats - Get secret scanning statistics (viewer+)
+router.get('/secret-scanner/stats',
+  authMiddleware.authorize(['admin', 'operator', 'viewer']),
+  securityController.getSecretScanningStats.bind(securityController)
+);
+
+// POST /api/security/secret-scanner/test-pattern - Test secret pattern (operator+)
+router.post('/secret-scanner/test-pattern',
+  authMiddleware.authorize(['admin', 'operator']),
+  securityController.testSecretPattern.bind(securityController)
+);
+
+// GET /api/security/secret-scanner/export - Export secret scanning results (operator+)
+router.get('/secret-scanner/export',
+  authMiddleware.authorize(['admin', 'operator']),
+  securityController.exportSecretScanResults.bind(securityController)
+);
+
 export default router;

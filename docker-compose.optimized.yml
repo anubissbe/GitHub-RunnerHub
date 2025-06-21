@@ -1,0 +1,236 @@
+version: '3.9'
+
+# Production-Optimized GitHub-RunnerHub Configuration
+# Based on comprehensive load testing results
+
+services:
+  # Optimized Redis with performance tuning
+  redis-optimized:
+    image: redis:7-alpine
+    container_name: runnerhub-redis-optimized
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - ./config/redis-optimized.conf:/etc/redis/redis.conf:ro
+      - redis-optimized-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - runnerhub-optimized-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optimized PostgreSQL with performance configuration
+  postgres-optimized:
+    image: postgres:16-alpine
+    container_name: runnerhub-postgres-optimized
+    environment:
+      POSTGRES_USER: ${DB_USER:-runnerhub}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-runnerhub_secure_2024}
+      POSTGRES_DB: ${DB_NAME:-github_runnerhub}
+    volumes:
+      - postgres-optimized-data:/var/lib/postgresql/data
+      - ./config/postgres-optimized.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - runnerhub-optimized-network
+    restart: unless-stopped
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 2G
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-runnerhub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optimized Orchestrator with performance tuning
+  orchestrator-optimized:
+    build:
+      context: .
+      dockerfile: docker/orchestrator/Dockerfile
+    container_name: runnerhub-orchestrator-optimized
+    env_file:
+      - ./config/orchestrator-optimized.env
+    environment:
+      REDIS_HOST: redis-optimized
+      DATABASE_URL: postgresql://${DB_USER:-runnerhub}:${DB_PASSWORD:-runnerhub_secure_2024}@postgres-optimized:5432/${DB_NAME:-github_runnerhub}
+      DOCKER_HOST: tcp://docker-proxy-optimized:2375
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - runnerhub-optimized-network
+    depends_on:
+      redis-optimized:
+        condition: service_healthy
+      postgres-optimized:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '4.0'
+        reservations:
+          memory: 2G
+          cpus: '2.0'
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Docker Socket Proxy with optimized configuration
+  docker-proxy-optimized:
+    image: tecnativa/docker-socket-proxy:latest
+    container_name: runnerhub-docker-proxy-optimized
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+      SERVICES: 1
+      IMAGES: 1
+      BUILD: 0
+      EXEC: 0
+      VOLUMES: 0
+      INFO: 1
+      POST: 1
+    ports:
+      - "2375:2375"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - runnerhub-optimized-network
+    restart: unless-stopped
+
+  # Optimized Proxy Runners with resource limits
+  proxy-runner-optimized-1:
+    build:
+      context: .
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: runnerhub-proxy-runner-optimized-1
+    environment:
+      RUNNER_NAME: proxy-runner-optimized-1
+      ORCHESTRATOR_URL: http://orchestrator-optimized:3000
+      RUNNER_LABELS: self-hosted,docker,optimized,ubuntu
+      MAX_PARALLEL_JOBS: 10
+      POLL_INTERVAL: 1
+    volumes:
+      - ./runner-data/proxy-1:/home/runner
+    networks:
+      - runnerhub-optimized-network
+    depends_on:
+      orchestrator-optimized:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  proxy-runner-optimized-2:
+    build:
+      context: .
+      dockerfile: docker/proxy-runner/Dockerfile
+    container_name: runnerhub-proxy-runner-optimized-2
+    environment:
+      RUNNER_NAME: proxy-runner-optimized-2
+      ORCHESTRATOR_URL: http://orchestrator-optimized:3000
+      RUNNER_LABELS: self-hosted,docker,optimized,ubuntu
+      MAX_PARALLEL_JOBS: 10
+      POLL_INTERVAL: 1
+    volumes:
+      - ./runner-data/proxy-2:/home/runner
+    networks:
+      - runnerhub-optimized-network
+    depends_on:
+      orchestrator-optimized:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+
+  # Performance Monitoring Stack
+  prometheus-optimized:
+    image: prom/prometheus:latest
+    container_name: runnerhub-prometheus-optimized
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./config/prometheus-loadtest.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus-performance-alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-optimized-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - runnerhub-optimized-network
+    restart: unless-stopped
+
+  grafana-optimized:
+    image: grafana/grafana:latest
+    container_name: runnerhub-grafana-optimized
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - ./config/grafana-performance-dashboard.json:/etc/grafana/provisioning/dashboards/performance.json:ro
+      - grafana-optimized-data:/var/lib/grafana
+    ports:
+      - "3002:3000"
+    networks:
+      - runnerhub-optimized-network
+    depends_on:
+      - prometheus-optimized
+    restart: unless-stopped
+
+networks:
+  runnerhub-optimized-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1500
+
+volumes:
+  redis-optimized-data:
+    driver: local
+  postgres-optimized-data:
+    driver: local
+  prometheus-optimized-data:
+    driver: local
+  grafana-optimized-data:
+    driver: local

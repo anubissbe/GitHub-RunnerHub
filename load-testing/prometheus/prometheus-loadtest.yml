@@ -1,0 +1,175 @@
+# Prometheus configuration for GitHub-RunnerHub Load Testing
+
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+  scrape_timeout: 4s
+
+rule_files:
+  - "rules/*.yml"
+
+scrape_configs:
+  # GitHub-RunnerHub Orchestrator
+  - job_name: 'github-runnerhub-orchestrator'
+    static_configs:
+      - targets: ['orchestrator-loadtest:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+    scrape_timeout: 2s
+
+  # Proxy Runners
+  - job_name: 'github-runnerhub-proxy-runners'
+    static_configs:
+      - targets: 
+          - 'proxy-runner-loadtest-1:3000'
+          - 'proxy-runner-loadtest-2:3000'
+          - 'proxy-runner-loadtest-3:3000'
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+    scrape_timeout: 2s
+
+  # PostgreSQL Metrics
+  - job_name: 'postgres-loadtest'
+    static_configs:
+      - targets: ['postgres-loadtest:5432']
+    metrics_path: '/metrics'
+    scrape_interval: 5s
+    scrape_timeout: 4s
+
+  # Redis Metrics
+  - job_name: 'redis-loadtest'
+    static_configs:
+      - targets: ['redis-loadtest:6379']
+    metrics_path: '/metrics'
+    scrape_interval: 2s
+    scrape_timeout: 2s
+
+  # Docker Container Metrics
+  - job_name: 'docker-containers'
+    docker_sd_configs:
+      - host: 'unix:///var/run/docker.sock'
+        refresh_interval: 5s
+        filters:
+          - name: 'label'
+            values: ['com.docker.compose.project=load-testing']
+    relabel_configs:
+      - source_labels: [__meta_docker_container_name]
+        target_label: container_name
+      - source_labels: [__meta_docker_container_label_com_docker_compose_service]
+        target_label: service_name
+
+  # System Metrics (Node Exporter equivalent)
+  - job_name: 'system-metrics'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 5s
+    scrape_timeout: 4s
+
+  # Load Test Framework Metrics
+  - job_name: 'load-test-framework'
+    static_configs:
+      - targets: ['loadtest-executor:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 1s
+    scrape_timeout: 1s
+
+  # HAProxy Stats (if using load balancer)
+  - job_name: 'haproxy-stats'
+    static_configs:
+      - targets: ['haproxy:8404']
+    metrics_path: '/stats/prometheus'
+    scrape_interval: 5s
+    scrape_timeout: 4s
+
+# Alerting rules for load testing
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Recording rules for load testing metrics
+recording_rules:
+  - name: 'load_test_rules'
+    interval: 5s
+    rules:
+      # Job throughput rates
+      - record: job_creation_rate
+        expr: rate(jobs_created_total[1m])
+      
+      - record: job_completion_rate
+        expr: rate(jobs_completed_total[1m])
+      
+      - record: job_failure_rate
+        expr: rate(jobs_failed_total[1m])
+      
+      # Response time percentiles
+      - record: job_response_time_p50
+        expr: histogram_quantile(0.5, rate(job_response_time_seconds_bucket[1m]))
+      
+      - record: job_response_time_p95
+        expr: histogram_quantile(0.95, rate(job_response_time_seconds_bucket[1m]))
+      
+      - record: job_response_time_p99
+        expr: histogram_quantile(0.99, rate(job_response_time_seconds_bucket[1m]))
+      
+      # Runner utilization
+      - record: runner_utilization_percent
+        expr: (active_runners / total_runners) * 100
+      
+      # Queue depth
+      - record: job_queue_depth
+        expr: queued_jobs_total - processing_jobs_total
+      
+      # Error rates
+      - record: error_rate_percent
+        expr: (rate(errors_total[1m]) / rate(requests_total[1m])) * 100
+      
+      # Scaling metrics
+      - record: scaling_events_rate
+        expr: rate(scaling_events_total[5m])
+      
+      # Resource utilization
+      - record: memory_utilization_percent
+        expr: (memory_used_bytes / memory_total_bytes) * 100
+      
+      - record: cpu_utilization_percent
+        expr: rate(cpu_usage_seconds_total[1m]) * 100
+      
+      # Database performance
+      - record: db_connection_pool_utilization
+        expr: (db_connections_active / db_connections_max) * 100
+      
+      - record: db_query_duration_p95
+        expr: histogram_quantile(0.95, rate(db_query_duration_seconds_bucket[1m]))
+      
+      # Redis performance
+      - record: redis_memory_utilization
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100
+      
+      - record: redis_command_rate
+        expr: rate(redis_commands_total[1m])
+      
+      # Network metrics
+      - record: network_throughput_mbps
+        expr: rate(network_bytes_total[1m]) * 8 / 1000000
+      
+      # Container metrics
+      - record: container_cpu_utilization
+        expr: rate(container_cpu_usage_seconds_total[1m]) * 100
+      
+      - record: container_memory_utilization
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+
+# Load test specific metric collection
+metric_relabel_configs:
+  # Add load test labels
+  - source_labels: [__name__]
+    regex: '(job_.*|runner_.*|queue_.*)'
+    target_label: load_test_metric
+    replacement: 'true'
+  
+  # Normalize container names
+  - source_labels: [container_name]
+    regex: 'loadtest-(.*)'
+    target_label: service
+    replacement: '${1}'
