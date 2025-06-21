@@ -12,16 +12,16 @@ import database from './services/database';
 import { initializeJobQueue, shutdownJobQueue } from './services/job-queue-fixed';
 
 // Import routes
-import authRoutes from './routes/auth-routes';
-import jobRoutes from './routes/job-routes';
-import runnerRoutes from './routes/runner-routes';
-import healthRoutes from './routes/health-routes';
-import monitoringRoutes from './routes/monitoring-routes';
-import metricsRoutes from './routes/metrics-routes';
-import systemRoutes from './routes/system-routes';
-import networkRoutes from './routes/network-routes';
-import securityRoutes from './routes/security-routes';
-import auditRoutes from './routes/audit-routes';
+import authRoutes from './routes/auth';
+import jobRoutes from './routes/jobs';
+import runnerRoutes from './routes/runners';
+import healthRoutes from './routes/health';
+import monitoringRoutes from './routes/monitoring';
+import metricsRoutes from './routes/metrics';
+import systemRoutes from './routes/system';
+import networkRoutes from './routes/networks';
+import securityRoutes from './routes/security';
+import auditRoutes from './routes/audit';
 
 const logger = createLogger('Server');
 
