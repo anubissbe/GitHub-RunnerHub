@@ -8,6 +8,7 @@ const DockerAPIManager = require('./docker/docker-api');
 const ContainerLifecycleManager = require('./lifecycle/container-lifecycle');
 const ContainerMonitor = require('./monitoring/container-monitoring');
 const ContainerCleanupManager = require('./cleanup/container-cleanup');
+const SecurityOrchestrator = require('./security/security-orchestrator');
 const logger = require('../utils/logger');
 
 class ContainerOrchestrator extends EventEmitter {
@@ -37,6 +38,17 @@ class ContainerOrchestrator extends EventEmitter {
       // Scaling configuration
       scaleCheckInterval: options.scaleCheckInterval || 30000, // 30 seconds
       jobQueueCheckInterval: options.jobQueueCheckInterval || 15000, // 15 seconds
+      
+      // Security configuration
+      securityEnabled: options.securityEnabled !== false,
+      securityLevel: options.securityLevel || 'high',
+      securityPolicies: {
+        enforceNetworkIsolation: options.enforceNetworkIsolation !== false,
+        enforceResourceLimits: options.enforceResourceLimits !== false,
+        requireContainerScanning: options.requireContainerScanning !== false,
+        blockOnSecurityFailure: options.blockOnSecurityFailure !== false,
+        requireAuthentication: options.requireAuthentication !== false
+      },
       
       ...options
     };
@@ -81,6 +93,21 @@ class ContainerOrchestrator extends EventEmitter {
         maxContainerAge: options.maxContainerAge || 3600000,
         enableVolumeCleanup: options.enableVolumeCleanup !== false,
         enableImageCleanup: options.enableImageCleanup !== false
+      }
+    ) : null;
+    
+    this.securityOrchestrator = this.config.securityEnabled ? new SecurityOrchestrator(
+      this.dockerAPI,
+      {
+        securityLevel: this.config.securityLevel,
+        policies: this.config.securityPolicies,
+        auditPath: options.auditPath || '/opt/github-runnerhub/audit-logs',
+        networkIsolation: options.networkIsolation,
+        resourceQuotas: options.resourceQuotas,
+        secretManagement: options.secretManagement,
+        containerScanner: options.containerScanner,
+        rbac: options.rbac,
+        runtimeMonitor: options.runtimeMonitor
       }
     ) : null;
     
@@ -141,6 +168,25 @@ class ContainerOrchestrator extends EventEmitter {
         this.emit('cleanupCompleted', event);
       });
     }
+
+    // Security events
+    if (this.securityOrchestrator) {
+      this.securityOrchestrator.on('threatHandled', (threat) => {
+        this.handleSecurityThreat(threat);
+      });
+
+      this.securityOrchestrator.on('jobBlocked', (event) => {
+        this.handleJobBlocked(event);
+      });
+
+      this.securityOrchestrator.on('containerBlocked', (event) => {
+        this.handleContainerBlocked(event);
+      });
+
+      this.securityOrchestrator.on('securityAlert', (alert) => {
+        this.emit('securityAlert', alert);
+      });
+    }
   }
 
   /**
@@ -164,6 +210,11 @@ class ContainerOrchestrator extends EventEmitter {
       // Start cleanup if enabled
       if (this.cleanupManager) {
         this.cleanupManager.start();
+      }
+      
+      // Initialize security if enabled
+      if (this.securityOrchestrator) {
+        await this.securityOrchestrator.initialize();
       }
       
       this.initialized = true;
@@ -247,6 +298,10 @@ class ContainerOrchestrator extends EventEmitter {
       this.cleanupManager.stop();
     }
     
+    if (this.securityOrchestrator) {
+      await this.securityOrchestrator.stop();
+    }
+    
     // Clean up all containers
     await this.dockerAPI.cleanup();
     
@@ -260,6 +315,14 @@ class ContainerOrchestrator extends EventEmitter {
   async submitJob(jobId, jobConfig = {}) {
     try {
       logger.info(`Submitting job for orchestration: ${jobId}`);
+      
+      // Create security context if security is enabled
+      if (this.securityOrchestrator) {
+        const securityContext = await this.securityOrchestrator.createJobSecurityContext(jobId, jobConfig);
+        if (securityContext.state === 'blocked') {
+          throw new Error(`Job blocked by security policy: ${jobId}`);
+        }
+      }
       
       // Add to job queue
       this.jobQueue.set(jobId, {
@@ -330,7 +393,16 @@ class ContainerOrchestrator extends EventEmitter {
       logger.info(`Executing job in container: ${jobId}`);
       
       // Create and start container
-      await this.lifecycleManager.createAndStartContainer(jobId, jobConfig);
+      const containerId = await this.lifecycleManager.createAndStartContainer(jobId, jobConfig);
+      
+      // Apply security controls if enabled
+      if (this.securityOrchestrator && containerId) {
+        const secured = await this.securityOrchestrator.prepareSecureContainer(containerId, jobId);
+        if (!secured) {
+          await this.lifecycleManager.stopAndCleanupContainer(jobId);
+          throw new Error(`Failed to secure container for job ${jobId}`);
+        }
+      }
       
       // Track active job
       this.activeJobs.set(jobId, {
@@ -361,9 +433,14 @@ class ContainerOrchestrator extends EventEmitter {
         duration: Date.now() - activeJob.startedAt
       });
       
-      // Clean up container
+      // Clean up container and security context
       setTimeout(async () => {
         try {
+          // Clean up security context first
+          if (this.securityOrchestrator) {
+            await this.securityOrchestrator.cleanupJobSecurity(jobId);
+          }
+          
           await this.lifecycleManager.stopAndCleanupContainer(jobId);
           this.activeJobs.delete(jobId);
         } catch (error) {
@@ -559,6 +636,61 @@ class ContainerOrchestrator extends EventEmitter {
   }
 
   /**
+   * Handle security threat
+   */
+  handleSecurityThreat(threat) {
+    logger.error(`Security threat detected: ${threat.type} - ${threat.message}`);
+    
+    // Take action based on threat severity
+    if (threat.severity === 'critical' && threat.jobId) {
+      // Find and terminate the job
+      const activeJob = this.activeJobs.get(threat.jobId);
+      if (activeJob) {
+        this.lifecycleManager.stopAndCleanupContainer(threat.jobId).catch(err =>
+          logger.error(`Failed to terminate job ${threat.jobId} due to security threat:`, err)
+        );
+        this.activeJobs.delete(threat.jobId);
+      }
+    }
+    
+    this.emit('securityThreat', threat);
+  }
+
+  /**
+   * Handle job blocked by security
+   */
+  handleJobBlocked(event) {
+    const { jobId, reason } = event;
+    logger.warn(`Job ${jobId} blocked: ${reason}`);
+    
+    // Remove from queue if present
+    this.jobQueue.delete(jobId);
+    
+    this.emit('jobBlocked', event);
+  }
+
+  /**
+   * Handle container blocked by security
+   */
+  handleContainerBlocked(event) {
+    const { containerId, reason } = event;
+    logger.warn(`Container ${containerId} blocked: ${reason}`);
+    
+    // Find associated job and clean up
+    for (const [jobId, job] of this.activeJobs.entries()) {
+      if (job.containerId === containerId) {
+        this.lifecycleManager.stopAndCleanupContainer(jobId).catch(err =>
+          logger.error(`Failed to cleanup blocked container ${containerId}:`, err)
+        );
+        this.activeJobs.delete(jobId);
+        break;
+      }
+    }
+    
+    this.emit('containerBlocked', event);
+  }
+
+  /**
    * Get orchestrator status
    */
   getStatus() {
@@ -580,7 +712,8 @@ class ContainerOrchestrator extends EventEmitter {
       },
       lifecycle: lifecycleStats,
       monitoring: this.monitor ? this.monitor.getMonitoringStats() : null,
-      cleanup: this.cleanupManager ? this.cleanupManager.getCleanupStats() : null
+      cleanup: this.cleanupManager ? this.cleanupManager.getCleanupStats() : null,
+      security: this.securityOrchestrator ? this.securityOrchestrator.getStatus() : null
     };
   }
 
@@ -603,6 +736,7 @@ class ContainerOrchestrator extends EventEmitter {
     return {
       status,
       containerMetrics,
+      security: this.securityOrchestrator ? this.securityOrchestrator.getSecurityMetrics() : null,
       timestamp: new Date()
     };
   }
