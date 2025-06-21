@@ -92,5 +92,5 @@ None reported. System is production ready.
 ---
 
 **Last Updated**: December 2024  
-**Maintainer**: anubissbe  
+**Maintainer**: YOUR_GITHUB_ORG  
 **Status**: Ready for production deployment

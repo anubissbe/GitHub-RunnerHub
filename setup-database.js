@@ -141,7 +141,7 @@ async function setupDatabase() {
             const startTime = `NOW() - INTERVAL '${hoursAgo} hours ${Math.floor(Math.random() * 60)} minutes'`;
             const duration = Math.floor(Math.random() * 10) + 1;
             const status = Math.random() > 0.1 ? 'completed' : 'failed';
-            const repo = ['anubissbe/test-repo', 'anubissbe/web-app', 'anubissbe/api-service'][Math.floor(Math.random() * 3)];
+            const repo = ['YOUR_GITHUB_ORG/test-repo', 'YOUR_GITHUB_ORG/web-app', 'YOUR_GITHUB_ORG/api-service'][Math.floor(Math.random() * 3)];
             const workflow = ['CI Pipeline', 'Deploy', 'Tests', 'Build'][Math.floor(Math.random() * 4)];
             
             jobs.push(`(
@@ -157,10 +157,10 @@ async function setupDatabase() {
         }
         
         // Add some pending and running jobs
-        jobs.push(`('job-50', 'job-50', 'run-50', 'anubissbe/test-repo', 'Deploy', 'running', NOW() - INTERVAL '5 minutes', NULL)`);
-        jobs.push(`('job-51', 'job-51', 'run-51', 'anubissbe/api-service', 'Tests', 'running', NOW() - INTERVAL '2 minutes', NULL)`);
-        jobs.push(`('job-52', 'job-52', 'run-52', 'anubissbe/web-app', 'Build', 'pending', NULL, NULL)`);
-        jobs.push(`('job-53', 'job-53', 'run-53', 'anubissbe/test-repo', 'CI Pipeline', 'pending', NULL, NULL)`);
+        jobs.push(`('job-50', 'job-50', 'run-50', 'YOUR_GITHUB_ORG/test-repo', 'Deploy', 'running', NOW() - INTERVAL '5 minutes', NULL)`);
+        jobs.push(`('job-51', 'job-51', 'run-51', 'YOUR_GITHUB_ORG/api-service', 'Tests', 'running', NOW() - INTERVAL '2 minutes', NULL)`);
+        jobs.push(`('job-52', 'job-52', 'run-52', 'YOUR_GITHUB_ORG/web-app', 'Build', 'pending', NULL, NULL)`);
+        jobs.push(`('job-53', 'job-53', 'run-53', 'YOUR_GITHUB_ORG/test-repo', 'CI Pipeline', 'pending', NULL, NULL)`);
         
         await pool.query(`
             INSERT INTO runnerhub.jobs (id, job_id, run_id, repository, workflow, status, started_at, completed_at)

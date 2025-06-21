@@ -57,8 +57,8 @@ sanitize_file() {
         -e 's/ssh your-remote-server/ssh your-remote-server/g' \
         -e 's/user YOUR_USERNAME/user YOUR_USERNAME/g' \
         -e 's/bert@telkom\.be/your-email@example.com/g' \
-        -e 's/anubissbe@gmail\.com/your-email@example.com/g' \
-        -e 's/buymeacoffee\.com\/anubissbe/buymeacoffee.com\/YOUR_USERNAME/g' \
+        -e 's/YOUR_GITHUB_ORG@gmail\.com/your-email@example.com/g' \
+        -e 's/buymeacoffee\.com\/YOUR_GITHUB_ORG/buymeacoffee.com\/YOUR_USERNAME/g' \
         "$file"
     
     # Check if file was modified

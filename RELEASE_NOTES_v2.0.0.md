@@ -51,7 +51,7 @@
 
 ```bash
 # Clone and setup
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 
 # Configure environment

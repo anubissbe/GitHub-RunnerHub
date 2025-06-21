@@ -265,7 +265,7 @@ docker-compose restart [service-name]
 
 - Check logs: `docker-compose logs -f`
 - Review installation log: `install-*.log`
-- GitHub Issues: https://github.com/anubissbe/GitHub-RunnerHub/issues
+- GitHub Issues: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues
 
 ## 🛠️ Advanced Configuration
 
@@ -357,4 +357,4 @@ git pull
 
 ---
 
-For more information, visit the [GitHub RunnerHub documentation](https://github.com/anubissbe/GitHub-RunnerHub).
+For more information, visit the [GitHub RunnerHub documentation](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub).

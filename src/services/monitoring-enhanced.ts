@@ -3,7 +3,7 @@ import { createLogger } from '../utils/logger';
 import { getGitHubDataService } from './github-data-service';
 import database from './database';
 import runnerPoolManager from './runner-pool-manager';
-import { Job, Runner, RunnerPool, RunnerStatus } from '../types';
+import { Job, Runner, RunnerStatus } from '../types';
 import config from '../config';
 
 const logger = createLogger('MonitoringEnhanced');
@@ -105,13 +105,13 @@ export class MonitoringServiceEnhanced extends EventEmitter {
 
       // Default repositories if none found
       if (this.trackedRepositories.length === 0) {
-        this.trackedRepositories = ['anubissbe/GitHub-RunnerHub'];
+        this.trackedRepositories = ['YOUR_GITHUB_ORG/GitHub-RunnerHub'];
       }
 
       logger.info('Loaded tracked repositories', { count: this.trackedRepositories.length });
     } catch (error) {
       logger.error('Failed to load tracked repositories', error);
-      this.trackedRepositories = ['anubissbe/GitHub-RunnerHub'];
+      this.trackedRepositories = ['YOUR_GITHUB_ORG/GitHub-RunnerHub'];
     }
   }
 

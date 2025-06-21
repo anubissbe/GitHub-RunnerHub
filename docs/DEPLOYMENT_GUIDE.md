@@ -50,7 +50,7 @@ Follow the steps in this guide for custom deployments.
 
 1. Clone the repository locally:
 ```bash
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 ```
 
@@ -943,7 +943,7 @@ sudo ufw status numbered
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/anubissbe/GitHub-RunnerHub/issues)
+- **Issues**: [GitHub Issues](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues)
 - **Documentation**: [/docs](./docs)
 - **Community**: GitHub Discussions
 

@@ -50,7 +50,7 @@ export class ContainerOrchestrator {
 
       // Prepare container configuration
       const containerConfig: ContainerConfig = {
-        image: 'ghcr.io/anubissbe/github-runner:latest',
+        image: 'ghcr.io/YOUR_GITHUB_ORG/github-runner:latest',
         name: containerName,
         env: {
           RUNNER_TOKEN: runnerToken,

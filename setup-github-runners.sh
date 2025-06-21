@@ -72,7 +72,7 @@ if [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 # Get GitHub username/org
-GITHUB_USER="${GITHUB_USER:-anubissbe}"
+GITHUB_USER="${GITHUB_USER:-YOUR_GITHUB_ORG}"
 
 # Validate GitHub token
 log_info "Validating GitHub token..."

@@ -78,7 +78,7 @@ REQUIREMENTS:
     - 4GB+ RAM
     - 10GB+ disk space
 
-For more information, visit: https://github.com/anubissbe/GitHub-RunnerHub
+For more information, visit: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub
 EOF
 }
 
@@ -542,7 +542,7 @@ cleanup() {
         docker network rm github-runnerhub-network 2>/dev/null || true
         echo
         info "Installation log saved to: $LOG_FILE"
-        info "For support, visit: https://github.com/anubissbe/GitHub-RunnerHub/issues"
+        info "For support, visit: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues"
     fi
 }
 
@@ -603,7 +603,7 @@ EOF
     info "Configuration file: $ENV_FILE"
     info "Installation log: $LOG_FILE"
     echo
-    info "For documentation, visit: https://github.com/anubissbe/GitHub-RunnerHub"
+    info "For documentation, visit: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub"
     echo
     success "Happy running! 🚀"
 }

@@ -37,7 +37,7 @@ fi
 echo "✅ GitHub token loaded from Vault"
 
 # Configuration
-GITHUB_USER="anubissbe"
+GITHUB_USER="YOUR_GITHUB_ORG"
 TARGET_REPO="GitHub-RunnerHub"
 RUNNER_NAME_PREFIX="runnerhub"
 RUNNER_COUNT=2

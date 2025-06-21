@@ -65,7 +65,7 @@ GitHub RunnerHub is now a **production-ready, enterprise-grade** GitHub Actions 
 
 ### Quick Start (Single Node)
 ```bash
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 ./quick-start.sh
 ```
@@ -127,8 +127,8 @@ docker-compose -f docker-compose.ha.yml up -d
 - **HA Settings:** `HA_ENABLED`, `LEADER_ELECTION_ENABLED`
 
 ### Container Images
-- **Main Application:** `ghcr.io/anubissbe/github-runnerhub:latest`
-- **Proxy Runner:** `ghcr.io/anubissbe/github-runner-proxy:latest`
+- **Main Application:** `ghcr.io/YOUR_GITHUB_ORG/github-runnerhub:latest`
+- **Proxy Runner:** `ghcr.io/YOUR_GITHUB_ORG/github-runner-proxy:latest`
 - **Dependencies:** PostgreSQL 16, Redis 7, HAProxy 2.8
 
 ## Security Features
@@ -240,6 +240,6 @@ The project is ready for enterprise deployment and can handle mission-critical G
 ---
 
 **Project Status:** ✅ **COMPLETE AND PRODUCTION READY**  
-**Maintainer:** anubissbe  
+**Maintainer:** YOUR_GITHUB_ORG  
 **License:** MIT  
-**Repository:** https://github.com/anubissbe/GitHub-RunnerHub
+**Repository:** https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub

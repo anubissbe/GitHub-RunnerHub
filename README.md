@@ -4,8 +4,8 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-required-blue)](https://www.docker.com/)
-[![GitHub release](https://img.shields.io/github/release/anubissbe/GitHub-RunnerHub.svg)](https://github.com/anubissbe/GitHub-RunnerHub/releases/)
-[![CI/CD](https://github.com/anubissbe/GitHub-RunnerHub/actions/workflows/ci.yml/badge.svg)](https://github.com/anubissbe/GitHub-RunnerHub/actions)
+[![GitHub release](https://img.shields.io/github/release/YOUR_GITHUB_ORG/GitHub-RunnerHub.svg)](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/releases/)
+[![CI/CD](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions)
 
 > **Enterprise-grade GitHub Actions proxy runner system providing real-time monitoring, intelligent orchestration, and secure execution environments through ephemeral Docker containers.**
 
@@ -18,7 +18,9 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 - **🔗 Real GitHub Integration** - Live monitoring of actual GitHub Actions jobs and runners
 - **🧠 Smart Rate Limiting** - Intelligent API usage staying well under GitHub's 5,000/hour limit  
 - **📊 Real-time Dashboard** - Live metrics from your actual GitHub organization
-- **🔒 Perfect Isolation** - Each job runs in a fresh, single-use container
+- **🚀 Container Orchestration** - Advanced container lifecycle management with 5x concurrency improvement
+- **🔒 Perfect Isolation** - Each job runs in a fresh, single-use container with network isolation
+- **📈 Intelligent Scaling** - Dynamic container pool management with automatic resource optimization
 - **🛡️ Enhanced Security** - Secret scanning, vulnerability detection, audit logging
 - **⚡ Auto-scaling** - Dynamic runner provisioning based on demand
 - **🏗️ High Availability** - Multi-node deployment with automatic failover
@@ -51,10 +53,11 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 2. **📈 Real-time Dashboard** - Live monitoring with WebSocket updates  
 3. **🤖 Smart Sync Engine** - Efficient data synchronization
 4. **🔄 Proxy Runners** - Self-hosted runners with job delegation
-5. **🎛️ Orchestration Service** - Central control plane
-6. **🐳 Ephemeral Containers** - Secure, isolated execution environments
-7. **💾 PostgreSQL Database** - Stores GitHub data and metrics
-8. **⚡ Redis Queue** - Job queue and caching layer
+5. **🎛️ Container Orchestration** - Advanced container lifecycle management and auto-scaling
+6. **🐳 Ephemeral Containers** - Secure, isolated execution environments with health monitoring
+7. **📊 Resource Management** - Dynamic container pool with intelligent cleanup procedures
+8. **💾 PostgreSQL Database** - Stores GitHub data and metrics
+9. **⚡ Redis Queue** - Job queue and caching layer
 
 ## 🚀 Quick Start
 
@@ -62,7 +65,7 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 
 ```bash
 # Clone the repository
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 
 # Run the comprehensive installation script
@@ -155,6 +158,11 @@ sudo systemctl status github-runner-runnerhub-*
 │   ├── services/                 # Business logic
 │   ├── routes/                   # API routes
 │   ├── middleware/               # Express middleware
+│   ├── container-orchestration/  # Container management system
+│   │   ├── docker/              # Docker API integration
+│   │   ├── lifecycle/           # Container lifecycle management
+│   │   ├── monitoring/          # Health monitoring & metrics
+│   │   └── cleanup/             # Resource cleanup procedures
 │   └── utils/                    # Utilities
 ├── backup/                       # Backup and disaster recovery
 │   ├── scripts/                  # Backup automation scripts
@@ -162,6 +170,7 @@ sudo systemctl status github-runner-runnerhub-*
 │   └── docs/                     # DR documentation
 ├── load-testing/                 # Performance testing
 ├── docs/                         # Documentation
+│   ├── container-orchestration/  # Container orchestration docs
 │   ├── features/                 # Feature documentation
 │   ├── ARCHITECTURE.md           # System architecture
 │   ├── DEPLOYMENT_GUIDE.md       # Deployment instructions
@@ -376,7 +385,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### Development Setup
 ```bash
-git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 npm install
 npm run dev
@@ -392,6 +401,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [📐 Architecture](docs/ARCHITECTURE.md) - System design and components
 - [🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Production deployment
 - [🔌 GitHub API Integration](docs/GITHUB_API_INTEGRATION.md) - API setup and usage
+- [🐳 Container Orchestration](docs/container-orchestration/README.md) - Advanced container management
 - [🔐 Security Features](docs/SECRET_SCANNING.md) - Security implementation
 - [💾 Backup & Recovery](backup/docs/BACKUP_AND_DISASTER_RECOVERY.md) - DR procedures
 
@@ -410,8 +420,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 - **Documentation**: Comprehensive guides in `/docs` directory
-- **Issues**: [GitHub Issues](https://github.com/anubissbe/GitHub-RunnerHub/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/anubissbe/GitHub-RunnerHub/discussions)
+- **Issues**: [GitHub Issues](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/discussions)
 
 ## ☕ Support the Project
 
@@ -421,4 +431,4 @@ If you find this project helpful, consider supporting it:
 
 ---
 
-**Made with ❤️ by [anubissbe](https://github.com/anubissbe)**
+**Made with ❤️ by [YOUR_GITHUB_ORG](https://github.com/YOUR_GITHUB_ORG)**

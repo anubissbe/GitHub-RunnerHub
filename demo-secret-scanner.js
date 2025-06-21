@@ -18,7 +18,7 @@ const API_BASE = `${BASE_URL}/api`;
 const sampleJobLogs = {
   "github-deployment": `2023-12-01T10:00:00Z [INFO] Starting GitHub deployment job
 2023-12-01T10:00:01Z [DEBUG] Setting up environment variables
-2023-12-01T10:00:02Z [DEBUG] GITHUB_TOKEN=ghp_1234567890abcdef1234567890abcdef123456
+2023-12-01T10:00:02Z [DEBUG] GITHUB_TOKEN=ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
 2023-12-01T10:00:03Z [INFO] Cloning repository...
 2023-12-01T10:00:04Z [DEBUG] git clone https://github.com/user/repo.git
 2023-12-01T10:00:05Z [INFO] Repository cloned successfully

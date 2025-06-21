@@ -270,7 +270,7 @@ const client = getGitHubAPIClient();
 // Fetch repository with real GitHub data structure
 const repo = await client.request(
   () => octokit.rest.repos.get({ 
-    owner: 'anubissbe', 
+    owner: 'YOUR_GITHUB_ORG', 
     repo: 'GitHub-RunnerHub' 
   }),
   { 
@@ -295,7 +295,7 @@ console.log('Repository data:', {
 // Fetch workflow runs with real data
 const workflowRuns = await client.request(
   () => octokit.rest.actions.listWorkflowRunsForRepo({
-    owner: 'anubissbe',
+    owner: 'YOUR_GITHUB_ORG',
     repo: 'GitHub-RunnerHub',
     per_page: 10
   }),
@@ -308,7 +308,7 @@ workflowRuns.data.workflow_runs.forEach(run => {
 });
 
 // Batch multiple repository requests
-const repositories = ['anubissbe/GitHub-RunnerHub', 'anubissbe/ProjectHub-Mcp'];
+const repositories = ['YOUR_GITHUB_ORG/GitHub-RunnerHub', 'YOUR_GITHUB_ORG/ProjectHub-Mcp'];
 const results = await client.batchRequests(
   repositories.map(repo => {
     const [owner, repoName] = repo.split('/');
@@ -363,10 +363,10 @@ const webhookEvent = {
     repository: {
       id: 12345,
       name: 'GitHub-RunnerHub',
-      full_name: 'anubissbe/GitHub-RunnerHub'
+      full_name: 'YOUR_GITHUB_ORG/GitHub-RunnerHub'
     },
     actor: {
-      login: 'anubissbe',
+      login: 'YOUR_GITHUB_ORG',
       id: 67890
     }
   }
@@ -733,14 +733,14 @@ Response:
     {
       "id": 12345,
       "name": "GitHub-RunnerHub",
-      "full_name": "anubissbe/GitHub-RunnerHub",
+      "full_name": "YOUR_GITHUB_ORG/GitHub-RunnerHub",
       "owner": {
-        "login": "anubissbe",
+        "login": "YOUR_GITHUB_ORG",
         "id": 67890,
         "type": "User"
       },
       "private": true,
-      "html_url": "https://github.com/anubissbe/GitHub-RunnerHub",
+      "html_url": "https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub",
       "description": "GitHub Actions self-hosted runner management system",
       "fork": false,
       "created_at": "2024-12-01T10:00:00Z",
@@ -780,7 +780,7 @@ Response:
 # Add repository to tracking
 POST /api/github/repositories
 {
-  "owner": "anubissbe",
+  "owner": "YOUR_GITHUB_ORG",
   "repo": "GitHub-RunnerHub"
 }
 ```
@@ -821,13 +821,13 @@ Response:
       "workflow_id": 12345678,
       "check_suite_id": 98765432,
       "check_suite_node_id": "CS_kwDOABCD_98765432",
-      "url": "https://api.github.com/repos/anubissbe/GitHub-RunnerHub/actions/runs/7234567890",
-      "html_url": "https://github.com/anubissbe/GitHub-RunnerHub/actions/runs/7234567890",
+      "url": "https://api.github.com/repos/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runs/7234567890",
+      "html_url": "https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runs/7234567890",
       "pull_requests": [],
       "created_at": "2024-12-20T14:20:00Z",
       "updated_at": "2024-12-20T14:25:30Z",
       "actor": {
-        "login": "anubissbe",
+        "login": "YOUR_GITHUB_ORG",
         "id": 67890,
         "type": "User"
       },
@@ -835,7 +835,7 @@ Response:
       "referenced_workflows": [],
       "run_started_at": "2024-12-20T14:20:05Z",
       "triggering_actor": {
-        "login": "anubissbe",
+        "login": "YOUR_GITHUB_ORG",
         "id": 67890,
         "type": "User"
       },
@@ -843,12 +843,12 @@ Response:
         {
           "id": 1234567890,
           "run_id": 7234567890,
-          "run_url": "https://api.github.com/repos/anubissbe/GitHub-RunnerHub/actions/runs/7234567890",
+          "run_url": "https://api.github.com/repos/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runs/7234567890",
           "run_attempt": 1,
           "node_id": "J_kwDOABCD_1234567890",
           "head_sha": "abc123def456789",
-          "url": "https://api.github.com/repos/anubissbe/GitHub-RunnerHub/actions/jobs/1234567890",
-          "html_url": "https://github.com/anubissbe/GitHub-RunnerHub/actions/runs/7234567890/job/1234567890",
+          "url": "https://api.github.com/repos/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/jobs/1234567890",
+          "html_url": "https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runs/7234567890/job/1234567890",
           "status": "completed",
           "conclusion": "success",
           "created_at": "2024-12-20T14:20:05Z",
@@ -1026,7 +1026,7 @@ Response (Real GitHub Integration Data):
     "syncDuration": "2.3s",
     "repositories": [
       {
-        "name": "anubissbe/GitHub-RunnerHub",
+        "name": "YOUR_GITHUB_ORG/GitHub-RunnerHub",
         "lastActivity": "2024-12-20T14:30:00Z",
         "workflowRuns": 12,
         "queuedJobs": 2,

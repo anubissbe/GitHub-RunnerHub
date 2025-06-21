@@ -29,7 +29,7 @@
     "docker",
     "orchestration"
   ],
-  "author": "anubissbe",
+  "author": "YOUR_GITHUB_ORG",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"

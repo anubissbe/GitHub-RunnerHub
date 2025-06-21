@@ -123,7 +123,7 @@ export async function initializeJobQueue(): Promise<void> {
     );
 
     // Set up event listeners
-    queueEvents.on('completed', ({ jobId, returnvalue }) => {
+    queueEvents.on('completed', ({ jobId }) => {
       logger.info('Job completed event', { jobId });
     });
 

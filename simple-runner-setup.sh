@@ -33,7 +33,7 @@ fi
 echo "✅ GitHub token obtained"
 
 # Configuration
-GITHUB_USER="anubissbe"
+GITHUB_USER="YOUR_GITHUB_ORG"
 TARGET_REPO="GitHub-RunnerHub"
 RUNNER_VERSION="2.311.0"
 

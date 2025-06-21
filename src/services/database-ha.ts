@@ -592,7 +592,7 @@ export class DatabaseHAService extends EventEmitter {
 
         // Stop health monitoring
         if (this.healthCheckInterval) {
-            clearInterval(this.healthCheckInterval);
+            if (this.healthCheckInterval) clearInterval(this.healthCheckInterval as any);
         }
 
         // Close database pools

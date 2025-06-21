@@ -97,10 +97,10 @@ async function testDatabase() {
             await pool.query(`
                 INSERT INTO runnerhub.jobs (id, job_id, run_id, repository, workflow, status, started_at, completed_at)
                 VALUES 
-                    ('job-1', 'job-1', 'run-1', 'anubissbe/test-repo', 'CI Pipeline', 'completed', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '55 minutes'),
-                    ('job-2', 'job-2', 'run-2', 'anubissbe/another-repo', 'Deploy', 'running', NOW() - INTERVAL '5 minutes', NULL),
-                    ('job-3', 'job-3', 'run-3', 'anubissbe/test-repo', 'Tests', 'failed', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour 50 minutes'),
-                    ('job-4', 'job-4', 'run-4', 'anubissbe/web-app', 'Build', 'pending', NULL, NULL)
+                    ('job-1', 'job-1', 'run-1', 'YOUR_GITHUB_ORG/test-repo', 'CI Pipeline', 'completed', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '55 minutes'),
+                    ('job-2', 'job-2', 'run-2', 'YOUR_GITHUB_ORG/another-repo', 'Deploy', 'running', NOW() - INTERVAL '5 minutes', NULL),
+                    ('job-3', 'job-3', 'run-3', 'YOUR_GITHUB_ORG/test-repo', 'Tests', 'failed', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '1 hour 50 minutes'),
+                    ('job-4', 'job-4', 'run-4', 'YOUR_GITHUB_ORG/web-app', 'Build', 'pending', NULL, NULL)
                 ON CONFLICT (id) DO NOTHING
             `);
             

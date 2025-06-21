@@ -161,7 +161,7 @@ ${WHITE}POST-INSTALLATION:${NC}
     3. API endpoint: ${CYAN}http://localhost:3001${NC}
     4. View logs: ${CYAN}docker-compose logs -f${NC}
 
-For more information, visit: ${BLUE}https://github.com/anubissbe/GitHub-RunnerHub${NC}
+For more information, visit: ${BLUE}https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub${NC}
 EOF
 }
 
@@ -1891,8 +1891,8 @@ show_post_install_info() {
     echo "  4. Monitor system: Check dashboard and logs"
     
     echo
-    info "Documentation: https://github.com/anubissbe/GitHub-RunnerHub"
-    info "Support: https://github.com/anubissbe/GitHub-RunnerHub/issues"
+    info "Documentation: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub"
+    info "Support: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues"
     echo
     success "Happy running! 🚀"
 }
@@ -1917,7 +1917,7 @@ cleanup() {
         
         echo
         info "Installation log: $LOG_FILE"
-        info "For support, visit: https://github.com/anubissbe/GitHub-RunnerHub/issues"
+        info "For support, visit: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues"
     fi
 }
 

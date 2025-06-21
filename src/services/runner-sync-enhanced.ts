@@ -163,7 +163,7 @@ export class RunnerSyncEnhanced {
           const octokit = new Octokit({ auth: config.github.token });
           
           return await octokit.rest.actions.listSelfHostedRunnersForOrg({
-            org: config.github.organization,
+            org: config.github.org,
             per_page: 100
           });
         },
@@ -241,7 +241,7 @@ export class RunnerSyncEnhanced {
           
           // Get repositories first
           const reposResponse = await octokit.rest.repos.listForOrg({
-            org: config.github.organization,
+            org: config.github.org,
             type: 'all',
             per_page: 100
           });
@@ -251,7 +251,7 @@ export class RunnerSyncEnhanced {
           
           for (const repo of reposResponse.data.slice(0, 5)) { // Limit to 5 repos
             const runsResponse = await octokit.rest.actions.listWorkflowRunsForRepo({
-              owner: config.github.organization,
+              owner: config.github.org,
               repo: repo.name,
               status: 'in_progress',
               per_page: 20
@@ -292,7 +292,7 @@ export class RunnerSyncEnhanced {
           const octokit = new Octokit({ auth: config.github.token });
           
           return await octokit.rest.repos.listForOrg({
-            org: config.github.organization,
+            org: config.github.org,
             type: 'all',
             per_page: 100
           });
@@ -315,7 +315,7 @@ export class RunnerSyncEnhanced {
             const octokit = new Octokit({ auth: config.github.token });
             
             return await octokit.rest.actions.listWorkflowRunsForRepo({
-              owner: config.github.organization,
+              owner: config.github.org,
               repo: repo.name,
               per_page: 50
             });
@@ -363,7 +363,7 @@ export class RunnerSyncEnhanced {
           const octokit = new Octokit({ auth: config.github.token });
           
           return await octokit.rest.repos.listForOrg({
-            org: config.github.organization,
+            org: config.github.org,
             type: 'all',
             per_page: 100
           });

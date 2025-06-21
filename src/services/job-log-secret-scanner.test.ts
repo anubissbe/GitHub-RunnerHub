@@ -31,7 +31,7 @@ describe('JobLogSecretScanner', () => {
     test('should detect GitHub tokens', async () => {
       const logContent = `
         2023-01-01T10:00:00Z [INFO] Starting CI job
-        2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_1234567890abcdef1234567890abcdef123456
+        2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
         2023-01-01T10:00:02Z [INFO] Job completed
       `;
 
@@ -40,7 +40,7 @@ describe('JobLogSecretScanner', () => {
       expect(result.detectedSecrets).toHaveLength(1);
       expect(result.detectedSecrets[0].pattern.category).toBe(SecretCategory.TOKEN);
       expect(result.detectedSecrets[0].pattern.severity).toBe(SecretSeverity.CRITICAL);
-      expect(result.detectedSecrets[0].match).toBe('ghp_1234567890abcdef1234567890abcdef123456');
+      expect(result.detectedSecrets[0].match).toBe('ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56');
     });
 
     test('should detect AWS credentials', async () => {
@@ -108,19 +108,19 @@ describe('JobLogSecretScanner', () => {
     test('should redact GitHub tokens', async () => {
       const logContent = `
         2023-01-01T10:00:00Z [INFO] Starting CI job
-        2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_1234567890abcdef1234567890abcdef123456
+        2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
         2023-01-01T10:00:02Z [INFO] Job completed
       `;
 
       const result = await scanner.scanJobLogs('test-job-redact-1', logContent);
       
-      expect(result.redactedLogContent).not.toContain('ghp_1234567890abcdef1234567890abcdef123456');
+      expect(result.redactedLogContent).not.toContain('ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56');
       expect(result.redactedLogContent).toContain('[REDACTED_TOKEN_ghp_***]');
     });
 
     test('should preserve log formatting', async () => {
       const logContent = `2023-01-01T10:00:00Z [INFO] Starting CI job
-2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_1234567890abcdef1234567890abcdef123456
+2023-01-01T10:00:01Z [DEBUG] Using GitHub token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
 2023-01-01T10:00:02Z [INFO] Job completed`;
 
       const result = await scanner.scanJobLogs('test-job-redact-2', logContent);
@@ -140,7 +140,7 @@ describe('JobLogSecretScanner', () => {
   describe('Statistical Calculations', () => {
     test('should calculate correct summary statistics', async () => {
       const logContent = `
-        2023-01-01T10:00:00Z [DEBUG] GitHub token: ghp_1234567890abcdef1234567890abcdef123456
+        2023-01-01T10:00:00Z [DEBUG] GitHub token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
         2023-01-01T10:00:01Z [DEBUG] AWS key: AKIAIOSFODNN7EXAMPLE
         2023-01-01T10:00:02Z [DEBUG] API key: sk-1234567890abcdef1234567890abcdef
         2023-01-01T10:00:03Z [DEBUG] JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
@@ -172,7 +172,7 @@ describe('JobLogSecretScanner', () => {
     test('should assign higher confidence to complex secrets', async () => {
       const logContent = `
         2023-01-01T10:00:00Z [DEBUG] Simple: abc123
-        2023-01-01T10:00:01Z [DEBUG] Complex: ghp_1234567890abcdef1234567890abcdef123456
+        2023-01-01T10:00:01Z [DEBUG] Complex: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
       `;
 
       const result = await scanner.scanJobLogs('test-job-confidence', logContent);
@@ -219,7 +219,7 @@ describe('JobLogSecretScanner', () => {
         lines.push(`2023-01-01T10:${String(i % 60).padStart(2, '0')}:00Z [INFO] Log line ${i}`);
       }
       // Add one secret in the middle
-      lines[500] = '2023-01-01T10:30:00Z [DEBUG] Token: ghp_1234567890abcdef1234567890abcdef123456';
+      lines[500] = '2023-01-01T10:30:00Z [DEBUG] Token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56';
       
       const logContent = lines.join('\n');
       

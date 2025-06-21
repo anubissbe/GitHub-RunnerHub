@@ -20,7 +20,7 @@
     "docker",
     "scaling"
   ],
-  "author": "anubissbe",
+  "author": "YOUR_GITHUB_ORG",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
@@ -47,10 +47,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/anubissbe/GitHub-RunnerHub.git"
+    "url": "git+https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git"
   },
   "bugs": {
-    "url": "https://github.com/anubissbe/GitHub-RunnerHub/issues"
+    "url": "https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues"
   },
-  "homepage": "https://github.com/anubissbe/GitHub-RunnerHub#readme"
+  "homepage": "https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub#readme"
 }

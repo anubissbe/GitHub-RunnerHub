@@ -20,7 +20,7 @@ sed -i 's/192\.168\.1\.24/${DB_HOST:-localhost}/g' "$PROJECT_DIR/scripts/run-mig
 sed -i 's/192\.168\.1\.24/${VAULT_HOST:-localhost}/g' "$PROJECT_DIR/scripts/setup-vault-secrets.sh" || true
 
 # Clean up any GitHub tokens in example files
-find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/ghp_[a-zA-Z0-9]*/ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX/g' || true
+find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/ghp_[a-zA-Z0-9]*/ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS/g' || true
 
 # Clean up any vault tokens
 find "$PROJECT_DIR" -name "*.md" -o -name "*.yml" -o -name "*.yaml" | xargs sed -i 's/hvs\.[a-zA-Z0-9]*/hvs.YOUR_VAULT_TOKEN/g' || true

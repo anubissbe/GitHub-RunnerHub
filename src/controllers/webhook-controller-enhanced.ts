@@ -263,7 +263,7 @@ export class WebhookControllerEnhanced {
   /**
    * Retry failed webhooks
    */
-  async retryFailedWebhooks(req: Request, res: Response): Promise<void> {
+  async retryFailedWebhooks(_req: Request, res: Response): Promise<void> {
     try {
       logger.info('Retrying failed webhooks');
 
@@ -425,7 +425,7 @@ export class WebhookControllerEnhanced {
   /**
    * Get webhook health with detailed metrics
    */
-  async getWebhookHealth(req: Request, res: Response): Promise<void> {
+  async getWebhookHealth(_req: Request, res: Response): Promise<void> {
     try {
       // Get recent webhook activity
       const recentEvents = await githubWebhookEnhanced.getWebhookEvents({

@@ -100,7 +100,7 @@ All runners are configured with:
 - **Name Pattern**: `runnerhub-1`, `runnerhub-2`, etc.
 - **Labels**: `self-hosted,docker,runnerhub,projecthub`
 - **Work Directory**: `/tmp/runner-work` (separate for each runner)
-- **Repository**: `anubissbe/GitHub-RunnerHub` (configurable)
+- **Repository**: `YOUR_GITHUB_ORG/GitHub-RunnerHub` (configurable)
 
 ### Custom Labels
 
@@ -157,11 +157,11 @@ Check runner status via GitHub API:
 ```bash
 # Get all runners for repository
 curl -H "Authorization: token $GITHUB_TOKEN" \
-  https://api.github.com/repos/anubissbe/GitHub-RunnerHub/actions/runners
+  https://api.github.com/repos/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runners
 
 # Check specific runner (replace ID)
 curl -H "Authorization: token $GITHUB_TOKEN" \
-  https://api.github.com/repos/anubissbe/GitHub-RunnerHub/actions/runners/151
+  https://api.github.com/repos/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/runners/151
 ```
 
 ## Troubleshooting

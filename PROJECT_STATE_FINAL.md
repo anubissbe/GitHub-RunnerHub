@@ -4,7 +4,7 @@
 - **Date**: 2025-06-20
 - **Status**: ✅ COMPLETED - All phases successfully implemented
 - **Architecture**: Enterprise-grade proxy runner system with full security features
-- **Repository**: https://github.com/anubissbe/GitHub-RunnerHub
+- **Repository**: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub
 
 ## Completed Phases
 
@@ -153,7 +153,7 @@ GitHub-RunnerHub/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/anubissbe/GitHub-RunnerHub.git
+   git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
    ```
 
 2. **Configure environment**
@@ -174,7 +174,7 @@ GitHub-RunnerHub/
 
 ## Support
 
-- GitHub Issues: https://github.com/anubissbe/GitHub-RunnerHub/issues
+- GitHub Issues: https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues
 - Documentation: See `/docs` directory
 - Examples: See test files for usage examples
 

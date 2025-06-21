@@ -59,7 +59,7 @@ async function testGitHubIntegration() {
       const addRepoResponse = await fetch(`${API_BASE}/monitoring/repositories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repository: 'anubissbe/GitHub-RunnerHub' })
+        body: JSON.stringify({ repository: 'YOUR_GITHUB_ORG/GitHub-RunnerHub' })
       });
       
       const addResult = await addRepoResponse.json();

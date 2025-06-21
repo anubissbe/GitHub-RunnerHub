@@ -25,7 +25,7 @@ import networkRoutes from './routes/networks';
 import auditRoutes from './routes/audit';
 import securityRoutes from './routes/security';
 import { MonitoringController } from './controllers/monitoring-controller';
-import monitoringServiceEnhancedEnhanced from './services/monitoring-enhanced';
+import monitoringServiceEnhanced from './services/monitoring-enhanced';
 import path from 'path';
 
 const logger = createLogger('App');

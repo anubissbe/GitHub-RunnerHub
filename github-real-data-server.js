@@ -109,7 +109,7 @@ app.get('/api/github/status', async (req, res) => {
             success: true,
             data: {
                 integration: githubService.isEnabled() ? 'enabled' : 'disabled',
-                organization: githubService.organization || 'anubissbe',
+                organization: githubService.organization || 'YOUR_GITHUB_ORG',
                 tokenSource: githubService.githubToken ? (process.env.GITHUB_TOKEN ? 'environment' : 'vault') : 'none',
                 rateLimit: rateLimitStatus,
                 sync: {
@@ -457,7 +457,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`🐙 GitHub API integration: ${process.env.GITHUB_TOKEN ? 'ENABLED' : 'DISABLED (set GITHUB_TOKEN)'}`);
     
     if (process.env.GITHUB_TOKEN) {
-        console.log(`📡 Monitoring organization: ${process.env.GITHUB_ORG || 'anubissbe'}`);
+        console.log(`📡 Monitoring organization: ${process.env.GITHUB_ORG || 'YOUR_GITHUB_ORG'}`);
         console.log(`⚡ Real-time sync: Every 5 minutes`);
         console.log(`📈 Rate limit: Smart queuing enabled`);
     }

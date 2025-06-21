@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import monitoringServiceEnhancedEnhanced from '../services/monitoring-enhanced';
+import monitoringServiceEnhanced from '../services/monitoring-enhanced';
 import { AppError } from '../middleware/error-handler';
 
 export class MonitoringController {
@@ -8,7 +8,7 @@ export class MonitoringController {
    */
   async getSystemMetrics(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const metrics = await monitoringServiceEnhancedEnhanced.getSystemMetrics();
+      const metrics = await monitoringServiceEnhanced.getSystemMetrics();
       
       res.json({
         success: true,
@@ -25,7 +25,7 @@ export class MonitoringController {
   async getRepositoryMetrics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const repository = req.params.repository.replace('_', '/');
-      const metrics = await monitoringServiceEnhancedEnhanced.getRepositoryMetrics(repository);
+      const metrics = await monitoringServiceEnhanced.getRepositoryMetrics(repository);
       
       res.json({
         success: true,

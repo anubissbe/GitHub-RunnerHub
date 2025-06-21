@@ -146,9 +146,9 @@ docker_secrets=$(cat <<EOF
 {
   "data": {
     "registry_url": "${DOCKER_REGISTRY:-ghcr.io}",
-    "username": "${DOCKER_USERNAME:-anubissbe}",
+    "username": "${DOCKER_USERNAME:-YOUR_GITHUB_ORG}",
     "password": "${DOCKER_PASSWORD:-}",
-    "namespace": "${DOCKER_NAMESPACE:-anubissbe}",
+    "namespace": "${DOCKER_NAMESPACE:-YOUR_GITHUB_ORG}",
     "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   }
 }

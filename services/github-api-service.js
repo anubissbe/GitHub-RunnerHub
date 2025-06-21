@@ -51,7 +51,7 @@ class GitHubAPIService {
             
             if (githubSecrets && githubSecrets.token) {
                 this.githubToken = githubSecrets.token;
-                this.organization = githubSecrets.org || process.env.GITHUB_ORG || 'anubissbe';
+                this.organization = githubSecrets.org || process.env.GITHUB_ORG || 'YOUR_GITHUB_ORG';
                 
                 // Initialize Octokit with Vault token
                 this.octokit = new Octokit({
@@ -85,7 +85,7 @@ class GitHubAPIService {
         if (envToken) {
             console.log('🔄 Using GitHub token from environment variables');
             this.githubToken = envToken;
-            this.organization = process.env.GITHUB_ORG || 'anubissbe';
+            this.organization = process.env.GITHUB_ORG || 'YOUR_GITHUB_ORG';
             
             this.octokit = new Octokit({
                 auth: this.githubToken,

@@ -43,7 +43,7 @@ All advanced features were integrated into earlier phases:
 See `/docs` directory for comprehensive feature documentation.
 
 ## Repository
-https://github.com/anubissbe/GitHub-RunnerHub
+https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub
 
 ---
 For future enhancements or feature requests, please create GitHub issues.

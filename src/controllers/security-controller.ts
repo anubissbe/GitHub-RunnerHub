@@ -649,11 +649,11 @@ export class SecurityController {
 
       // Test the pattern
       const matches = Array.from(testText.matchAll(regexPattern));
-      const matchResults = matches.map((match: RegExpMatchArray, index: number) => ({
+      const matchResults = matches.map((match, index: number) => ({
         index,
-        match: match[0],
-        position: match.index || 0,
-        groups: match.slice(1)
+        match: (match as RegExpMatchArray)[0],
+        position: (match as RegExpMatchArray).index || 0,
+        groups: (match as RegExpMatchArray).slice(1)
       }));
 
       res.json({

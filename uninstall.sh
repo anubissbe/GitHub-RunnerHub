@@ -308,7 +308,7 @@ remove_images() {
     # Images to remove
     IMAGES=(
         "github-runnerhub"
-        "ghcr.io/anubissbe/github-runnerhub"
+        "ghcr.io/YOUR_GITHUB_ORG/github-runnerhub"
         "postgres:16"
         "redis:7-alpine"
         "prometheus/prometheus"
@@ -418,7 +418,7 @@ EOF
     fi
     
     info "To reinstall GitHub RunnerHub:"
-    echo "  git clone https://github.com/anubissbe/GitHub-RunnerHub.git"
+    echo "  git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git"
     echo "  cd GitHub-RunnerHub"
     echo "  ./install.sh"
     echo
