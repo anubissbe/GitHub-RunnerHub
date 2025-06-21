@@ -8,6 +8,8 @@ const ContainerStartupOptimizer = require('./container-startup-optimizer');
 const AdvancedCacheManager = require('./advanced-cache-manager');
 const PerformanceProfiler = require('./performance-profiler');
 const BottleneckAnalyzer = require('./bottleneck-analyzer');
+const PredictiveScaler = require('./predictive-scaler');
+const ResourcePredictor = require('./resource-predictor');
 const logger = require('../../utils/logger');
 
 class PerformanceOptimizer extends EventEmitter {
@@ -59,6 +61,8 @@ class PerformanceOptimizer extends EventEmitter {
     this.cacheManager = new AdvancedCacheManager(this.config.cacheManager);
     this.profiler = new PerformanceProfiler(this.config.profiler);
     this.bottleneckAnalyzer = new BottleneckAnalyzer(this.profiler, this.cacheManager, this.config.bottleneckAnalyzer);
+    this.predictiveScaler = new PredictiveScaler(dockerAPI, this.config.predictiveScaler || {});
+    this.resourcePredictor = new ResourcePredictor(this.config.resourcePredictor || {});
     
     // Optimization state
     this.optimizationHistory = [];
@@ -111,6 +115,20 @@ class PerformanceOptimizer extends EventEmitter {
     this.cacheManager.on('metricsCollected', (metrics) => {
       this.evaluateCachePerformance(metrics);
     });
+    
+    // Predictive scaler events
+    this.predictiveScaler.on('scalingRecommendations', (recommendations) => {
+      this.handleScalingRecommendations(recommendations);
+    });
+    
+    this.predictiveScaler.on('anomalyDetected', (anomaly) => {
+      this.handlePredictiveAnomaly(anomaly);
+    });
+    
+    // Resource predictor events
+    this.resourcePredictor.on('resourcesPredicted', (prediction) => {
+      this.handleResourcePrediction(prediction);
+    });
   }
 
   /**
@@ -123,6 +141,8 @@ class PerformanceOptimizer extends EventEmitter {
       // Initialize all components
       await this.startupOptimizer.initialize();
       await this.cacheManager.initialize();
+      await this.predictiveScaler.initialize();
+      await this.resourcePredictor.initialize();
       
       // Establish performance baseline
       await this.establishPerformanceBaseline();
@@ -1206,6 +1226,142 @@ class PerformanceOptimizer extends EventEmitter {
     }
     
     return mostEffective;
+  }
+
+  /**
+   * Handle scaling recommendations from predictive scaler
+   */
+  async handleScalingRecommendations(recommendations) {
+    try {
+      logger.info(`Received ${recommendations.length} scaling recommendations`);
+      
+      for (const recommendation of recommendations) {
+        const timeUntil = recommendation.timestamp - Date.now();
+        
+        if (timeUntil > 0 && timeUntil <= 300000) { // Within 5 minutes
+          logger.info(`Planning ${recommendation.type} from ${recommendation.currentCapacity} to ${recommendation.requiredCapacity} containers`);
+          
+          // Schedule scaling action
+          setTimeout(() => {
+            this.emit('scalingRequired', {
+              type: recommendation.type,
+              targetCapacity: recommendation.requiredCapacity,
+              reason: recommendation.reason,
+              confidence: recommendation.confidence
+            });
+          }, Math.max(0, timeUntil - 60000)); // Execute 1 minute before predicted time
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to handle scaling recommendations:', error);
+    }
+  }
+
+  /**
+   * Handle predictive anomaly detection
+   */
+  async handlePredictiveAnomaly(anomaly) {
+    try {
+      logger.warn(`Predictive anomaly detected: ${anomaly.anomaly.type} with severity ${anomaly.anomaly.severity}`);
+      
+      if (anomaly.recommendation === 'immediate_scale_up') {
+        // Trigger immediate scaling
+        this.emit('emergencyScaling', {
+          type: 'scale_up',
+          urgency: 'immediate',
+          reason: 'anomaly_detected',
+          details: anomaly
+        });
+      }
+      
+      // Record anomaly for learning
+      this.optimizationHistory.push({
+        timestamp: Date.now(),
+        type: 'anomaly_response',
+        anomaly: anomaly.anomaly,
+        action: anomaly.recommendation
+      });
+      
+    } catch (error) {
+      logger.error('Failed to handle predictive anomaly:', error);
+    }
+  }
+
+  /**
+   * Handle resource prediction results
+   */
+  async handleResourcePrediction(prediction) {
+    try {
+      const { jobConfig, prediction: resources, profile } = prediction;
+      
+      logger.info(`Resources predicted for job type ${jobConfig.repository}:${jobConfig.workflow}: CPU=${resources.cpu}, Memory=${resources.memory}MB`);
+      
+      // Store prediction for optimization
+      this.currentOptimizations.set('resource_prediction', {
+        jobConfig,
+        resources,
+        confidence: resources.confidence,
+        timestamp: Date.now()
+      });
+      
+      // Emit for container orchestrator to use
+      this.emit('resourcesOptimized', {
+        jobConfig,
+        optimizedResources: resources,
+        basedOn: profile.sampleCount > 0 ? 'historical_data' : 'defaults'
+      });
+      
+    } catch (error) {
+      logger.error('Failed to handle resource prediction:', error);
+    }
+  }
+
+  /**
+   * Get predictive insights
+   */
+  getPredictiveInsights() {
+    return {
+      scaling: this.predictiveScaler ? this.predictiveScaler.getPredictiveInsights() : null,
+      resources: this.resourcePredictor ? this.resourcePredictor.getPredictionInsights() : null
+    };
+  }
+
+  /**
+   * Update models with job execution data
+   */
+  async updatePredictiveModels(jobData) {
+    try {
+      // Update predictive scaler
+      if (this.predictiveScaler) {
+        await this.predictiveScaler.updateModels({
+          jobCount: jobData.activeJobs || 0,
+          jobType: jobData.jobType,
+          resourceUsage: {
+            cpu: jobData.cpuUsage || 0,
+            memory: jobData.memoryUsage || 0
+          }
+        });
+      }
+      
+      // Update resource predictor
+      if (this.resourcePredictor && jobData.jobId) {
+        await this.resourcePredictor.updateJobMetrics(jobData.jobId, {
+          jobType: jobData.jobType,
+          repository: jobData.repository,
+          workflow: jobData.workflow,
+          actualResources: {
+            cpu: jobData.cpuUsage || 0,
+            memory: jobData.memoryUsage || 0,
+            disk: jobData.diskUsage || 0,
+            network: jobData.networkUsage || 0
+          },
+          duration: jobData.duration,
+          predictedResources: jobData.predictedResources
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to update predictive models:', error);
+    }
   }
 }
 
