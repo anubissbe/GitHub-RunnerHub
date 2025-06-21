@@ -2,11 +2,11 @@ import axios from 'axios';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+// const execAsync = promisify(exec); // Not used in current tests
 
 // Configuration
 const API_BASE_URL = 'http://localhost:3001/api';
-const TEST_IMAGE = 'nginx:1.21.0'; // Known image with some vulnerabilities
+// const TEST_IMAGE = 'nginx:1.21.0'; // Known image with some vulnerabilities - Not used in current tests
 
 describe('Container Security Scanning E2E Tests', () => {
   let authToken: string;

@@ -52,6 +52,7 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 - 🛡️ **Container Security Scanning**: Automatic vulnerability scanning with Trivy
 - 📝 **Comprehensive Audit Logging**: Full audit trail for all operations
 - 🎯 **Label-based Routing**: Smart job distribution
+- ✅ **Self-Hosted Runners**: Automated setup and management of GitHub self-hosted runners
 
 ### High Availability Features ⚡
 - 🏗️ **Enterprise HA Architecture**: Multi-node deployment with automatic failover
@@ -72,6 +73,16 @@ GitHub Actions → Proxy Runners → Orchestration Service → Ephemeral Contain
 - 🏷️ **GitHub Labels**: Native support for GitHub runner labels and job routing
 - 📈 **Historical Data**: 24-hour job timeline with real GitHub workflow data
 - 🔍 **Organization-wide**: Monitor all repositories and runners in your GitHub organization
+
+### Self-Hosted Runners 🏃‍♂️
+- 🚀 **Automated Setup**: One-command runner deployment and configuration
+- 🔑 **Vault Integration**: Secure GitHub token management via HashiCorp Vault
+- ⚙️ **Systemd Services**: Auto-startup and monitoring with systemd integration
+- 🏷️ **Smart Labels**: Automatic labeling with `self-hosted,docker,runnerhub,projecthub`
+- 📊 **Multi-Runner**: Support for multiple concurrent runners per server
+- 🔄 **Auto-Registration**: Automatic GitHub registration with token rotation
+- 🩺 **Health Monitoring**: Real-time runner status and job execution tracking
+- 🐳 **Docker Ready**: Full Docker support for containerized job execution
 
 ## Quick Start
 
@@ -111,6 +122,48 @@ export GITHUB_ORG="your_github_organization"
 - 🏗️ [Architecture](docs/ARCHITECTURE.md) - System architecture overview
 - 📁 [Project Structure](docs/PROJECT_STRUCTURE.md) - Directory layout and organization
 - 🔐 [Security Features](docs/features/) - Security and feature documentation
+
+### 🏃‍♂️ GitHub Self-Hosted Runners Setup
+
+Set up GitHub self-hosted runners that integrate with your RunnerHub deployment:
+
+```bash
+# 1. Configure runners using Vault-integrated script
+./simple-runner-setup.sh
+
+# 2. Check runner status
+curl -H "Authorization: token $GITHUB_TOKEN" \
+  https://api.github.com/repos/your-org/your-repo/actions/runners
+
+# 3. Monitor runners in your repository settings
+# https://github.com/your-org/your-repo/settings/actions/runners
+```
+
+**Runner Features:**
+- ✅ **Vault Integration**: Secure token retrieval from HashiCorp Vault
+- ✅ **Auto-Registration**: Automatic GitHub registration with proper labels
+- ✅ **Systemd Services**: Auto-startup and monitoring
+- ✅ **Multi-Runner Support**: Deploy multiple runners per server
+- ✅ **Docker Ready**: Full containerized job support
+- ✅ **Health Monitoring**: Real-time status tracking
+
+**Runner Scripts Available:**
+- `simple-runner-setup.sh`: Vault-integrated setup (recommended)
+- `auto-setup-runners.sh`: Automated deployment for remote servers
+- `setup-github-runners.sh`: Interactive setup with options
+
+**Management Commands:**
+```bash
+# Check runner status
+sudo systemctl status github-runner-runnerhub-1
+sudo systemctl status github-runner-runnerhub-2
+
+# View runner logs
+sudo journalctl -u github-runner-runnerhub-1 -f
+
+# Restart runners
+sudo systemctl restart github-runner-runnerhub-*
+```
 
 ### 💻 Local Development
 

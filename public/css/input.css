@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.metric-card {
+    @apply bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow;
+}
+.status-healthy { @apply text-green-500; }
+.status-warning { @apply text-yellow-500; }
+.status-critical { @apply text-red-500; }
+.status-offline { @apply text-gray-500; }

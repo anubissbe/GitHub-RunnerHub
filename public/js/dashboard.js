@@ -17,12 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(refreshInterval);
     }
     
-    // Refresh data every 30 seconds (increased from 10)
+    // Auto-refresh every 10 seconds for real-time updates
     refreshInterval = setInterval(() => {
         if (!isLoading) {
             loadDashboardData();
         }
-    }, 30000);
+    }, 10000); // 10 seconds
+    
+    // Add visual refresh indicator
+    addRefreshIndicator();
 });
 
 // Initialize WebSocket connection
@@ -269,7 +272,23 @@ function updateRunnerHealth(runners) {
     const tbody = document.getElementById('runnerHealthTable');
     tbody.innerHTML = '';
     
-    runners.forEach(runner => {
+    // Only show real GitHub runners (filter out any remaining mock data)
+    const githubRunners = runners.filter(runner => 
+        runner.id && runner.id.startsWith('github-')
+    );
+    
+    if (githubRunners.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
+                    No GitHub runners found. Deploy runners using the setup scripts.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    githubRunners.forEach(runner => {
         const row = document.createElement('tr');
         
         const healthClass = `status-${runner.healthStatus}`;
@@ -297,4 +316,32 @@ function updateRunnerHealth(runners) {
         
         tbody.appendChild(row);
     });
+}
+
+// Add refresh indicator function
+function addRefreshIndicator() {
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    if (!lastUpdatedElement) return;
+    
+    // Add refresh countdown
+    const parent = lastUpdatedElement.parentElement;
+    const refreshIndicator = document.createElement('span');
+    refreshIndicator.id = 'refreshIndicator';
+    refreshIndicator.className = 'ml-4 text-sm text-gray-500';
+    parent.appendChild(refreshIndicator);
+    
+    // Update countdown every second
+    let countdown = 10;
+    const updateCountdown = () => {
+        if (isLoading) {
+            refreshIndicator.innerHTML = '<span class="text-blue-600">⟳ Refreshing...</span>';
+        } else {
+            refreshIndicator.innerHTML = `<span class="text-gray-400">⟳ Auto-refresh in ${countdown}s</span>`;
+            countdown--;
+            if (countdown < 0) countdown = 10;
+        }
+    };
+    
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
 }

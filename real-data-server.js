@@ -121,7 +121,7 @@ app.get("/api/monitoring/dashboard", async (req, res) => {
             SELECT 
                 id, name, type, status, repository, last_heartbeat,
                 CASE 
-                    WHEN last_heartbeat >= NOW() - INTERVAL '1 minute' THEN 'healthy'
+                    WHEN last_heartbeat >= NOW() - INTERVAL '90 seconds' THEN 'healthy'
                     WHEN last_heartbeat >= NOW() - INTERVAL '5 minutes' THEN 'warning'
                     WHEN last_heartbeat >= NOW() - INTERVAL '10 minutes' THEN 'critical'
                     ELSE 'offline'

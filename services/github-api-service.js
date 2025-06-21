@@ -208,7 +208,7 @@ class GitHubAPIService {
     }
 
     /**
-     * Get all self-hosted runners for the organization
+     * Get all self-hosted runners for the organization or repository
      */
     async getRunners() {
         if (!this.isEnabled()) {
@@ -228,11 +228,35 @@ class GitHubAPIService {
                 console.log(`✅ Found ${response.data.runners.length} GitHub org runners`);
                 return response;
             } catch (error) {
-                // If org fails, it might be a personal account - personal accounts don't have org-level runners
-                console.log('⚠️ No organization runners available (likely personal account)');
-                return { data: { runners: [] } };
+                // If org fails, try repository-level runners (for personal accounts)
+                console.log('⚠️ No organization runners available, checking repository runners...');
+                return await this.getRepositoryRunners();
             }
         }, 'high');
+    }
+
+    /**
+     * Get repository-level self-hosted runners (for personal accounts)
+     */
+    async getRepositoryRunners() {
+        const allRunners = [];
+        
+        try {
+            // Get runners for the main repository
+            const response = await this.octokit.rest.actions.listSelfHostedRunnersForRepo({
+                owner: this.organization,
+                repo: 'GitHub-RunnerHub',
+                per_page: 100
+            });
+            
+            console.log(`✅ Found ${response.data.runners.length} repository runners for GitHub-RunnerHub`);
+            allRunners.push(...response.data.runners);
+            
+        } catch (error) {
+            console.warn(`⚠️ Failed to get repository runners: ${error.message}`);
+        }
+        
+        return { data: { runners: allRunners } };
     }
 
     /**
@@ -473,18 +497,19 @@ class GitHubAPIService {
     }
 
     /**
-     * Start periodic sync (every 5 minutes)
+     * Start periodic sync (every 1 minute for real-time updates)
      */
     startPeriodicSync() {
-        console.log('🕐 Starting periodic GitHub sync (every 5 minutes)');
+        console.log('🕐 Starting periodic GitHub sync (every 1 minute for real-time updates)');
         
         // Initial sync
         this.performSync();
 
-        // Set up interval
+        // Set up interval - 1 minute for real-time runner status
+        // This uses only 3.6% of GitHub's rate limit (180 calls/hour vs 5000 limit)
         this.syncInterval = setInterval(() => {
             this.performSync();
-        }, 5 * 60 * 1000); // 5 minutes
+        }, 1 * 60 * 1000); // 1 minute
     }
 
     /**
