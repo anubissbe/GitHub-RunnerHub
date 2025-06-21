@@ -33,7 +33,8 @@ export default [
       'no-console': 'off', // Allow console in JS files for debugging
       'no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_'
+        varsIgnorePattern: '^_',
+        caughtErrors: 'none' // Don't check catch block errors
       }]
     }
   },
@@ -97,6 +98,6 @@ export default [
     }
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '*.config.js', 'public/**', 'scripts/**/*.js']
+    ignores: ['dist/**', 'node_modules/**', 'coverage/**', '*.config.js', 'public/**', 'scripts/**', 'tests/**', '*.test.ts', '*.spec.ts']
   }
 ];

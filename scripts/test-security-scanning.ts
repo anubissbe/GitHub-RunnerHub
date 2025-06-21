@@ -2,7 +2,6 @@
 
 import { SecurityScanner } from '../src/services/security-scanner';
 import { createLogger } from '../src/utils/logger';
-import config from '../src/config';
 
 const logger = createLogger('SecurityScanningTest');
 
@@ -96,7 +95,7 @@ async function testSecurityScanning() {
     logger.info('Test 6: Testing scan caching...');
     
     const startTime = Date.now();
-    const cachedResult = await scanner.scanImage({
+    await scanner.scanImage({
       imageId: 'alpine:latest',
       imageName: 'alpine',
       imageTag: 'latest',
@@ -111,7 +110,7 @@ async function testSecurityScanning() {
     logger.info('Test 7: Testing force scan...');
     
     const forceStartTime = Date.now();
-    const forcedResult = await scanner.scanImage({
+    await scanner.scanImage({
       imageId: 'alpine:latest',
       imageName: 'alpine',
       imageTag: 'latest',

@@ -227,7 +227,7 @@ class GitHubAPIService {
                 
                 console.log(`✅ Found ${response.data.runners.length} GitHub org runners`);
                 return response;
-            } catch (_error) {
+            } catch {
                 // If org fails, try repository-level runners (for personal accounts)
                 console.log('⚠️ No organization runners available, checking repository runners...');
                 return await this.getRepositoryRunners();
@@ -286,7 +286,7 @@ class GitHubAPIService {
                 
                 repositories = reposResponse.data.map(repo => repo.name);
                 console.log(`✅ Found ${repositories.length} repositories for user ${this.organization}`);
-            } catch (_error) {
+            } catch {
                 console.warn('⚠️ Failed to get user repositories, trying authenticated user repos');
                 
                 // Fallback to authenticated user's repos
@@ -361,7 +361,6 @@ class GitHubAPIService {
             // Insert GitHub runners
             for (const runner of githubRunners) {
                 const status = runner.status === 'online' ? 'idle' : 'offline';
-                const healthStatus = runner.status === 'online' ? 'healthy' : 'offline';
 
                 await this.db.query(`
                     INSERT INTO runnerhub.runners (
