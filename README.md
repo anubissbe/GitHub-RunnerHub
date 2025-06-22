@@ -68,7 +68,9 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 13. **🤖 AI Optimization Engine** - Machine learning-based resource optimization
 14. **📊 Usage Analytics** - Advanced reporting and analytics system
 15. **💾 PostgreSQL Database** - Stores GitHub data and metrics
-16. **⚡ Redis Queue** - Job queue and caching layer
+16. **⚡ Redis Job Queue System** - Enterprise-grade job processing with Bull/BullMQ
+17. **🔁 Advanced Retry System** - Intelligent retry mechanisms with exponential backoff
+18. **💼 Job Persistence** - Automatic job recovery and persistence layer
 
 ## 🚀 Quick Start
 
@@ -147,6 +149,16 @@ export GITHUB_ORG="your_organization"
 - **🔄 Dynamic Scaling** - Predictive resource allocation based on workload patterns
 - **💰 Cost Optimization** - 30-50% resource waste reduction through intelligent optimization
 - **📡 Real-Time Monitoring** - Sub-second resource tracking with violation detection
+
+### 🚀 Redis Job Queue System
+- **🎯 Priority-Based Routing** - Intelligent job distribution across 6 specialized queues
+- **🔁 Advanced Retry Logic** - Customizable retry strategies with exponential backoff
+- **💾 Job Persistence** - Automatic recovery from failures and system restarts
+- **📊 Queue Dashboard** - Real-time monitoring at `/dashboard/queues` and Bull Dashboard at `/admin/queues`
+- **⏰ Recurring Jobs** - Support for interval and cron-based scheduled tasks
+- **🔄 Bulk Operations** - Efficient batch job processing
+- **🎛️ Queue Management** - Pause, resume, drain, and clean operations
+- **📈 Performance Analytics** - Throughput tracking and bottleneck detection
 
 ## 🛠️ Installation Options
 
@@ -628,6 +640,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Production deployment
 - [🧪 Testing Guide](docs/TESTING.md) - Comprehensive testing framework
 - [🔌 GitHub API Integration](docs/GITHUB_API_INTEGRATION.md) - API setup and usage
+- [⚡ Redis Job Queue System](docs/REDIS_JOB_QUEUE_SYSTEM.md) - Advanced job processing with Bull/BullMQ
 - [🐳 Container Orchestration](docs/container-orchestration/README.md) - Advanced container management
 - [⚡ Performance Optimization](docs/container-orchestration/PERFORMANCE_OPTIMIZATION.md) - AI-driven performance tuning
 - [📊 Container Pool Management](CONTAINER_POOL_MANAGEMENT_SUMMARY.md) - Advanced pool orchestration system

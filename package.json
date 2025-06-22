@@ -42,13 +42,17 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@bull-board/api": "^6.10.1",
+    "@bull-board/express": "^6.10.1",
     "@octokit/rest": "^20.0.2",
+    "@types/bull": "^3.15.9",
     "@types/express": "^5.0.3",
     "@types/node": "^24.0.3",
     "@types/redis": "^4.0.10",
     "axios": "^1.10.0",
     "bcrypt": "^5.1.1",
-    "bullmq": "^5.54.3",
+    "bull": "^4.16.5",
+    "bullmq": "^5.55.0",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dockerode": "^4.0.7",

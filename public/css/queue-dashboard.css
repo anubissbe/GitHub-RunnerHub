@@ -1,0 +1,409 @@
+/* Queue Dashboard Styles */
+.dashboard-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: #333;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  text-align: center;
+}
+
+.summary-card .metric {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 10px 0;
+}
+
+.metric.active {
+  color: #4CAF50;
+}
+
+.metric.failed {
+  color: #F44336;
+}
+
+.metric.completed {
+  color: #2196F3;
+}
+
+/* Charts Section */
+.charts-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.chart-card {
+  min-height: 300px;
+}
+
+.chart-card canvas {
+  max-height: 250px;
+}
+
+/* Queue Details */
+.queue-details {
+  margin-bottom: 30px;
+}
+
+.queue-details h2 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.queue-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.queue-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.queue-status.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.queue-status.idle {
+  background-color: #2196F3;
+  color: white;
+}
+
+.queue-status.paused {
+  background-color: #FF9800;
+  color: white;
+}
+
+.queue-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.queue-stats .stat {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.queue-stats .label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.queue-stats .value {
+  font-weight: 600;
+  color: #333;
+}
+
+.queue-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* Job Lists */
+.job-lists {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.job-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.job-item {
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+}
+
+.job-item.failed {
+  border-left: 4px solid #F44336;
+}
+
+.job-item.active {
+  border-left: 4px solid #4CAF50;
+}
+
+.job-info {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 5px;
+  font-size: 0.875rem;
+}
+
+.job-id {
+  font-family: monospace;
+  color: #666;
+}
+
+.job-type {
+  font-weight: 600;
+  color: #333;
+}
+
+.job-queue {
+  color: #2196F3;
+}
+
+.job-error {
+  font-size: 0.813rem;
+  color: #F44336;
+  margin: 5px 0;
+  font-style: italic;
+}
+
+.job-progress {
+  margin: 10px 0;
+}
+
+.progress {
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #4CAF50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition: width 0.3s ease;
+}
+
+.job-actions {
+  margin-top: 10px;
+}
+
+/* Card Styles */
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 15px 20px;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.card-body {
+  padding: 20px;
+}
+
+/* Button Styles */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #2196F3;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #1976D2;
+}
+
+.btn-warning {
+  background-color: #FF9800;
+  color: white;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #F57C00;
+}
+
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.813rem;
+}
+
+.btn-link {
+  background: none;
+  color: #2196F3;
+  text-decoration: underline;
+}
+
+.btn-link:hover {
+  color: #1976D2;
+}
+
+/* Footer */
+.dashboard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 15px;
+}
+
+/* Notifications */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 4px;
+  color: white;
+  font-size: 0.875rem;
+  opacity: 0;
+  transform: translateX(100px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.notification.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.notification.success {
+  background-color: #4CAF50;
+}
+
+.notification.error {
+  background-color: #F44336;
+}
+
+/* Scrollbar Styles */
+.job-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.job-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.job-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.job-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .summary-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .charts-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .queue-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .job-lists {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-footer {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+}

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Dashboard - GitHub RunnerHub</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/queue-dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <h1>Queue Management Dashboard</h1>
+      <div class="header-actions">
+        <label class="auto-refresh-toggle">
+          <input type="checkbox" id="autoRefresh" checked>
+          <span>Auto-refresh</span>
+        </label>
+        <button id="refreshDashboard" class="btn btn-primary">
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <section class="summary-cards">
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3>Total Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div class="metric" id="totalJobs">0</div>
+        </div>
+      </div>
+      
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3>Active Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div class="metric active" id="activeJobs">0</div>
+        </div>
+      </div>
+      
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3>Failed Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div class="metric failed" id="failedJobs">0</div>
+        </div>
+      </div>
+      
+      <div class="card summary-card">
+        <div class="card-header">
+          <h3>Completed Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div class="metric completed" id="completedJobs">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts-section">
+      <div class="card chart-card">
+        <div class="card-header">
+          <h3>Job Status Distribution</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="queueStatusChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="card chart-card">
+        <div class="card-header">
+          <h3>Throughput</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="throughputChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="card chart-card">
+        <div class="card-header">
+          <h3>Queue Distribution</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="queueDistributionChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Queue Details -->
+    <section class="queue-details">
+      <h2>Queue Status</h2>
+      <div class="queue-grid">
+        <!-- Job Execution Queue -->
+        <div class="card queue-card" data-queue="job-execution">
+          <div class="card-header">
+            <h3>Job Execution</h3>
+            <span class="queue-status active">Active</span>
+          </div>
+          <div class="card-body">
+            <div class="queue-stats">
+              <div class="stat">
+                <span class="label">Waiting:</span>
+                <span class="value queue-waiting">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Active:</span>
+                <span class="value queue-active">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Completed:</span>
+                <span class="value queue-completed">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Failed:</span>
+                <span class="value queue-failed">0</span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button class="btn btn-sm queue-action" data-action="pause" data-queue="job-execution">Pause</button>
+              <button class="btn btn-sm queue-action" data-action="resume" data-queue="job-execution">Resume</button>
+              <button class="btn btn-sm queue-action" data-action="drain" data-queue="job-execution">Drain</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Container Management Queue -->
+        <div class="card queue-card" data-queue="container-management">
+          <div class="card-header">
+            <h3>Container Management</h3>
+            <span class="queue-status idle">Idle</span>
+          </div>
+          <div class="card-body">
+            <div class="queue-stats">
+              <div class="stat">
+                <span class="label">Waiting:</span>
+                <span class="value queue-waiting">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Active:</span>
+                <span class="value queue-active">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Completed:</span>
+                <span class="value queue-completed">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Failed:</span>
+                <span class="value queue-failed">0</span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button class="btn btn-sm queue-action" data-action="pause" data-queue="container-management">Pause</button>
+              <button class="btn btn-sm queue-action" data-action="resume" data-queue="container-management">Resume</button>
+              <button class="btn btn-sm queue-action" data-action="drain" data-queue="container-management">Drain</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Monitoring Queue -->
+        <div class="card queue-card" data-queue="monitoring">
+          <div class="card-header">
+            <h3>Monitoring</h3>
+            <span class="queue-status active">Active</span>
+          </div>
+          <div class="card-body">
+            <div class="queue-stats">
+              <div class="stat">
+                <span class="label">Waiting:</span>
+                <span class="value queue-waiting">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Active:</span>
+                <span class="value queue-active">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Completed:</span>
+                <span class="value queue-completed">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Failed:</span>
+                <span class="value queue-failed">0</span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button class="btn btn-sm queue-action" data-action="pause" data-queue="monitoring">Pause</button>
+              <button class="btn btn-sm queue-action" data-action="resume" data-queue="monitoring">Resume</button>
+              <button class="btn btn-sm queue-action" data-action="drain" data-queue="monitoring">Drain</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Webhook Processing Queue -->
+        <div class="card queue-card" data-queue="webhook-processing">
+          <div class="card-header">
+            <h3>Webhook Processing</h3>
+            <span class="queue-status active">Active</span>
+          </div>
+          <div class="card-body">
+            <div class="queue-stats">
+              <div class="stat">
+                <span class="label">Waiting:</span>
+                <span class="value queue-waiting">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Active:</span>
+                <span class="value queue-active">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Completed:</span>
+                <span class="value queue-completed">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Failed:</span>
+                <span class="value queue-failed">0</span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button class="btn btn-sm queue-action" data-action="pause" data-queue="webhook-processing">Pause</button>
+              <button class="btn btn-sm queue-action" data-action="resume" data-queue="webhook-processing">Resume</button>
+              <button class="btn btn-sm queue-action" data-action="drain" data-queue="webhook-processing">Drain</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cleanup Queue -->
+        <div class="card queue-card" data-queue="cleanup">
+          <div class="card-header">
+            <h3>Cleanup</h3>
+            <span class="queue-status idle">Idle</span>
+          </div>
+          <div class="card-body">
+            <div class="queue-stats">
+              <div class="stat">
+                <span class="label">Waiting:</span>
+                <span class="value queue-waiting">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Active:</span>
+                <span class="value queue-active">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Completed:</span>
+                <span class="value queue-completed">0</span>
+              </div>
+              <div class="stat">
+                <span class="label">Failed:</span>
+                <span class="value queue-failed">0</span>
+              </div>
+            </div>
+            <div class="queue-actions">
+              <button class="btn btn-sm queue-action" data-action="pause" data-queue="cleanup">Pause</button>
+              <button class="btn btn-sm queue-action" data-action="resume" data-queue="cleanup">Resume</button>
+              <button class="btn btn-sm queue-action" data-action="drain" data-queue="cleanup">Drain</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Job Lists -->
+    <section class="job-lists">
+      <div class="card">
+        <div class="card-header">
+          <h3>Failed Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div id="failedJobsList" class="job-list">
+            <!-- Failed jobs will be populated here -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h3>Active Jobs</h3>
+        </div>
+        <div class="card-body">
+          <div id="activeJobsList" class="job-list">
+            <!-- Active jobs will be populated here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      <div class="footer-info">
+        <span>Last updated: <span id="lastUpdated">Never</span></span>
+      </div>
+      <div class="footer-actions">
+        <a href="/admin/queues" class="btn btn-link">Bull Dashboard</a>
+        <a href="/dashboard" class="btn btn-link">Main Dashboard</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="/js/queue-dashboard.js"></script>
+</body>
+</html>
