@@ -22,7 +22,7 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 - **⚡ Performance Optimization** - AI-driven performance tuning with 60-70% startup time reduction
 - **🔒 Perfect Isolation** - Each job runs in a fresh, single-use container with network isolation
 - **📈 Intelligent Container Pool Management** - Advanced pool orchestration with ML-based scaling and optimization
-- **🔄 Dynamic Scaling** - Predictive scaling algorithms with 85-95% demand forecasting accuracy
+- **🔄 Auto-Scaling System** - Intelligent auto-scaling with demand prediction, cost optimization, and analytics
 - **♻️ Container Reuse Optimization** - Pattern-based container selection with 85%+ efficiency
 - **🧠 AI-Powered Bottleneck Detection** - ML-based performance analysis and automatic resolution
 - **💾 Advanced Multi-layer Caching** - 85-95% cache hit ratio with intelligent prefetching
@@ -60,7 +60,7 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 5. **🎛️ Container Orchestration** - Advanced container lifecycle management and auto-scaling
 6. **🐳 Ephemeral Containers** - Secure, isolated execution environments with health monitoring
 7. **📊 Container Pool Management** - Intelligent pool orchestration with 6 integrated components
-8. **🔄 Dynamic Scaling Engine** - ML-based predictive scaling with cost optimization
+8. **🔄 Auto-Scaling System** - Comprehensive intelligent auto-scaling with 6 integrated components
 9. **♻️ Container Reuse Optimizer** - Pattern recognition and efficiency optimization
 10. **🔍 State Management** - Comprehensive container state tracking with recovery
 11. **📈 Resource Monitor** - Real-time monitoring with anomaly detection and alerting
@@ -215,6 +215,13 @@ sudo systemctl status github-runner-runnerhub-*
 │   │   ├── resource-optimization-engine.js # AI-driven optimization
 │   │   ├── usage-reporting-analytics.js # Analytics and reporting
 │   │   └── resource-management-orchestrator.js # Unified orchestration
+│   ├── auto-scaling/            # Intelligent auto-scaling system
+│   │   ├── autoscaling-orchestrator.js    # Central coordination & orchestration
+│   │   ├── demand-predictor.js           # ML-based demand forecasting
+│   │   ├── scaling-controller.js         # Horizontal scaling logic
+│   │   ├── container-prewarmer.js        # Container pool pre-warming
+│   │   ├── cost-optimizer.js             # Cost tracking & optimization
+│   │   └── scaling-analytics.js          # Metrics collection & analytics
 │   └── utils/                    # Utilities
 ├── backup/                       # Backup and disaster recovery
 │   ├── scripts/                  # Backup automation scripts
@@ -552,6 +559,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [⚡ Performance Optimization](docs/container-orchestration/PERFORMANCE_OPTIMIZATION.md) - AI-driven performance tuning
 - [📊 Container Pool Management](CONTAINER_POOL_MANAGEMENT_SUMMARY.md) - Advanced pool orchestration system
 - [🎯 Resource Management System](RESOURCE_MANAGEMENT_SYSTEM_SUMMARY.md) - Comprehensive resource control
+- [🔄 Auto-Scaling System](AUTO_SCALING_SYSTEM_SUMMARY.md) - Intelligent auto-scaling with demand prediction and cost optimization
 - [🔐 Security Architecture](docs/SECURITY.md) - Enterprise security features
 - [📋 Compliance Guide](docs/COMPLIANCE.md) - SOC2, ISO27001, GDPR compliance
 - [🛡️ Security API](docs/SECURITY-API.md) - Security component API reference
