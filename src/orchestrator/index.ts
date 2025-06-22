@@ -1,11 +1,16 @@
 /**
- * GitHub RunnerHub Orchestrator System
+ * GitHub RunnerHub Enhanced Orchestrator System
  * 
- * Advanced container orchestration for GitHub Actions replacing traditional dedicated runners
- * with intelligent container assignment, load balancing, and real-time status reporting.
+ * Advanced container orchestration for GitHub Actions with intelligent job distribution,
+ * Docker integration, auto-scaling, and real-time monitoring. Replaces traditional 
+ * dedicated runners with a sophisticated container-based approach.
  */
 
-// Core Orchestrator Components
+// Enhanced Orchestrator Components
+export { EnhancedOrchestrator, EnhancedOrchestratorConfig, EnhancedOrchestratorStatus } from './enhanced-orchestrator';
+export { OrchestrationIntegration, IntegrationConfig, SystemHealth, IntegrationMetrics } from './orchestration-integration';
+
+// Core Orchestrator Components (Legacy Support)
 export { RunnerOrchestrator, OrchestratorConfig, OrchestratorStatus } from './runner-orchestrator';
 export { ContainerAssignmentManager, ContainerStatus, LoadBalancingStrategy } from './container-assignment';
 export { JobParser, ParsedJob, ValidationError } from './job-parser';
@@ -121,3 +126,129 @@ export const JOB_PRIORITIES = {
   HIGH: 2,
   CRITICAL: 1
 } as const;
+
+// Enhanced Factory Functions
+export function createEnhancedOrchestrator(config?: Partial<EnhancedOrchestratorConfig>): EnhancedOrchestrator {
+  const defaultConfig: EnhancedOrchestratorConfig = {
+    maxConcurrentJobs: 50,
+    containerPoolSize: 100,
+    healthCheckInterval: 30000,
+    metricsInterval: 60000,
+    webhookSecret: process.env.GITHUB_WEBHOOK_SECRET || '',
+    gitHubToken: process.env.GITHUB_TOKEN || '',
+    gitHubOrg: process.env.GITHUB_ORG || '',
+    jobDistribution: {
+      enabled: true,
+      maxConcurrentJobs: 100,
+      maxQueuedJobs: 1000,
+      enableDependencyExecution: true,
+      enableResourceAwareScheduling: true,
+      enableLoadBalancing: true
+    },
+    docker: {
+      enabled: true,
+      socketPath: process.env.DOCKER_SOCKET_PATH || '/var/run/docker.sock',
+      registryUrl: process.env.DOCKER_REGISTRY_URL,
+      networkConfig: {
+        defaultDriver: 'bridge',
+        enableMonitoring: true
+      },
+      volumeConfig: {
+        defaultDriver: 'local',
+        enableCleanup: true
+      }
+    },
+    scaling: {
+      autoScaling: true,
+      minContainers: 5,
+      maxContainers: 200,
+      scaleUpThreshold: 0.8,
+      scaleDownThreshold: 0.3,
+      cooldownPeriod: 300000 // 5 minutes
+    }
+  };
+
+  const mergedConfig = { ...defaultConfig, ...config };
+  return EnhancedOrchestrator.getInstance(mergedConfig);
+}
+
+export function createOrchestrationIntegration(config?: Partial<IntegrationConfig>): OrchestrationIntegration {
+  const defaultConfig: IntegrationConfig = {
+    orchestrator: {
+      maxConcurrentJobs: 50,
+      containerPoolSize: 100,
+      healthCheckInterval: 30000,
+      metricsInterval: 60000,
+      webhookSecret: process.env.GITHUB_WEBHOOK_SECRET || '',
+      gitHubToken: process.env.GITHUB_TOKEN || '',
+      gitHubOrg: process.env.GITHUB_ORG || '',
+      jobDistribution: {
+        enabled: true,
+        maxConcurrentJobs: 100,
+        maxQueuedJobs: 1000,
+        enableDependencyExecution: true,
+        enableResourceAwareScheduling: true,
+        enableLoadBalancing: true
+      },
+      docker: {
+        enabled: true,
+        socketPath: '/var/run/docker.sock',
+        networkConfig: {
+          defaultDriver: 'bridge',
+          enableMonitoring: true
+        },
+        volumeConfig: {
+          defaultDriver: 'local',
+          enableCleanup: true
+        }
+      },
+      scaling: {
+        autoScaling: true,
+        minContainers: 5,
+        maxContainers: 200,
+        scaleUpThreshold: 0.8,
+        scaleDownThreshold: 0.3,
+        cooldownPeriod: 300000
+      }
+    },
+    webhook: {
+      enabled: true,
+      port: parseInt(process.env.WEBHOOK_PORT || '3000'),
+      path: process.env.WEBHOOK_PATH || '/webhook',
+      secret: process.env.GITHUB_WEBHOOK_SECRET || ''
+    },
+    monitoring: {
+      enabled: true,
+      metricsPort: parseInt(process.env.METRICS_PORT || '9090'),
+      healthCheckPort: parseInt(process.env.HEALTH_PORT || '8080')
+    },
+    features: {
+      jobDistribution: true,
+      dockerIntegration: true,
+      autoScaling: true,
+      legacyCompatibility: true
+    }
+  };
+
+  const mergedConfig = { ...defaultConfig, ...config };
+  return OrchestrationIntegration.getInstance(mergedConfig);
+}
+
+// Convenience function to create a complete orchestration system
+export async function createOrchestratedRunnerHub(config?: {
+  orchestrator?: Partial<EnhancedOrchestratorConfig>;
+  integration?: Partial<IntegrationConfig>;
+}) {
+  const integration = createOrchestrationIntegration(config?.integration);
+  await integration.initialize();
+  
+  return {
+    integration,
+    health: () => integration.getSystemHealth(),
+    metrics: () => integration.getSystemMetrics(),
+    getJobStatus: (jobId: string) => integration.getJobStatus(jobId),
+    cancelJob: (jobId: string) => integration.cancelJob(jobId),
+    getActiveJobs: () => integration.getActiveJobs(),
+    shutdown: () => integration.shutdown()
+  };
+}
