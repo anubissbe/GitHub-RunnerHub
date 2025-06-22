@@ -6,7 +6,7 @@ on:
 
 jobs:
   test-runner:
-    runs-on: [self-hosted, docker, runnerhub]
+    runs-on: ubuntu-latest
     
     steps:
     - name: Check runner
