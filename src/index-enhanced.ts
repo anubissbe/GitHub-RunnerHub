@@ -2,8 +2,8 @@ import AppEnhanced from './app-enhanced';
 import { createLogger } from './utils/logger';
 import database from './services/database';
 import runnerPoolManager from './services/runner-pool-manager';
-import containerOrchestrator from './services/container-orchestrator';
-import jobQueue from './services/job-queue';
+import { ContainerOrchestratorV2 } from './services/container-orchestrator-v2';
+// import jobQueue from './services/job-queue';
 import githubWebhookEnhanced from './services/github-webhook-enhanced';
 
 const logger = createLogger('MainEnhanced');
@@ -33,6 +33,7 @@ async function start() {
     await runnerPoolManager.initialize();
     
     // Initialize container orchestrator
+    const containerOrchestrator = ContainerOrchestratorV2.getInstance();
     await containerOrchestrator.initialize();
 
     // Create and start enhanced app

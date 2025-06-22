@@ -87,7 +87,7 @@ export async function initializeJobQueue(): Promise<void> {
           );
 
           // Create and run container
-          const result = await containerOrchestrator.runJob(delegatedJob);
+          const result = await containerOrchestrator.executeJob(delegatedJob);
 
           // Update job completion
           await database.query(

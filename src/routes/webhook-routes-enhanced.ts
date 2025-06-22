@@ -13,7 +13,7 @@ router.post(
 );
 
 // Protected management endpoints
-router.use(authenticate); // All routes below require authentication
+router.use(authenticate.authenticate()); // All routes below require authentication
 
 // Get webhook events with filtering
 router.get(

@@ -391,11 +391,7 @@ export class GitHubAPIEnhanced {
   /**
    * Get current rate limit status
    */
-  getRateLimitStatus(): RateLimitInfo & { 
-    queueLength: number; 
-    metrics: typeof this.metrics;
-    strategy: string;
-  } {
+  getRateLimitStatus() {
     return {
       ...this.rateLimit,
       queueLength: this.requestQueue.length,

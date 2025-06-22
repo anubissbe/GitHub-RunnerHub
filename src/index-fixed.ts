@@ -7,8 +7,8 @@ import path from 'path';
 import { createLogger } from './utils/logger';
 import { validateConfig } from './config';
 import config from './config';
-import serviceManager from './services/service-manager';
-import database from './services/database';
+// import serviceManager from './services/service-manager';
+// import database from './services/database';
 import { initializeJobQueue, shutdownJobQueue } from './services/job-queue-fixed';
 
 // Import routes
