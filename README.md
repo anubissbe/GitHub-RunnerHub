@@ -4,8 +4,8 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-required-blue)](https://www.docker.com/)
-[![GitHub release](https://img.shields.io/github/release/YOUR_GITHUB_ORG/GitHub-RunnerHub.svg)](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/releases/)
-[![CI/CD](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/actions)
+[![GitHub release](https://img.shields.io/github/release/anubissbe/GitHub-RunnerHub.svg)](https://github.com/anubissbe/GitHub-RunnerHub/releases/)
+[![CI/CD](https://github.com/anubissbe/GitHub-RunnerHub/actions/workflows/ci.yml/badge.svg)](https://github.com/anubissbe/GitHub-RunnerHub/actions)
 
 > **Enterprise-grade GitHub Actions proxy runner system providing real-time monitoring, intelligent orchestration, and secure execution environments through ephemeral Docker containers.**
 
@@ -76,7 +76,7 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
+git clone https://github.com/anubissbe/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 
 # Run the comprehensive installation script
@@ -539,11 +539,83 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### Development Setup
 ```bash
-git clone https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub.git
+git clone https://github.com/anubissbe/GitHub-RunnerHub.git
 cd GitHub-RunnerHub
 npm install
 npm run dev
 ```
+
+## 🧪 Comprehensive Testing Suite
+
+GitHub-RunnerHub features a comprehensive testing framework ensuring enterprise-grade quality and reliability.
+
+### 🎯 Testing Components
+
+1. **Unit Tests** - Individual component testing with 70% coverage requirement
+2. **Integration Tests** - API endpoint and service interaction testing  
+3. **End-to-End Tests** - Complete workflow scenario validation
+4. **Security Tests** - Vulnerability and penetration testing
+5. **Load Tests** - Performance testing with Artillery.js
+
+### 🚀 Running Tests
+
+```bash
+# Run all tests
+npm run test:comprehensive
+
+# Run specific test types
+npm run test:unit           # Unit tests
+npm run test:integration    # Integration tests
+npm run test:e2e           # End-to-end tests
+npm run test:security      # Security tests
+npm run test:load          # Load/performance tests
+
+# Development testing
+npm run test:watch         # Watch mode
+npm run test:coverage      # Coverage report
+npm run test:ci           # CI-optimized testing
+
+# Comprehensive test script
+./scripts/run-comprehensive-tests.sh
+```
+
+### 📊 Test Coverage & Quality
+
+- **100+ test scenarios** across all system components
+- **15+ test categories** covering security, performance, and functionality
+- **Multi-environment testing** (Node.js 18.x, 20.x, 22.x)
+- **Automated CI/CD integration** with GitHub Actions
+- **Security vulnerability scanning** with Trivy
+- **Performance benchmarking** and load testing
+
+### 🔒 Security Testing
+
+- **SQL Injection Protection** - Validates input sanitization
+- **XSS/CSRF Prevention** - Tests web security measures
+- **Authentication Security** - Brute force and weak password protection
+- **Authorization Testing** - RBAC and privilege escalation prevention
+- **Data Protection** - Information disclosure and secure headers validation
+
+### ⚡ Performance Testing
+
+- **Load Testing Phases**:
+  - Warm-up: 5 req/sec for 30s
+  - Load: 50 req/sec for 2 minutes  
+  - Spike: 100 req/sec for 1 minute
+  - Sustained: 75 req/sec for 5 minutes
+
+- **Metrics Tracked**:
+  - Response time percentiles (P50, P95, P99)
+  - Request throughput and error rates
+  - Resource utilization (CPU, memory)
+  - Database and Redis performance
+
+### 📚 Testing Documentation
+
+- **[Complete Testing Guide](docs/TESTING.md)** - Comprehensive testing documentation
+- **Test Structure & Organization** - Professional test suite architecture
+- **CI/CD Integration** - Automated testing workflows
+- **Best Practices** - Testing guidelines and standards
 
 ## 📄 License
 
@@ -554,6 +626,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Core Documentation
 - [📐 Architecture](docs/ARCHITECTURE.md) - System design and components
 - [🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Production deployment
+- [🧪 Testing Guide](docs/TESTING.md) - Comprehensive testing framework
 - [🔌 GitHub API Integration](docs/GITHUB_API_INTEGRATION.md) - API setup and usage
 - [🐳 Container Orchestration](docs/container-orchestration/README.md) - Advanced container management
 - [⚡ Performance Optimization](docs/container-orchestration/PERFORMANCE_OPTIMIZATION.md) - AI-driven performance tuning
@@ -583,8 +656,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 - **Documentation**: Comprehensive guides in `/docs` directory
-- **Issues**: [GitHub Issues](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/YOUR_GITHUB_ORG/GitHub-RunnerHub/discussions)
+- **Issues**: [GitHub Issues](https://github.com/anubissbe/GitHub-RunnerHub/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/anubissbe/GitHub-RunnerHub/discussions)
 
 ## ☕ Support the Project
 
@@ -594,4 +667,4 @@ If you find this project helpful, consider supporting it:
 
 ---
 
-**Made with ❤️ by [YOUR_GITHUB_ORG](https://github.com/YOUR_GITHUB_ORG)**
+**Made with ❤️ by [anubissbe](https://github.com/anubissbe)**
