@@ -15,6 +15,10 @@ GitHub-RunnerHub is a comprehensive GitHub Actions management platform that inte
 
 ### ✨ Key Features
 
+- **🎛️ Advanced Orchestrator System** - NEW: Intelligent container assignment replacing dedicated runners
+- **🚀 Dynamic Load Balancing** - NEW: Multiple strategies (round-robin, least-loaded, resource-aware, affinity-based)
+- **📡 Real-time Status Reporting** - NEW: Live GitHub integration with check runs and step tracking
+- **🔍 Intelligent Job Parsing** - NEW: Comprehensive GitHub Actions workflow validation
 - **🔗 Real GitHub Integration** - Live monitoring of actual GitHub Actions jobs and runners
 - **🧠 Smart Rate Limiting** - Intelligent API usage staying well under GitHub's 5,000/hour limit  
 - **📊 Real-time Dashboard** - Live metrics from your actual GitHub organization
@@ -193,7 +197,18 @@ sudo systemctl status github-runner-runnerhub-*
 │   ├── services/                 # Business logic
 │   ├── routes/                   # API routes
 │   ├── middleware/               # Express middleware
-│   ├── container-orchestration/  # Container management system
+│   ├── orchestrator/             # NEW: Advanced Orchestrator System
+│   │   ├── runner-orchestrator.ts       # Central coordination engine
+│   │   ├── container-assignment.ts      # Intelligent container assignment
+│   │   ├── job-parser.ts                # GitHub Actions job parser
+│   │   ├── status-reporter.ts           # Real-time GitHub status updates
+│   │   ├── webhook-handler.ts           # Secure webhook processing
+│   │   ├── orchestrator-service.ts      # Main orchestrator service
+│   │   ├── monitoring/                  # Comprehensive monitoring system
+│   │   │   ├── orchestrator-monitor.ts  # Health checks and metrics
+│   │   │   └── dashboard.ts             # Real-time dashboard
+│   │   └── __tests__/                   # Comprehensive test suite
+│   ├── container-orchestration/  # Legacy container management system
 │   │   ├── docker/              # Docker API integration
 │   │   ├── lifecycle/           # Container lifecycle management
 │   │   ├── monitoring/          # Health monitoring & metrics
@@ -637,6 +652,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### Core Documentation
 - [📐 Architecture](docs/ARCHITECTURE.md) - System design and components
+- [🎛️ Orchestrator Architecture](docs/ORCHESTRATOR_ARCHITECTURE.md) - NEW: Advanced orchestrator system design
+- [⚡ Orchestrator Quick Start](docs/ORCHESTRATOR_QUICKSTART.md) - NEW: Get started with the orchestrator
 - [🚀 Deployment Guide](docs/DEPLOYMENT_GUIDE.md) - Production deployment
 - [🧪 Testing Guide](docs/TESTING.md) - Comprehensive testing framework
 - [🔌 GitHub API Integration](docs/GITHUB_API_INTEGRATION.md) - API setup and usage
