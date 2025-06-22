@@ -36,7 +36,7 @@ describe('High Availability System E2E Tests', () => {
         
         // Setup database client for testing
         dbClient = new Client({
-            connectionString: process.env.DATABASE_URL || 'postgresql://user:password@host:5432/database
+            connectionString: process.env.DATABASE_URL || 'postgresql://user:password@host:5432/database'
         });
         await dbClient.connect();
         

@@ -1,0 +1,175 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm-up"
+    
+    # Load testing phase
+    - duration: 120
+      arrivalRate: 50
+      name: "Load test"
+    
+    # Spike testing phase
+    - duration: 60
+      arrivalRate: 100
+      name: "Spike test"
+    
+    # Sustained load phase
+    - duration: 300
+      arrivalRate: 75
+      name: "Sustained load"
+
+  processor: "./load-test-processor.js"
+  
+  variables:
+    test_user: "load_test_user"
+    test_password: "load_test_password"
+
+  defaults:
+    headers:
+      'Content-Type': 'application/json'
+      'User-Agent': 'Artillery-LoadTest/1.0'
+
+scenarios:
+  # Health check scenario (baseline)
+  - name: "Health checks"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          capture:
+            json: "$.status"
+            as: "health_status"
+      - think: 1
+
+  # Authentication flow
+  - name: "Authentication"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            username: "{{ test_user }}"
+            password: "{{ test_password }}"
+          capture:
+            json: "$.token"
+            as: "auth_token"
+      - think: 2
+      - get:
+          url: "/api/auth/me"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      - think: 1
+
+  # Job management scenario
+  - name: "Job operations"
+    weight: 30
+    flow:
+      # Login first
+      - post:
+          url: "/api/auth/login"
+          json:
+            username: "{{ test_user }}"
+            password: "{{ test_password }}"
+          capture:
+            json: "$.token"
+            as: "auth_token"
+      
+      # List jobs
+      - get:
+          url: "/api/jobs"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      # Create job
+      - post:
+          url: "/api/jobs"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+          json:
+            repository: "test/load-repo"
+            workflow: "load-test-workflow"
+            ref: "main"
+            inputs: {}
+          capture:
+            json: "$.id"
+            as: "job_id"
+      
+      - think: 3
+      
+      # Get job status
+      - get:
+          url: "/api/jobs/{{ job_id }}"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      - think: 2
+
+  # Runner management scenario
+  - name: "Runner operations"
+    weight: 20
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            username: "{{ test_user }}"
+            password: "{{ test_password }}"
+          capture:
+            json: "$.token"
+            as: "auth_token"
+      
+      # List runners
+      - get:
+          url: "/api/runners"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      # Get runner metrics
+      - get:
+          url: "/api/runners/metrics"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      - think: 2
+
+  # Monitoring scenario
+  - name: "Monitoring and metrics"
+    weight: 15
+    flow:
+      # Login
+      - post:
+          url: "/api/auth/login"
+          json:
+            username: "{{ test_user }}"
+            password: "{{ test_password }}"
+          capture:
+            json: "$.token"
+            as: "auth_token"
+      
+      # Get system metrics
+      - get:
+          url: "/api/monitoring/metrics"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      # Get Prometheus metrics
+      - get:
+          url: "/metrics"
+          headers:
+            Authorization: "Bearer {{ auth_token }}"
+      
+      - think: 1
+
+  # Stress test scenario (high frequency operations)
+  - name: "High frequency operations"
+    weight: 5
+    flow:
+      # Rapid health checks
+      - loop:
+          - get:
+              url: "/health"
+          - think: 0.1
+        count: 10
