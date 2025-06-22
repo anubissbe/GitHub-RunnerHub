@@ -364,7 +364,7 @@ const allowed = await rbac.checkPermission('user123', 'workflows:execute', {
 Create user session.
 ```javascript
 const session = await rbac.createSession('user123', {
-  ipAddress: '192.168.1.100',
+  ipAddress: '10.0.1.100',
   userAgent: 'Mozilla/5.0...'
 });
 ```

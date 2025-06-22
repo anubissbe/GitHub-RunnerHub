@@ -560,6 +560,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [📊 Container Pool Management](CONTAINER_POOL_MANAGEMENT_SUMMARY.md) - Advanced pool orchestration system
 - [🎯 Resource Management System](RESOURCE_MANAGEMENT_SYSTEM_SUMMARY.md) - Comprehensive resource control
 - [🔄 Auto-Scaling System](AUTO_SCALING_SYSTEM_SUMMARY.md) - Intelligent auto-scaling with demand prediction and cost optimization
+- [📚 Documentation & Training](DOCUMENTATION_TRAINING_SUMMARY.md) - Comprehensive documentation and training system
 - [🔐 Security Architecture](docs/SECURITY.md) - Enterprise security features
 - [📋 Compliance Guide](docs/COMPLIANCE.md) - SOC2, ISO27001, GDPR compliance
 - [🛡️ Security API](docs/SECURITY-API.md) - Security component API reference
