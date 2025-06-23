@@ -6,9 +6,9 @@ import { rateLimiter } from '../middleware/rate-limiter';
 const router = Router();
 const jobController = new JobController();
 
-// Apply authentication and rate limiting to all routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // Delegate a job from proxy runner
 router.post('/delegate', jobController.delegateJob.bind(jobController));

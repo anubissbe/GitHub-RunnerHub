@@ -1290,7 +1290,7 @@ export class DockerSecurityManager extends EventEmitter {
    * Get container security configuration
    */
   private async getContainerSecurityConfig(containerId: string): Promise<ContainerSecurityConfig> {
-    const containerInfo = await this.dockerClient.getContainerInfo(containerId);
+    const _containerInfo = await this.dockerClient.getContainerInfo(containerId);
     
     return {
       securityContext: {

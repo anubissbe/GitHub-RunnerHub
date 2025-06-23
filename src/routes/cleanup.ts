@@ -7,9 +7,9 @@ import { rateLimiter } from '../middleware/rate-limiter';
 const router = Router();
 const cleanupController = new CleanupController();
 
-// Apply authentication and rate limiting to all routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // Get all cleanup policies
 router.get('/policies', asyncHandler(cleanupController.getCleanupPolicies));

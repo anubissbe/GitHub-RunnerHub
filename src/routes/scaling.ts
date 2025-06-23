@@ -6,9 +6,9 @@ import { rateLimiter } from '../middleware/rate-limiter';
 const router = Router();
 const scalingController = new ScalingController();
 
-// Apply authentication and rate limiting to all routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // Scaling policies
 router.get('/policies', scalingController.getPolicies.bind(scalingController));

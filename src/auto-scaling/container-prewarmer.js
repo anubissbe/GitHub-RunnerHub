@@ -747,7 +747,7 @@ class ContainerPrewarmer extends EventEmitter {
   /**
    * Prepare container for use
    */
-  async prepareContainerForUse(containerId) {
+  async prepareContainerForUse(_containerId) {
     // Any last-minute preparation
     // e.g., inject fresh tokens, update configuration, etc.
   }

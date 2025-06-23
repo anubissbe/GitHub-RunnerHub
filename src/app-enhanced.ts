@@ -34,7 +34,7 @@ const logger = createLogger('AppEnhanced');
 
 export class AppEnhanced {
   private app: Application;
-  private server: any;
+  private server: import('http').Server | null = null;
   private io: Server;
 
   constructor() {
@@ -100,7 +100,7 @@ export class AppEnhanced {
 
     // Make io available in req
     this.app.use((req, _res, next) => {
-      (req as any).io = this.io;
+      (req as Request & { io: Server }).io = this.io;
       next();
     });
   }
@@ -235,7 +235,7 @@ export class AppEnhanced {
         id: socket.id 
       });
 
-      socket.on('subscribe:webhook-events', (filters: any) => {
+      socket.on('subscribe:webhook-events', (filters: { repository?: string; eventType?: string }) => {
         // Join rooms based on filters
         if (filters.repository) {
           socket.join(`webhook:repo:${filters.repository}`);

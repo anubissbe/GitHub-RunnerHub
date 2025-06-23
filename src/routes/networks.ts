@@ -10,9 +10,9 @@ const router = Router();
  * Rate limiting applied to prevent abuse
  */
 
-// Apply authentication and rate limiting to all network routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all network routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // GET /api/networks/stats - Get network statistics
 router.get('/stats', networkController.getNetworkStats.bind(networkController));

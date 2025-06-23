@@ -38,7 +38,7 @@ const logger = createLogger('App');
 
 export class App {
   private app: Application;
-  private server: any;
+  private server: import('http').Server | null = null;
   private io: Server;
   private queueManager: QueueManager;
   private _serviceManager: ServiceManager; // Prefixed with underscore to indicate intentionally unused
