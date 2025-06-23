@@ -344,10 +344,14 @@ jobs:
 
       - name: 📦 Create Release Archive
         run: |
+          # Create archive excluding changing files
           tar -czf github-runnerhub-${{ needs.container.outputs.version }}.tar.gz \
             --exclude=node_modules \
             --exclude=.git \
             --exclude=.env \
+            --exclude=dist \
+            --exclude='*.tar.gz' \
+            --dereference \
             .
 
       - name: 🎉 Create GitHub Release
