@@ -374,7 +374,7 @@ class DemandPredictor extends EventEmitter {
       values.reduce((sq, n) => sq + Math.pow(n - mean, 2), 0) / values.length
     );
     
-    for (const [minute, avg] of minuteAverages) {
+    for (const [_minute, avg] of minuteAverages) {
       if (Math.abs(avg - mean) > stdDev) {
         this.stats.patternsDetected++;
       }
@@ -519,7 +519,7 @@ class DemandPredictor extends EventEmitter {
    */
   async generatePredictions() {
     try {
-      const now = Date.now();
+      const _now = Date.now();
       
       // Generate predictions using selected algorithm
       switch (this.config.algorithm) {
@@ -651,7 +651,7 @@ class DemandPredictor extends EventEmitter {
    */
   async generateHybridPredictions() {
     // Combine multiple methods
-    const exponentialForecasts = [];
+    const _exponentialForecasts = [];
     const arimaForecasts = [];
     
     // Get exponential smoothing forecasts

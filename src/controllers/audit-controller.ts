@@ -383,7 +383,7 @@ export class AuditController {
   /**
    * Helper: Get top actions from events
    */
-  private getTopActions(events: any[], limit: number): Array<{ action: string; count: number }> {
+  private getTopActions(events: Array<{ action: string; [key: string]: unknown }>, limit: number): Array<{ action: string; count: number }> {
     const actionCounts: Record<string, number> = {};
     
     events.forEach(event => {
@@ -399,7 +399,7 @@ export class AuditController {
   /**
    * Helper: Get affected resources from events
    */
-  private getAffectedResources(events: any[]): Record<string, number> {
+  private getAffectedResources(events: Array<{ resource?: string; [key: string]: unknown }>): Record<string, number> {
     const resources: Record<string, number> = {};
     
     events.forEach(event => {

@@ -41,7 +41,7 @@ export class App {
   private server: import('http').Server | null = null;
   private io: Server;
   private queueManager: QueueManager;
-  private _serviceManager: ServiceManager; // Prefixed with underscore to indicate intentionally unused
+  private _serviceManager: ServiceManager; // Reserved for future service management integration
 
   constructor(serviceManager: ServiceManager, queueManager: QueueManager) {
     this.app = express();
@@ -232,7 +232,7 @@ export class App {
     const port = config.app.port;
     
     return new Promise((resolve, reject) => {
-      this.server.listen(port, () => {
+      this.server?.listen(port, () => {
         logger.info(`Server is running on port ${port}`);
         logger.info(`Dashboard: http://localhost:${port}/dashboard`);
         logger.info(`Queue Dashboard: http://localhost:${port}/dashboard/queues`);
@@ -246,7 +246,7 @@ export class App {
   public async stop(): Promise<void> {
     return new Promise((resolve) => {
       this.io.close(() => {
-        this.server.close(() => {
+        this.server?.close(() => {
           logger.info('Server stopped');
           resolve();
         });

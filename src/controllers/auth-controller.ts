@@ -7,6 +7,10 @@ import auditLogger from '../services/audit-logger';
 
 const logger = createLogger('AuthController');
 
+interface DatabaseService {
+  query: (sql: string, params?: unknown[]) => Promise<unknown[]>;
+}
+
 interface LoginRequest {
   username: string;
   password: string;
@@ -449,7 +453,7 @@ export class AuthController {
   private async getUserByUsername(username: string): Promise<User | null> {
     try {
       const serviceManager = ServiceManager.getInstance();
-      const database = serviceManager.getService<any>('database');
+      const database = serviceManager.getService<DatabaseService>('database');
 
       const [user] = await database.query(
         'SELECT * FROM users WHERE username = $1',
@@ -466,7 +470,7 @@ export class AuthController {
   private async getUserById(id: string): Promise<User | null> {
     try {
       const serviceManager = ServiceManager.getInstance();
-      const database = serviceManager.getService<any>('database');
+      const database = serviceManager.getService<DatabaseService>('database');
 
       const [user] = await database.query(
         'SELECT * FROM users WHERE id = $1',
@@ -482,7 +486,7 @@ export class AuthController {
 
   private async getAllUsers(): Promise<User[]> {
     const serviceManager = ServiceManager.getInstance();
-    const database = serviceManager.getService<any>('database');
+    const database = serviceManager.getService<DatabaseService>('database');
 
     return await database.query(
       'SELECT * FROM users ORDER BY created_at DESC'
@@ -491,7 +495,7 @@ export class AuthController {
 
   private async createUserInDatabase(userData: Partial<User>): Promise<string> {
     const serviceManager = ServiceManager.getInstance();
-    const database = serviceManager.getService<any>('database');
+    const database = serviceManager.getService<DatabaseService>('database');
 
     const [result] = await database.query(
       `INSERT INTO users (username, email, password_hash, role, permissions, active)
@@ -512,7 +516,7 @@ export class AuthController {
 
   private async updateUserInDatabase(id: string, updates: Partial<User>): Promise<void> {
     const serviceManager = ServiceManager.getInstance();
-    const database = serviceManager.getService<any>('database');
+    const database = serviceManager.getService<DatabaseService>('database');
 
     const setClause = [];
     const values = [];
@@ -544,7 +548,7 @@ export class AuthController {
 
   private async deleteUserFromDatabase(id: string): Promise<void> {
     const serviceManager = ServiceManager.getInstance();
-    const database = serviceManager.getService<any>('database');
+    const database = serviceManager.getService<DatabaseService>('database');
 
     await database.query('DELETE FROM users WHERE id = $1', [id]);
   }
@@ -552,7 +556,7 @@ export class AuthController {
   private async updateLastLogin(userId: string): Promise<void> {
     try {
       const serviceManager = ServiceManager.getInstance();
-      const database = serviceManager.getService<any>('database');
+      const database = serviceManager.getService<DatabaseService>('database');
 
       await database.query(
         'UPDATE users SET last_login = NOW() WHERE id = $1',
