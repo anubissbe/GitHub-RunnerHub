@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // PostgreSQL connection - force external database
 const pool = new Pool({
-    connectionString: 'postgresql://user:password@host:5432/database
+    connectionString: 'postgresql://user:password@host:5432/database',
     ssl: false
 });
 
