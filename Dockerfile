@@ -1,6 +1,11 @@
 # Build stage
 FROM node:20-alpine AS builder
 
+# Build arguments
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+
 WORKDIR /app
 
 # Copy package files
@@ -19,8 +24,28 @@ RUN npm run build || true
 # Ensure dist directory exists even if build failed
 RUN mkdir -p dist && echo '{}' > dist/package.json
 
+# Add version info
+RUN echo "{\"version\":\"${VERSION}\",\"buildDate\":\"${BUILD_DATE}\",\"gitCommit\":\"${VCS_REF}\"}" > dist/version.json
+
 # Production stage
 FROM node:20-alpine
+
+# Build arguments for labels
+ARG VERSION=dev
+ARG BUILD_DATE
+ARG VCS_REF
+
+# OCI image labels
+LABEL org.opencontainers.image.title="GitHub RunnerHub" \
+      org.opencontainers.image.description="Enterprise-grade GitHub Actions proxy runner system" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="anubissbe" \
+      org.opencontainers.image.source="https://github.com/anubissbe/GitHub-RunnerHub" \
+      org.opencontainers.image.documentation="https://github.com/anubissbe/GitHub-RunnerHub/blob/main/README.md" \
+      org.opencontainers.image.licenses="MIT" \
+      maintainer="anubissbe <bert@telkom.be>"
 
 WORKDIR /app
 

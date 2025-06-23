@@ -4,8 +4,11 @@
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 [![Docker](https://img.shields.io/badge/Docker-required-blue)](https://www.docker.com/)
-[![GitHub release](https://img.shields.io/github/release/anubissbe/GitHub-RunnerHub.svg)](https://github.com/anubissbe/GitHub-RunnerHub/releases/)
-[![CI/CD](https://github.com/anubissbe/GitHub-RunnerHub/actions/workflows/ci.yml/badge.svg)](https://github.com/anubissbe/GitHub-RunnerHub/actions)
+[![GitHub release](https://img.shields.io/github/v/release/anubissbe/GitHub-RunnerHub)](https://github.com/anubissbe/GitHub-RunnerHub/releases/)
+[![Release & Deploy](https://github.com/anubissbe/GitHub-RunnerHub/actions/workflows/release.yml/badge.svg)](https://github.com/anubissbe/GitHub-RunnerHub/actions/workflows/release.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/anubissbe/github-runnerhub)](https://hub.docker.com/r/anubissbe/github-runnerhub)
+[![Docker Image Size](https://img.shields.io/docker/image-size/anubissbe/github-runnerhub/latest)](https://hub.docker.com/r/anubissbe/github-runnerhub)
+[![Security Scan](https://snyk.io/test/github/anubissbe/GitHub-RunnerHub/badge.svg)](https://snyk.io/test/github/anubissbe/GitHub-RunnerHub)
 
 > **Enterprise-grade GitHub Actions proxy runner system providing real-time monitoring, intelligent orchestration, and secure execution environments through ephemeral Docker containers.**
 
