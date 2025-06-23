@@ -41,19 +41,31 @@ set_secret() {
 echo ""
 echo "📝 Setting up required secrets..."
 
-# Docker Hub credentials (optional)
+# Docker Hub credentials
 echo ""
-echo "🐳 Docker Hub credentials (optional - press Enter to skip):"
-read -p "  Enter Docker Hub username (or press Enter to skip): " DOCKERHUB_USERNAME
+echo "🐳 Docker Hub credentials:"
+echo "  Retrieving from Vault..."
 
-if [ -n "$DOCKERHUB_USERNAME" ]; then
-    read -s -p "  Enter Docker Hub token/password: " DOCKERHUB_TOKEN
-    echo ""
-    
-    set_secret "DOCKERHUB_USERNAME" "$DOCKERHUB_USERNAME" "Docker Hub username"
-    set_secret "DOCKERHUB_TOKEN" "$DOCKERHUB_TOKEN" "Docker Hub access token"
-else
+# Get Docker Hub credentials from Vault
+# Note: VAULT_TOKEN should be set as environment variable
+if [ -z "$VAULT_TOKEN" ]; then
+    echo "  ⚠️  VAULT_TOKEN not set. Please run: source /opt/projects/scripts/utilities/export-vault-secrets.sh"
     echo "  Skipping Docker Hub setup"
+else
+    DOCKERHUB_CREDS=$(curl -s -H "X-Vault-Token: $VAULT_TOKEN" http://192.168.1.24:8200/v1/secret/data/Dockerhub | jq -r '.data.data')
+    if [ "$DOCKERHUB_CREDS" != "null" ]; then
+        DOCKERHUB_USERNAME=$(echo "$DOCKERHUB_CREDS" | jq -r '.USERNAME')
+        DOCKERHUB_TOKEN=$(echo "$DOCKERHUB_CREDS" | jq -r '.TOKEN')
+        
+        if [ -n "$DOCKERHUB_USERNAME" ] && [ -n "$DOCKERHUB_TOKEN" ]; then
+            set_secret "DOCKERHUB_USERNAME" "$DOCKERHUB_USERNAME" "Docker Hub username"
+            set_secret "DOCKERHUB_TOKEN" "$DOCKERHUB_TOKEN" "Docker Hub access token"
+        else
+            echo "  ⚠️  Docker Hub credentials not found in Vault"
+        fi
+    else
+        echo "  ⚠️  Could not retrieve Docker Hub credentials from Vault"
+    fi
 fi
 
 # SNYK token
