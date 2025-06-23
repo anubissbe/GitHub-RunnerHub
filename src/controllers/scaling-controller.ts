@@ -192,7 +192,22 @@ export class ScalingController {
         const history = autoScaler.getMetricsHistory(pool.repository, 60);
 
         // Calculate recommendations
-        const recommendation: any = {
+        interface ScalingRecommendation {
+          repository: string;
+          currentRunners: number;
+          currentUtilization: number;
+          predictedUtilization: number;
+          recommendedRunners: number;
+          confidence: number;
+          action: 'maintain' | 'scale-up' | 'scale-down';
+          runnersToAdd?: number;
+          runnersToRemove?: number;
+          recentScaleUps?: number;
+          recentScaleDowns?: number;
+          trend?: string;
+        }
+
+        const recommendation: ScalingRecommendation = {
           repository: pool.repository,
           currentRunners: metrics.totalRunners,
           currentUtilization: metrics.utilization,

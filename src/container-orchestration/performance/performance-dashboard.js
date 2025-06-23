@@ -788,7 +788,7 @@ class PerformanceDashboard extends EventEmitter {
     return sorted[Math.max(0, Math.min(index, sorted.length - 1))];
   }
 
-  calculateJobSuccessRate(jobMetrics) {
+  calculateJobSuccessRate(_jobMetrics) {
     const total = this.dashboardData.systemOverview.completedJobs + this.dashboardData.systemOverview.failedJobs;
     if (total === 0) return 0;
     return this.dashboardData.systemOverview.completedJobs / total;
@@ -1127,7 +1127,7 @@ class PerformanceDashboard extends EventEmitter {
 
   predictCapacityRequirements() {
     const peakDemand = Math.max(...this.dashboardData.predictions.map(p => p.value));
-    const avgDemand = this.calculateAverage(this.dashboardData.predictions.map(p => p.value));
+    const _avgDemand = this.calculateAverage(this.dashboardData.predictions.map(p => p.value));
     
     return {
       current: this.dashboardData.systemOverview.activeContainers,
@@ -1167,7 +1167,7 @@ class PerformanceDashboard extends EventEmitter {
     return rows.map(row => row.join(',')).join('\n');
   }
 
-  generatePDFReport(data) {
+  generatePDFReport(_data) {
     // In a real implementation, this would use a PDF generation library
     return {
       format: 'pdf',

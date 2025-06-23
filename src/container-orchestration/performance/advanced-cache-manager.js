@@ -574,7 +574,7 @@ class AdvancedCacheManager extends EventEmitter {
     for (const [prefetchKey, { key, cacheType }] of entries) {
       try {
         // Check if we have a preload function for this pattern
-        for (const [_patternName, { pattern, preloadFunction }] of this.preloadPatterns.entries()) {
+        for (const [, { pattern, preloadFunction }] of this.preloadPatterns.entries()) {
           if (pattern.test(key)) {
             await preloadFunction(key, cacheType);
             break;
@@ -592,7 +592,7 @@ class AdvancedCacheManager extends EventEmitter {
   /**
    * Preload GitHub repositories data
    */
-  async preloadGithubRepos(key, cacheType) {
+  async preloadGithubRepos(key, _cacheType) {
     // Implementation would depend on GitHub API service
     logger.debug(`Preloading GitHub repos for key: ${key}`);
   }
@@ -600,7 +600,7 @@ class AdvancedCacheManager extends EventEmitter {
   /**
    * Preload container configurations
    */
-  async preloadContainerConfigs(key, cacheType) {
+  async preloadContainerConfigs(key, _cacheType) {
     // Implementation would depend on container configuration service
     logger.debug(`Preloading container configs for key: ${key}`);
   }
@@ -608,7 +608,7 @@ class AdvancedCacheManager extends EventEmitter {
   /**
    * Preload Docker images metadata
    */
-  async preloadDockerImages(key, cacheType) {
+  async preloadDockerImages(key, _cacheType) {
     // Implementation would depend on Docker service
     logger.debug(`Preloading Docker images for key: ${key}`);
   }

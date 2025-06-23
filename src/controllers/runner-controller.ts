@@ -14,7 +14,7 @@ export class RunnerController {
     try {
       const { type, status, repository } = req.query;
       const conditions: string[] = [];
-      const params: any[] = [];
+      const params: unknown[] = [];
 
       if (type) {
         params.push(type);

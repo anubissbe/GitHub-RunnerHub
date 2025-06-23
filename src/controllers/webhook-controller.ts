@@ -116,7 +116,19 @@ export class WebhookController {
       );
 
       // Calculate totals
-      const summary = stats.reduce((acc: any, stat: any) => {
+      interface StatSummary {
+        totalEvents: number;
+        processedEvents: number;
+        pendingEvents: number;
+      }
+
+      interface EventStat {
+        total: number;
+        processed: number;
+        pending: number;
+      }
+
+      const summary = stats.reduce((acc: StatSummary, stat: EventStat) => {
         acc.totalEvents += stat.total;
         acc.processedEvents += stat.processed;
         acc.pendingEvents += stat.pending;

@@ -765,7 +765,7 @@ class PerformanceProfiler extends EventEmitter {
    */
   cleanupOldContainerMetrics() {
     const cutoff = Date.now() - this.config.metricsRetentionPeriod;
-    for (const [timestamp, metrics] of this.containerMetrics.entries()) {
+    for (const [timestamp, _metrics] of this.containerMetrics.entries()) {
       if (timestamp < cutoff) {
         this.containerMetrics.delete(timestamp);
       }

@@ -450,7 +450,7 @@ export class JobController {
       const scanResult = await jobLogSecretScanner.scanJobLogs(
         id, 
         rawLogs, 
-        (req as any).user?.id
+        (req as AuthenticatedRequest).user?.id
       );
 
       // Update job record

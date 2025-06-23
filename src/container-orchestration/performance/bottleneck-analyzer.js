@@ -210,7 +210,7 @@ class BottleneckAnalyzer extends EventEmitter {
     try {
       // Get recent performance data
       const performanceReport = this.performanceProfiler.getPerformanceReport();
-      const systemHealth = performanceReport.systemHealth;
+      const _systemHealth = performanceReport.systemHealth;
       const summary = performanceReport.summary;
       
       if (!summary) {
@@ -505,7 +505,7 @@ class BottleneckAnalyzer extends EventEmitter {
     };
     
     // Populate metrics arrays
-    for (const analysis of recentAnalyses) {
+    for (const _analysis of recentAnalyses) {
       // This would be populated from actual metric data
       // For now, we'll create a placeholder structure
       metrics.cpuUsage.push(Math.random() * 100);
@@ -807,7 +807,7 @@ class BottleneckAnalyzer extends EventEmitter {
   /**
    * Resolve cache efficiency bottleneck
    */
-  async resolveCacheEfficiencyBottleneck(bottleneck) {
+  async resolveCacheEfficiencyBottleneck(_bottleneck) {
     if (this.cacheManager) {
       // Trigger cache optimization
       logger.info('Triggering cache optimization to resolve efficiency bottleneck');
@@ -818,7 +818,7 @@ class BottleneckAnalyzer extends EventEmitter {
   /**
    * Resolve container startup bottleneck
    */
-  async resolveContainerStartupBottleneck(bottleneck) {
+  async resolveContainerStartupBottleneck(_bottleneck) {
     logger.info('Triggering container startup optimization');
     // This would integrate with the startup optimizer
   }
@@ -826,7 +826,7 @@ class BottleneckAnalyzer extends EventEmitter {
   /**
    * Resolve memory bottleneck
    */
-  async resolveMemoryBottleneck(bottleneck) {
+  async resolveMemoryBottleneck(_bottleneck) {
     logger.info('Triggering memory cleanup and optimization');
     if (global.gc) {
       global.gc();
