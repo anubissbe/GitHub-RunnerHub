@@ -1099,7 +1099,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
       });
       
       logger.info(`Loaded ${images.length} optimized image records`);
-    } catch (_error) {
+    } catch {
       // File doesn't exist or is invalid, start fresh
       logger.info('Starting with empty optimized images cache');
     }

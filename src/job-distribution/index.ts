@@ -4,7 +4,7 @@
 // management, and parallel execution orchestration.
 
 // Import types that are used in this file
-import type { ResourceRequirements, JobMetadata } from './job-router';
+import type { ResourceRequirements, JobMetadata, JobRoutingRequest } from './job-router';
 import { RoutingAlgorithm, JobRouter } from './job-router';
 import { LoadBalancingAlgorithm, LoadBalancer, BackoffStrategy } from './load-balancer';
 import { SchedulingAlgorithm, ResourceScheduler } from './resource-scheduler';

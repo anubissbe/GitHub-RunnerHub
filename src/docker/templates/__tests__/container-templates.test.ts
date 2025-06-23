@@ -298,7 +298,7 @@ describe('ContainerTemplateManager', () => {
   describe('Template Management', () => {
     it('should update template', () => {
       const template = templateManager.getTemplate('ubuntu-runner')!;
-      const originalVersion = template.metadata.version;
+      const _originalVersion = template.metadata.version;
 
       templateManager.updateTemplate('ubuntu-runner', {
         description: 'Updated Ubuntu runner',
