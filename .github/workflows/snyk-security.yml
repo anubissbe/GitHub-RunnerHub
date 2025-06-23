@@ -19,10 +19,12 @@
 name: Snyk Security
 
 on:
-  push:
-    branches: ["main" ]
-  pull_request:
-    branches: ["main"]
+  # Temporarily disabled - needs SNYK_TOKEN secret to be configured
+  # push:
+  #   branches: ["main" ]
+  # pull_request:
+  #   branches: ["main"]
+  workflow_dispatch:
 
 permissions:
   contents: read

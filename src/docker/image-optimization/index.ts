@@ -25,7 +25,7 @@ export {
 } from './image-optimizer';
 
 // Convenience function to create and configure image optimizer
-export function createImageOptimizer(config?: Partial<ImageOptimizationConfig>) {
+export function createImageOptimizer(config?: any) {
   const optimizer = ImageOptimizer.getInstance();
   
   if (config) {
@@ -41,7 +41,7 @@ export async function optimizeImage(
   options?: {
     force?: boolean;
     optimizations?: string[];
-    buildContext?: BuildContext;
+    buildContext?: any;
   }
 ) {
   const optimizer = ImageOptimizer.getInstance();

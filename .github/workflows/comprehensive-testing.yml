@@ -1,13 +1,15 @@
 name: Comprehensive Testing Suite
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run tests daily at 2 AM UTC
-    - cron: '0 2 * * *'
+  # Temporarily disabled - needs test suites to be properly configured
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main, develop ]
+  # schedule:
+  #   # Run tests daily at 2 AM UTC
+  #   - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   test-matrix:

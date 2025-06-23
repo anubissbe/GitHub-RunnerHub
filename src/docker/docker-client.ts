@@ -339,7 +339,7 @@ export class DockerClient extends EventEmitter {
         follow: options.follow || false
       };
 
-      const logs = await container.logs(logOptions);
+      const logs = await container.logs(logOptions as any);
       
       return this.parseContainerLogs(logs);
     } catch (error) {
@@ -686,12 +686,12 @@ export class DockerClient extends EventEmitter {
    */
   private parseContainerLogs(logs: any): ContainerLogs {
     const logString = logs.toString();
-    const lines = logString.split('\n').filter(line => line.trim());
+    const lines = logString.split('\n').filter((line: string) => line.trim());
     
     const stdout: string[] = [];
     const stderr: string[] = [];
 
-    lines.forEach(line => {
+    lines.forEach((line: string) => {
       // Docker log format: first byte indicates stream type
       if (line.length > 8) {
         const streamType = line.charCodeAt(0);

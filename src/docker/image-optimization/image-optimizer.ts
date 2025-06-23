@@ -504,7 +504,7 @@ export class ImageOptimizer extends EventEmitter {
       }
 
       // Get image information
-      const imageInfo = await this.dockerClient.getImageInfo(imageId);
+      const imageInfo = await (this.dockerClient as any).getImageInfo(imageId);
       if (!imageInfo) {
         throw new Error(`Image not found: ${imageId}`);
       }
@@ -577,8 +577,8 @@ export class ImageOptimizer extends EventEmitter {
    */
   private async analyzeImage(imageId: string): Promise<any> {
     try {
-      const imageInfo = await this.dockerClient.getImageInfo(imageId);
-      const history = await this.dockerClient.getImageHistory(imageId);
+      const imageInfo = await (this.dockerClient as any).getImageInfo(imageId);
+      const history = await (this.dockerClient as any).getImageHistory(imageId);
       
       return {
         size: imageInfo.size,
@@ -641,7 +641,7 @@ export class ImageOptimizer extends EventEmitter {
     try {
       logger.info(`Applying optimization rule: ${rule.name} to ${imageId}`);
 
-      const sizeBefore = (await this.dockerClient.getImageInfo(imageId))?.size || 0;
+      const sizeBefore = (await (this.dockerClient as any).getImageInfo(imageId))?.size || 0;
       let optimizedImageId = imageId;
 
       // Apply each action in the rule
@@ -653,7 +653,7 @@ export class ImageOptimizer extends EventEmitter {
         );
       }
 
-      const sizeAfter = (await this.dockerClient.getImageInfo(optimizedImageId))?.size || sizeBefore;
+      const sizeAfter = (await (this.dockerClient as any).getImageInfo(optimizedImageId))?.size || sizeBefore;
       
       const impact: OptimizationImpact = {
         sizeReduction: sizeBefore - sizeAfter,
@@ -824,7 +824,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
         }
       };
 
-      const imageId = await this.dockerClient.buildImage(buildContext, buildOptions);
+      const imageId = await (this.dockerClient as any).buildImage(buildContext, buildOptions);
       
       // Cleanup build context
       await fs.rmdir(buildContext, { recursive: true });

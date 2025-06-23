@@ -6,12 +6,20 @@
  * volume management with performance optimization and security enforcement.
  */
 
+// Import core modules
+import { DockerClient, DockerClientConfig } from './docker-client';
+import { ContainerTemplateManager } from './templates/container-templates';
+import { NetworkManager } from './networking/network-manager';
+import { VolumeManager } from './volumes/volume-manager';
+import { ImageOptimizer } from './image-optimization/image-optimizer';
+import { DockerSecurityManager } from './security/docker-security-manager';
+
 // Core Docker Client
-export { DockerClient, DockerClientConfig } from './docker-client';
+export { DockerClient, DockerClientConfig };
 export type {
   ContainerInfo,
   PortMapping,
-  VolumeMount,
+  VolumeMount as DockerVolumeMount,
   NetworkInfo,
   ImageInfo,
   ContainerStats,

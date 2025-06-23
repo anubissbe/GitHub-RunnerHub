@@ -171,7 +171,7 @@ export class App {
       // Handle monitoring requests
       socket.on('monitoring:request', async (data) => {
         try {
-          const metrics = await monitoringServiceEnhanced.getRealtimeMetrics();
+          const metrics = await monitoringServiceEnhanced.getCurrentMetrics();
           socket.emit('monitoring:update', metrics);
         } catch (error) {
           logger.error('Error fetching monitoring data:', error);
@@ -198,7 +198,7 @@ export class App {
     // Emit monitoring updates every 5 seconds
     setInterval(async () => {
       try {
-        const metrics = await monitoringServiceEnhanced.getRealtimeMetrics();
+        const metrics = await monitoringServiceEnhanced.getCurrentMetrics();
         this.io.to('monitoring').emit('monitoring:update', metrics);
         
         // Also emit queue updates
