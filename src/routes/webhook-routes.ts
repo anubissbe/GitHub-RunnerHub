@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import webhookController from '../controllers/webhook-controller';
 import { asyncHandler } from '../middleware/async-handler';
-// import { validateWebhookSignature } from '../middleware/webhook-middleware';
+import { validateWebhookSignature } from '../middleware/webhook-middleware';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 
@@ -76,7 +77,11 @@ const router = Router();
  *       500:
  *         description: Internal server error
  */
-router.post('/github', asyncHandler(webhookController.handleGitHubWebhook));
+router.post('/github', 
+  rateLimiter,
+  validateWebhookSignature,
+  asyncHandler(webhookController.handleGitHubWebhook)
+);
 
 /**
  * @swagger
