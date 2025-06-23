@@ -33,6 +33,8 @@ permissions:
   packages: write
   issues: write
   pull-requests: write
+  security-events: write
+  actions: read
 
 jobs:
   # Job 1: Quality checks
@@ -111,10 +113,12 @@ jobs:
       - name: 📤 Upload Trivy Results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: 🛡️ Run Snyk Security Scan
+        id: snyk
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
@@ -124,7 +128,8 @@ jobs:
 
       - name: 📤 Upload Snyk Results
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && steps.snyk.outcome == 'success'
+        continue-on-error: true
         with:
           sarif_file: 'snyk-results.sarif'
           category: 'snyk'
@@ -240,6 +245,7 @@ jobs:
       - name: 📤 Upload Container Scan Results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: 'container-scan-results.sarif'
           category: 'container-scan'
