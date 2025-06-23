@@ -1299,7 +1299,7 @@ export class DockerSecurityManager extends EventEmitter {
         runAsNonRoot: false,
         readOnlyRootFilesystem: false,
         allowPrivilegeEscalation: true,
-        privileged: containerInfo?.privileged || false,
+        privileged: false, // Default to non-privileged for security
         capabilities: {
           add: [],
           drop: []
