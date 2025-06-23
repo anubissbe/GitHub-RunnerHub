@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import config from '../config';
 import { createLogger } from '../utils/logger';
+import { validateGitHubRepository } from '../utils/security-validators';
 
 const logger = createLogger('GitHubAPIService');
 
@@ -73,7 +74,10 @@ export class GitHubAPIService {
    */
   async generateRunnerToken(repository: string): Promise<string> {
     try {
-      const [owner, repo] = repository.split('/');
+      // Validate repository input to prevent SSRF attacks
+      const validatedRepository = validateGitHubRepository(repository);
+      const [owner, repo] = validatedRepository.split('/');
+      
       const response = await this.client.post<RunnerToken>(
         `/repos/${owner}/${repo}/actions/runners/registration-token`
       );
@@ -91,7 +95,10 @@ export class GitHubAPIService {
    */
   async listRunners(repository: string): Promise<GitHubRunner[]> {
     try {
-      const [owner, repo] = repository.split('/');
+      // Validate repository input to prevent SSRF attacks
+      const validatedRepository = validateGitHubRepository(repository);
+      const [owner, repo] = validatedRepository.split('/');
+      
       const response = await this.client.get<{ runners: GitHubRunner[] }>(
         `/repos/${owner}/${repo}/actions/runners`
       );
@@ -108,7 +115,10 @@ export class GitHubAPIService {
    */
   async removeRunner(repository: string, runnerId: number): Promise<void> {
     try {
-      const [owner, repo] = repository.split('/');
+      // Validate repository input to prevent SSRF attacks
+      const validatedRepository = validateGitHubRepository(repository);
+      const [owner, repo] = validatedRepository.split('/');
+      
       await this.client.delete(
         `/repos/${owner}/${repo}/actions/runners/${runnerId}`
       );
@@ -129,7 +139,10 @@ export class GitHubAPIService {
     page?: number;
   }) {
     try {
-      const [owner, repo] = repository.split('/');
+      // Validate repository input to prevent SSRF attacks
+      const validatedRepository = validateGitHubRepository(repository);
+      const [owner, repo] = validatedRepository.split('/');
+      
       const response = await this.client.get(
         `/repos/${owner}/${repo}/actions/runs`,
         { params: options }
@@ -147,7 +160,10 @@ export class GitHubAPIService {
    */
   async getWorkflowJobs(repository: string, runId: number) {
     try {
-      const [owner, repo] = repository.split('/');
+      // Validate repository input to prevent SSRF attacks
+      const validatedRepository = validateGitHubRepository(repository);
+      const [owner, repo] = validatedRepository.split('/');
+      
       const response = await this.client.get(
         `/repos/${owner}/${repo}/actions/runs/${runId}/jobs`
       );
