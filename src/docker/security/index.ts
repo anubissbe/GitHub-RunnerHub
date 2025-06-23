@@ -60,6 +60,8 @@ export {
   Permission
 } from './docker-security-manager';
 
+import { DockerSecurityManager } from './docker-security-manager';
+
 // Convenience function to create and configure security manager
 export function createDockerSecurityManager() {
   return DockerSecurityManager.getInstance();
