@@ -3,13 +3,11 @@ import Docker from 'dockerode';
 import { createLogger } from '../utils/logger';
 import database from './database';
 import auditLogger, { AuditEventType, AuditCategory, AuditSeverity } from './audit-logger';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-
-const execAsync = promisify(exec);
 const logger = createLogger('SecurityScanner');
 
 export interface ScanResult {
@@ -581,12 +579,12 @@ export class SecurityScanner extends EventEmitter {
       const trivyProcess = spawn('trivy', ['--version']);
       let stdout = '';
       
-      trivyProcess.stdout.on('data', (data) => {
+      trivyProcess.stdout?.on('data', (data: Buffer) => {
         stdout += data.toString();
       });
       
       await new Promise<void>((resolve, reject) => {
-        trivyProcess.on('close', (code) => {
+        trivyProcess.on('close', (code: number | null) => {
           if (code === 0) {
             resolve();
           } else {
@@ -617,7 +615,7 @@ export class SecurityScanner extends EventEmitter {
       const dockerProcess = spawn('docker', ['pull', `aquasec/trivy:${this.trivyVersion}`]);
       
       await new Promise<void>((resolve, reject) => {
-        dockerProcess.on('close', (code) => {
+        dockerProcess.on('close', (code: number | null) => {
           if (code === 0) {
             resolve();
           } else {
