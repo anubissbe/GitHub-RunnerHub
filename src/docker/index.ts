@@ -85,6 +85,105 @@ export {
   SelinuxRelabel
 } from './volumes/volume-manager';
 
+// Image Optimization System
+export {
+  ImageOptimizer,
+  ImageOptimizationConfig,
+  BaseImageConfig,
+  OptimizationRule,
+  OptimizationCondition,
+  OptimizationAction,
+  LayerCachingConfig,
+  CompressionConfig as ImageCompressionConfig,
+  SecurityConfig as ImageSecurityConfig,
+  PerformanceConfig as ImagePerformanceConfig,
+  CleanupConfig as ImageCleanupConfig,
+  OptimizedImage,
+  AppliedOptimization,
+  OptimizationImpact,
+  BuildContext,
+  ImageCategory,
+  OptimizationType,
+  OptimizationTarget,
+  OptimizationActionType,
+  CachingStrategy,
+  CompressionAlgorithm as ImageCompressionAlgorithm,
+  VulnerabilityLevel,
+  PruneStrategy,
+  createImageOptimizer,
+  optimizeImage,
+  getOptimizationStats
+} from './image-optimization';
+
+// Security Management System
+export {
+  DockerSecurityManager,
+  SecurityPolicyConfig,
+  SecurityRule,
+  SecurityCondition,
+  SecurityAction,
+  SecurityException,
+  PolicyMetadata,
+  SecurityScanResult,
+  SecurityFinding,
+  FindingLocation,
+  RemediationAdvice,
+  ComplianceViolation,
+  ScanSummary,
+  ScanMetadata,
+  ContainerSecurityProfile,
+  ActiveEnforcement,
+  SecurityViolation,
+  ContainerSecurityConfig,
+  SecurityContext,
+  CapabilityConfig,
+  SELinuxOptions,
+  SeccompProfile,
+  NetworkSecurityPolicy,
+  PortRange,
+  SecurityResourceLimits,
+  ResourceLimit,
+  NetworkLimit,
+  AccessControl,
+  AccessCondition,
+  SecurityMonitoring,
+  AlertingConfig,
+  AlertChannel,
+  AlertThreshold,
+  EscalationPolicy,
+  EscalationLevel,
+  SecurityLevel,
+  EnforcementMode,
+  SecurityRuleType,
+  SecurityCategory,
+  SecuritySeverity,
+  SecurityTarget,
+  ConditionType,
+  ConditionOperator,
+  ActionType,
+  ScanType,
+  ScanStatus,
+  FindingType,
+  ComplianceFramework,
+  ComplianceImpact,
+  RemediationPriority,
+  RemediationEffort,
+  SecurityGrade,
+  SecurityStatus,
+  EnforcementStatus,
+  ViolationType,
+  Protocol,
+  DNSPolicy,
+  AccessControlType,
+  Permission,
+  createDockerSecurityManager,
+  applySecurityPolicies,
+  getSecurityStats,
+  DEFAULT_SECURITY_POLICIES,
+  createSecurityRule,
+  createSecurityPolicy
+} from './security';
+
 // Utility Functions and Factory Methods
 export function createDockerClient(config?: any): DockerClient {
   return DockerClient.getInstance(config);
@@ -100,6 +199,14 @@ export function getNetworkManager(): NetworkManager {
 
 export function getVolumeManager(): VolumeManager {
   return VolumeManager.getInstance();
+}
+
+export function getImageOptimizer(): ImageOptimizer {
+  return ImageOptimizer.getInstance();
+}
+
+export function getDockerSecurityManager(): DockerSecurityManager {
+  return DockerSecurityManager.getInstance();
 }
 
 // Docker Integration Service Factory
@@ -128,6 +235,21 @@ export interface DockerIntegrationConfig {
     enableMonitoring?: boolean;
     monitoringInterval?: number;
   };
+  imageOptimization?: {
+    enabled?: boolean;
+    autoOptimize?: boolean;
+    scanImages?: boolean;
+    enforceSignatures?: boolean;
+    cleanupOldOptimizations?: boolean;
+  };
+  security?: {
+    enabled?: boolean;
+    defaultPolicy?: string;
+    enforcementMode?: 'permissive' | 'detection' | 'enforcement' | 'blocking';
+    scanOnCreate?: boolean;
+    monitoring?: boolean;
+    alerting?: boolean;
+  };
 }
 
 export class DockerIntegrationService {
@@ -136,6 +258,8 @@ export class DockerIntegrationService {
   private templateManager: ContainerTemplateManager;
   private networkManager: NetworkManager;
   private volumeManager: VolumeManager;
+  private imageOptimizer: ImageOptimizer;
+  private securityManager: DockerSecurityManager;
   private config: DockerIntegrationConfig;
 
   private constructor(config: DockerIntegrationConfig = {}) {
@@ -146,6 +270,8 @@ export class DockerIntegrationService {
     this.templateManager = ContainerTemplateManager.getInstance();
     this.networkManager = NetworkManager.getInstance();
     this.volumeManager = VolumeManager.getInstance();
+    this.imageOptimizer = ImageOptimizer.getInstance();
+    this.securityManager = DockerSecurityManager.getInstance();
   }
 
   public static getInstance(config?: DockerIntegrationConfig): DockerIntegrationService {
@@ -181,6 +307,47 @@ export class DockerIntegrationService {
         this.config.volumes.cleanupInterval || 3600000
       );
     }
+
+    // Configure image optimization if enabled
+    if (this.config.imageOptimization?.enabled) {
+      this.imageOptimizer.updateConfig({
+        enabled: true,
+        security: {
+          scanImages: this.config.imageOptimization.scanImages ?? true,
+          enforceSignatures: this.config.imageOptimization.enforceSignatures ?? false,
+          scannerConfig: {
+            scanner: 'trivy',
+            database: {
+              url: 'ghcr.io/aquasecurity/trivy-db',
+              updateInterval: 24
+            },
+            ignoreUnfixed: false,
+            skipFiles: [],
+            skipDirs: []
+          },
+          allowedRegistries: ['docker.io', 'ghcr.io', 'gcr.io'],
+          blockedImages: [],
+          vulnerabilityThreshold: 'high' as any
+        },
+        cleanup: {
+          enabled: this.config.imageOptimization.cleanupOldOptimizations ?? true,
+          schedule: '0 2 * * *',
+          removeUnused: true,
+          removeDangling: true,
+          pruneStrategy: 'balanced' as any,
+          retentionPeriod: 168,
+          excludeImages: ['ubuntu:latest', 'node:18-alpine', 'python:3.11-slim']
+        }
+      });
+    }
+
+    // Configure security if enabled
+    if (this.config.security?.enabled) {
+      // Start security monitoring if enabled
+      if (this.config.security.monitoring) {
+        this.securityManager.startMonitoring(300000); // 5 minutes
+      }
+    }
   }
 
   /**
@@ -191,6 +358,7 @@ export class DockerIntegrationService {
     this.networkManager.stopMonitoring();
     this.volumeManager.stopMonitoring();
     this.volumeManager.stopAutomaticCleanup();
+    this.securityManager.stopMonitoring();
 
     // Close Docker client
     await this.dockerClient.close();
@@ -204,10 +372,14 @@ export class DockerIntegrationService {
     templates: { available: number; categories: number };
     networks: { configured: number; monitoring: boolean };
     volumes: { configured: number; monitoring: boolean; cleanup: boolean };
+    imageOptimization: { enabled: boolean; optimizedImages: number };
+    security: { enabled: boolean; monitoring: boolean; policies: number; containers: number };
   } {
     const templateStats = this.templateManager.getTemplateStatistics();
     const networkStats = this.networkManager.getNetworkManagerStats();
     const volumeStats = this.volumeManager.getVolumeManagerStats();
+    const imageOptimizationStats = this.imageOptimizer.getOptimizationStats();
+    const securityStats = this.securityManager.getSecurityStats();
 
     return {
       docker: this.dockerClient.isDockerConnected(),
@@ -223,6 +395,16 @@ export class DockerIntegrationService {
         configured: volumeStats.totalVolumes,
         monitoring: volumeStats.monitoring.enabled,
         cleanup: volumeStats.cleanup.enabled
+      },
+      imageOptimization: {
+        enabled: this.config.imageOptimization?.enabled ?? false,
+        optimizedImages: imageOptimizationStats.totalOptimizations
+      },
+      security: {
+        enabled: this.config.security?.enabled ?? false,
+        monitoring: securityStats.monitoring.enabled,
+        policies: securityStats.policies.total,
+        containers: securityStats.containers.total
       }
     };
   }
@@ -235,6 +417,8 @@ export class DockerIntegrationService {
     templates: any;
     networks: any;
     volumes: any;
+    imageOptimization: any;
+    security: any;
   } {
     return {
       docker: {
@@ -243,7 +427,9 @@ export class DockerIntegrationService {
       },
       templates: this.templateManager.getTemplateStatistics(),
       networks: this.networkManager.getNetworkManagerStats(),
-      volumes: this.volumeManager.getVolumeManagerStats()
+      volumes: this.volumeManager.getVolumeManagerStats(),
+      imageOptimization: this.imageOptimizer.getOptimizationStats(),
+      security: this.securityManager.getSecurityStats()
     };
   }
 
@@ -412,6 +598,14 @@ export class DockerIntegrationService {
 
   public get volumes(): VolumeManager {
     return this.volumeManager;
+  }
+
+  public get imageOptimizer(): ImageOptimizer {
+    return this.imageOptimizer;
+  }
+
+  public get security(): DockerSecurityManager {
+    return this.securityManager;
   }
 }
 
