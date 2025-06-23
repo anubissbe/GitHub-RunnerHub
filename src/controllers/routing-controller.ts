@@ -326,6 +326,3 @@ export class RoutingController {
     }
   }
 }
-
-// Import runner pool manager for label suggestions
-import runnerPoolManager from '../services/runner-pool-manager';

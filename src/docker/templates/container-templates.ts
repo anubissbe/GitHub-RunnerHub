@@ -129,11 +129,12 @@ export class ContainerTemplateManager {
   private static instance: ContainerTemplateManager;
   private dockerClient: DockerClient;
   private templates: Map<string, TemplateConfig> = new Map();
-  private _templateRegistry: string;
+  // Template registry configuration (reserved for future use)
+  // private _templateRegistry: string;
 
   private constructor() {
     this.dockerClient = DockerClient.getInstance();
-    this._templateRegistry = process.env.TEMPLATE_REGISTRY || 'default';
+    // this._templateRegistry = process.env.TEMPLATE_REGISTRY || 'default';
     this.initializeDefaultTemplates();
   }
 

@@ -1180,7 +1180,7 @@ export class DockerSecurityManager extends EventEmitter {
   private async generateMockFindings(_scanType: ScanType): Promise<SecurityFinding[]> {
     const findings: SecurityFinding[] = [];
 
-    if (scanType === ScanType.VULNERABILITY) {
+    if (_scanType === ScanType.VULNERABILITY) {
       findings.push({
         id: 'vuln-001',
         type: FindingType.VULNERABILITY,
@@ -1213,7 +1213,7 @@ export class DockerSecurityManager extends EventEmitter {
       });
     }
 
-    if (scanType === ScanType.SECRETS) {
+    if (_scanType === ScanType.SECRETS) {
       findings.push({
         id: 'secret-001',
         type: FindingType.SECRET,

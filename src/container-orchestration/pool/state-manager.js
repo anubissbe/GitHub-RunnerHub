@@ -401,7 +401,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle failed state
    */
-  async handleFailedState(containerId, _metadata) {
+  async handleFailedState(containerId, metadata) {
     logger.warn(`Container ${containerId.substring(0, 12)} entered failed state: ${metadata.error || 'unknown error'}`);
     
     // Schedule for recovery if auto-recovery is enabled

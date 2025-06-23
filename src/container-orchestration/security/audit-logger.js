@@ -668,7 +668,7 @@ class AuditLogger extends EventEmitter {
    */
   async search(query) {
     const results = [];
-    const { startDate, endDate, category, action, userId, resourceId, limit = 100 } = query;
+    const { startDate, endDate, _category, _action, _userId, _resourceId, limit = 100 } = query;
     
     // Search in current buffer first
     for (const event of this.logBuffer) {
@@ -679,7 +679,7 @@ class AuditLogger extends EventEmitter {
     }
     
     // Search in indexed files
-    for (const [filename, fileInfo] of this.fileIndex.entries()) {
+    for (const [_filename, fileInfo] of this.fileIndex.entries()) {
       if (fileInfo.status !== 'indexed') continue;
       
       // Check date range

@@ -572,7 +572,7 @@ class ContainerSecurityScanner extends EventEmitter {
    * Update Trivy vulnerability database
    */
   async updateTrivyDatabase() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve, _reject) => {
       logger.info('Updating Trivy vulnerability database');
       
       const trivy = spawn(this.config.scanners.trivy.binaryPath, [

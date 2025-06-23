@@ -385,9 +385,6 @@ class ContainerPoolResourceMonitor extends EventEmitter {
         running: 5, // Placeholder
         sleeping: 90 // Placeholder
       };
-    } catch (error) {
-      logger.error('Failed to get process count:', error);
-      return { total: 0, running: 0, sleeping: 0 };
     }
   }
 

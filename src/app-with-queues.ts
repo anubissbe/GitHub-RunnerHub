@@ -42,7 +42,7 @@ export class App {
   private io: Server;
   private queueManager: QueueManager;
   // Reserved for future service management integration
-  // private _serviceManager: ServiceManager;
+  private _serviceManager: ServiceManager;
 
   constructor(_serviceManager: ServiceManager, queueManager: QueueManager) {
     this.app = express();
@@ -53,7 +53,7 @@ export class App {
         methods: ['GET', 'POST']
       }
     });
-    this._serviceManager = serviceManager;
+    this._serviceManager = _serviceManager;
     this.queueManager = queueManager;
     this.setupMiddleware();
     this.setupRoutes();
