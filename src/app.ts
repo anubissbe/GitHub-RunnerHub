@@ -32,7 +32,7 @@ const logger = createLogger('App');
 
 export class App {
   private app: Application;
-  private server: any;
+  private server: import('http').Server | null = null;
   private io: Server;
 
   constructor() {
@@ -85,7 +85,7 @@ export class App {
 
     // Make io available in req
     this.app.use((req, _res, next) => {
-      (req as any).io = this.io;
+      (req as Request & { io: Server }).io = this.io;
       next();
     });
   }

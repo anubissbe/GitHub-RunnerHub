@@ -2,6 +2,13 @@ import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import auditLogger, { AuditEventType, AuditCategory, AuditSeverity, AuditQuery } from '../services/audit-logger';
 
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id?: string;
+    username?: string;
+  };
+}
+
 const logger = createLogger('AuditController');
 
 export class AuditController {
@@ -50,8 +57,8 @@ export class AuditController {
         eventType: AuditEventType.DATA_EXPORTED,
         category: AuditCategory.DATA_MANAGEMENT,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         action: 'Query audit logs',
@@ -143,8 +150,8 @@ export class AuditController {
         eventType: AuditEventType.DATA_EXPORTED,
         category: AuditCategory.DATA_MANAGEMENT,
         severity: AuditSeverity.WARNING,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         action: 'Export audit logs',
@@ -215,7 +222,7 @@ export class AuditController {
       logger.info('Audit log cleanup completed', {
         retentionDays,
         deletedCount,
-        requestedBy: (req as any).user?.username
+        requestedBy: (req as AuthenticatedRequest).user?.username
       });
 
       res.json({
