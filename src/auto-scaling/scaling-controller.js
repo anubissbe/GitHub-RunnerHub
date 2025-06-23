@@ -360,7 +360,7 @@ class ScalingController extends EventEmitter {
   /**
    * Scale down runners
    */
-  async scaleDown(count, reason, metrics) {
+  async scaleDown(count, reason, _metrics) {
     logger.info(`Scaling down by ${count} runners. Reason: ${reason}`);
     
     // Apply constraints
@@ -445,7 +445,7 @@ class ScalingController extends EventEmitter {
     let remainingCount = count;
     
     switch (this.config.multiRegion.strategy) {
-      case 'balanced':
+      case 'balanced': {
         // Distribute evenly across regions
         const perRegion = Math.floor(count / regions.length);
         const remainder = count % regions.length;
@@ -460,6 +460,7 @@ class ScalingController extends EventEmitter {
             });
           }
         });
+      }
         break;
         
       case 'latency':
@@ -952,7 +953,7 @@ curl -X POST http://runnerhub-api/runners/ready -d '{"type":"${type}"}'
     let totalJobs = 0;
     let completedLifecycles = 0;
     
-    for (const [runnerId, lifecycle] of this.metrics.runnerLifecycles) {
+    for (const [_runnerId, lifecycle] of this.metrics.runnerLifecycles) {
       if (lifecycle.endTime) {
         totalLifetime += lifecycle.lifetime;
         totalJobs += lifecycle.totalJobs;

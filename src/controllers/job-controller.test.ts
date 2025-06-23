@@ -53,7 +53,7 @@ describe('JobController', () => {
       };
 
       mockReq.body = jobContext;
-      (mockReq as any).io = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
+      (mockReq as unknown as { io: { to: jest.Mock; emit: jest.Mock } }).io = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
 
       // Mock database query
       (database.query as jest.Mock).mockResolvedValue([]);
@@ -202,7 +202,7 @@ describe('JobController', () => {
     it('should update job status successfully', async () => {
       mockReq.params = { id: 'test-id' };
       mockReq.body = { status: 'completed' };
-      (mockReq as any).io = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
+      (mockReq as unknown as { io: { to: jest.Mock; emit: jest.Mock } }).io = { to: jest.fn().mockReturnThis(), emit: jest.fn() };
 
       const mockJob = {
         id: 'test-id',

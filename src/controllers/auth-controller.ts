@@ -455,12 +455,12 @@ export class AuthController {
       const serviceManager = ServiceManager.getInstance();
       const database = serviceManager.getService<DatabaseService>('database');
 
-      const [user] = await database.query(
+      const result = await database.query(
         'SELECT * FROM users WHERE username = $1',
         [username]
-      );
+      ) as User[];
 
-      return user || null;
+      return result[0] || null;
     } catch (error) {
       logger.error('Error getting user by username', { error: (error as Error).message });
       return null;
@@ -472,12 +472,12 @@ export class AuthController {
       const serviceManager = ServiceManager.getInstance();
       const database = serviceManager.getService<DatabaseService>('database');
 
-      const [user] = await database.query(
+      const result = await database.query(
         'SELECT * FROM users WHERE id = $1',
         [id]
-      );
+      ) as User[];
 
-      return user || null;
+      return result[0] || null;
     } catch (error) {
       logger.error('Error getting user by ID', { error: (error as Error).message });
       return null;
@@ -490,14 +490,14 @@ export class AuthController {
 
     return await database.query(
       'SELECT * FROM users ORDER BY created_at DESC'
-    );
+    ) as User[];
   }
 
   private async createUserInDatabase(userData: Partial<User>): Promise<string> {
     const serviceManager = ServiceManager.getInstance();
     const database = serviceManager.getService<DatabaseService>('database');
 
-    const [result] = await database.query(
+    const result = await database.query(
       `INSERT INTO users (username, email, password_hash, role, permissions, active)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id`,
@@ -509,9 +509,9 @@ export class AuthController {
         JSON.stringify(userData.permissions),
         userData.active
       ]
-    );
+    ) as Array<{ id: string }>;
 
-    return result.id;
+    return result[0].id;
   }
 
   private async updateUserInDatabase(id: string, updates: Partial<User>): Promise<void> {
