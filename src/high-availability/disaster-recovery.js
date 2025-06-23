@@ -541,7 +541,7 @@ class DisasterRecoveryManager extends EventEmitter {
   /**
    * Process backup file (compress and encrypt)
    */
-  async processBackupFile(inputFile, type) {
+  async processBackupFile(inputFile, _type) {
     let currentFile = inputFile;
     
     // Compress if enabled

@@ -366,7 +366,7 @@ class HAOrchestrator extends EventEmitter {
    */
   async performHealthCheck() {
     try {
-      const healthStatus = this.getHAStatus();
+      const _healthStatus = this.getHAStatus();
       
       // Check if any critical components have failed
       const criticalComponentsFailed = Object.entries(this.state.componentsStatus)
@@ -413,7 +413,7 @@ class HAOrchestrator extends EventEmitter {
    */
   getEnabledComponents() {
     return Object.entries(this.state.componentsStatus)
-      .filter(([name, status]) => status === 'active')
+      .filter(([_name, status]) => status === 'active')
       .map(([name]) => name);
   }
   

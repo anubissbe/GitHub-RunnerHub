@@ -41,7 +41,7 @@ export class OrchestratorWebhookHandler {
   /**
    * Express middleware to handle GitHub webhooks
    */
-  public handleWebhook = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  public handleWebhook = async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
     try {
       // Verify webhook signature
       if (!this.verifyWebhookSignature(req)) {

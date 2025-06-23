@@ -530,7 +530,7 @@ class NetworkIsolationManager extends EventEmitter {
     }
   }
   
-  async getNetworkStats(networkId) {
+  async getNetworkStats(_networkId) {
     // Simplified network stats - in production would get real metrics
     return {
       connectionsPerSecond: Math.floor(Math.random() * 100),

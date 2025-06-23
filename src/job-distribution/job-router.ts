@@ -627,7 +627,7 @@ export class JobRouter extends EventEmitter {
   private updateBatchState(
     request: JobRoutingRequest, 
     result: JobRoutingResult, 
-    analysis: BatchAnalysis
+    _analysis: BatchAnalysis
   ): void {
     // Update performance history
     if (result.selectedRunner) {
@@ -1486,7 +1486,7 @@ class IntelligentAlgorithm extends RoutingAlgorithmImpl {
 
   private calculateAffinityScore(candidate: RunnerCandidate, request: JobRoutingRequest): number {
     let score = 0.5; // Base score
-    let totalWeight = 0;
+    let _totalWeight = 0;
 
     // Positive affinity rules
     for (const rule of request.metadata.preferences.affinityRules) {
@@ -1498,14 +1498,14 @@ class IntelligentAlgorithm extends RoutingAlgorithmImpl {
           score += (rule.weight / 100) * 0.3;
         }
       }
-      totalWeight += rule.type === 'hard' ? 1 : rule.weight / 100;
+      _totalWeight += rule.type === 'hard' ? 1 : rule.weight / 100;
     }
 
     // Negative affinity rules (anti-affinity)
     for (const rule of request.metadata.preferences.antiAffinityRules) {
       // This would need access to currently running jobs
       // For now, assume neutral impact
-      totalWeight += rule.type === 'hard' ? 1 : rule.weight / 100;
+      _totalWeight += rule.type === 'hard' ? 1 : rule.weight / 100;
     }
 
     return Math.max(0, Math.min(1, score));
@@ -1535,7 +1535,7 @@ class IntelligentAlgorithm extends RoutingAlgorithmImpl {
     return true;
   }
 
-  private calculateHistoryScore(candidate: RunnerCandidate, request: JobRoutingRequest): number {
+  private calculateHistoryScore(candidate: RunnerCandidate, _request: JobRoutingRequest): number {
     if (candidate.performanceHistory.length === 0) {
       return 0.5; // Neutral score for new runners
     }
@@ -1843,7 +1843,7 @@ class MLBasedAlgorithm extends RoutingAlgorithmImpl {
           confidenceLevel: prediction.confidence
         }
       },
-      alternatives: alternatives.slice(0, 3).map((runner, index) => {
+      alternatives: alternatives.slice(0, 3).map((runner, _index) => {
         const altPrediction = this.generateMLPrediction(runner, request);
         return {
           runnerId: runner.id,

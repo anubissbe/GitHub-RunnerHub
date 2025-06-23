@@ -791,15 +791,16 @@ export class DependencyManager extends EventEmitter {
           }
           break;
 
-        case DependencyResolutionStrategy.OPTIMISTIC:
+        case DependencyResolutionStrategy.OPTIMISTIC: {
           // Try to continue with optional dependencies
           const hasRequiredDependencies = await this.hasRequiredDependencies(dependentJobId, jobId);
           if (hasRequiredDependencies) {
             await this.markJobFailed(dependentJobId, `Required dependency failed: ${jobId}`, true);
           }
           break;
+        }
 
-        case DependencyResolutionStrategy.ADAPTIVE:
+        case DependencyResolutionStrategy.ADAPTIVE: {
           // Use intelligent decision based on job importance and alternatives
           const shouldFail = await this.shouldFailDependentJob(dependentJobId, jobId);
           if (shouldFail) {
@@ -808,6 +809,7 @@ export class DependencyManager extends EventEmitter {
             dependentNode.status = JobNodeStatus.SKIPPED;
           }
           break;
+        }
       }
     }
   }

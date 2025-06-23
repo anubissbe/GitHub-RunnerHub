@@ -922,7 +922,7 @@ export class ResourceScheduler extends EventEmitter {
   /**
    * Select which job to preempt
    */
-  private selectJobToPreempt(preemptibleJobs: ScheduledJob[], request: SchedulingRequest): ScheduledJob | null {
+  private selectJobToPreempt(preemptibleJobs: ScheduledJob[], _request: SchedulingRequest): ScheduledJob | null {
     if (preemptibleJobs.length === 0) return null;
 
     // Sort by priority (higher number = lower priority, preempt first)
@@ -983,7 +983,7 @@ export class ResourceScheduler extends EventEmitter {
   /**
    * Allocate resources for scheduled job
    */
-  private async allocateResources(job: ScheduledJob, request: SchedulingRequest): Promise<boolean> {
+  private async allocateResources(job: ScheduledJob, _request: SchedulingRequest): Promise<boolean> {
     const pool = this.resourcePools.get(job.poolId);
     const runner = pool?.runners.find(r => r.id === job.runnerId);
     
@@ -1389,7 +1389,7 @@ class AutoScaler {
     }
   }
 
-  private async evaluatePool(pool: ResourcePool, queue: SchedulingRequest[]): Promise<void> {
+  private async evaluatePool(pool: ResourcePool, _queue: SchedulingRequest[]): Promise<void> {
     const utilization = this.calculatePoolUtilization(pool);
     const activeRunners = pool.runners.filter(r => r.status === RunnerStatus.ACTIVE).length;
 

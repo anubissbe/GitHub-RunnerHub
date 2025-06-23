@@ -706,7 +706,7 @@ class ContainerSecurityScanner extends EventEmitter {
     };
   }
   
-  async evaluateComplianceRule(rule, scanResult) {
+  async evaluateComplianceRule(rule, _scanResult) {
     // Simplified compliance rule evaluation
     // In a real implementation, this would check specific security configurations
     return {

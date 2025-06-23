@@ -855,7 +855,7 @@ class ResourceManagementOrchestrator extends EventEmitter {
     
     // Clean up old actions
     this.coordinationState.pendingActions = this.coordinationState.pendingActions
-      .filter(a => {
+      .filter(_a => {
         const age = Date.now() - action.receivedAt.getTime();
         return age < 3600000; // Keep for 1 hour
       });

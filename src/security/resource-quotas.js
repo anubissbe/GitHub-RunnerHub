@@ -646,7 +646,7 @@ class ResourceQuotaManager extends EventEmitter {
     }
   }
   
-  updateUsageStatistics(jobId, stats) {
+  updateUsageStatistics(_jobId, _stats) {
     // Update repository usage statistics
     // Implementation would track usage by repository for reporting
   }

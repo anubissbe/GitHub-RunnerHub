@@ -682,7 +682,7 @@ class AuditLogger extends EventEmitter {
     return 'non-personal';
   }
   
-  determineLawfulBasis(event) {
+  determineLawfulBasis(_event) {
     // Simplified GDPR lawful basis determination
     return 'legitimate_interest';
   }

@@ -918,7 +918,7 @@ class StorageQuotaManager extends EventEmitter {
   /**
    * Clean temp files
    */
-  async cleanTempFiles(containerId, containerInfo) {
+  async cleanTempFiles(containerId, _containerInfo) {
     try {
       const tempPaths = ['/tmp', '/var/tmp', '/temp'];
       let totalReclaimed = 0;
@@ -945,7 +945,7 @@ class StorageQuotaManager extends EventEmitter {
   /**
    * Clean cache files
    */
-  async cleanCacheFiles(containerId, containerInfo) {
+  async cleanCacheFiles(containerId, _containerInfo) {
     try {
       const cachePaths = [
         '/var/cache',
@@ -977,7 +977,7 @@ class StorageQuotaManager extends EventEmitter {
   /**
    * Clean old log files
    */
-  async cleanOldLogs(containerId, containerInfo) {
+  async cleanOldLogs(containerId, _containerInfo) {
     try {
       const logPaths = [
         '/var/log',
@@ -1231,7 +1231,7 @@ class StorageQuotaManager extends EventEmitter {
   /**
    * Clean up container quotas
    */
-  async cleanupContainerQuotas(containerId, quotaInfo) {
+  async cleanupContainerQuotas(containerId, _quotaInfo) {
     try {
       // Clean up any project quotas
       const projectId = this.generateProjectId(containerId);
@@ -1365,7 +1365,7 @@ class StorageQuotaManager extends EventEmitter {
           .filter(q => q.violations > 0).length,
         totalViolations: this.stats.totalQuotaViolations,
         recentViolations: Array.from(this.violationHistory.entries())
-          .flatMap(([id, history]) => history.slice(-5))
+          .flatMap(([_id, history]) => history.slice(-5))
           .sort((a, b) => b.timestamp - a.timestamp)
           .slice(0, 10)
       },

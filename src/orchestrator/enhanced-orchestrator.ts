@@ -514,7 +514,7 @@ export class EnhancedOrchestrator extends EventEmitter {
     return 'other';
   }
 
-  private getWorkflowType(workflowName: string): 'push' | 'pull_request' | 'schedule' | 'manual' | 'other' {
+  private getWorkflowType(_workflowName: string): 'push' | 'pull_request' | 'schedule' | 'manual' | 'other' {
     // This would normally come from the event context
     return 'push'; // Simplified for now
   }

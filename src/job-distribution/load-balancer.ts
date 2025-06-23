@@ -761,7 +761,7 @@ export class LoadBalancer extends EventEmitter {
   /**
    * Update metrics
    */
-  private updateMetrics(event: string, job: QueuedJob): void {
+  private updateMetrics(event: string, _job: QueuedJob): void {
     switch (event) {
       case 'job_submitted':
         this.metrics.totalRequests++;
@@ -862,7 +862,7 @@ export class LoadBalancer extends EventEmitter {
     return this.throttlers.get(key)!;
   }
 
-  private getPotentialRunners(request: JobRoutingRequest): string[] {
+  private getPotentialRunners(_request: JobRoutingRequest): string[] {
     // This would typically query available runners
     // For now, return empty array
     return [];
@@ -947,7 +947,7 @@ export class LoadBalancer extends EventEmitter {
   /**
    * Result creation methods
    */
-  private createThrottledResult(request: JobRoutingRequest, reason: string): LoadBalancingResult {
+  private createThrottledResult(request: JobRoutingRequest, _reason: string): LoadBalancingResult {
     return {
       success: false,
       jobId: request.jobId,
@@ -964,7 +964,7 @@ export class LoadBalancer extends EventEmitter {
     };
   }
 
-  private createCircuitBreakerResult(request: JobRoutingRequest, reason: string): LoadBalancingResult {
+  private createCircuitBreakerResult(request: JobRoutingRequest, _reason: string): LoadBalancingResult {
     return {
       success: false,
       jobId: request.jobId,

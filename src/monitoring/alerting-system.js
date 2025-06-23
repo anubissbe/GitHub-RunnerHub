@@ -426,7 +426,7 @@ class AlertingSystem extends EventEmitter {
   /**
    * Query Prometheus (placeholder implementation)
    */
-  async queryPrometheus(query) {
+  async queryPrometheus(_query) {
     // In a real implementation, this would make an HTTP request to Prometheus
     // For now, we'll simulate random triggers for demonstration
     return Math.random() < 0.1; // 10% chance of triggering

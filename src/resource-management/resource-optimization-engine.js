@@ -1169,17 +1169,17 @@ class ResourceOptimizationEngine extends EventEmitter {
   /**
    * Helper methods for optimization algorithms
    */
-  findContainerHost(containerId) {
+  findContainerHost(_containerId) {
     // This would be implemented based on actual infrastructure
     return 'host-1';
   }
 
-  calculateHostLoad(hostId) {
+  calculateHostLoad(_hostId) {
     // Calculate host CPU/memory utilization
     return Math.random() * 0.9; // Mock implementation
   }
 
-  canPlaceContainer(container, host) {
+  canPlaceContainer(_container, _host) {
     // Check placement constraints
     return true; // Simplified
   }
@@ -1276,7 +1276,7 @@ class ResourceOptimizationEngine extends EventEmitter {
     return this.resourceData.historical.slice(-1000);
   }
 
-  updateDemandPredictor(trainingData) {
+  updateDemandPredictor(_trainingData) {
     // Update exponential smoothing parameters based on recent performance
     const predictions = this.stats.predictions;
     if (predictions.total > 0) {
@@ -1299,7 +1299,7 @@ class ResourceOptimizationEngine extends EventEmitter {
     this.models.anomalyDetector.stats = stats;
   }
 
-  updatePatternAnalyzer(trainingData) {
+  updatePatternAnalyzer(_trainingData) {
     // Update pattern detection parameters
     // This would involve more sophisticated pattern learning
   }

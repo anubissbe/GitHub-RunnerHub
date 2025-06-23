@@ -222,7 +222,7 @@ export class OrchestratorService extends EventEmitter {
     }
   }
   
-  private async fallbackToTraditionalSystem(event: string, payload: any): Promise<void> {
+  private async fallbackToTraditionalSystem(_event: string, _payload: any): Promise<void> {
     logger.info('Executing fallback to traditional runner system');
     
     // This would trigger the existing runner pool manager

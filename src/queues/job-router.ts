@@ -55,7 +55,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.PREPARE_RUNNER, (data) => ({
+    this.routingRules.set(JobType.PREPARE_RUNNER, (_data) => ({
       queue: QUEUE_CONFIG.queues.JOB_EXECUTION,
       priority: QUEUE_CONFIG.priorities.HIGH,
       jobOptions: {
@@ -67,7 +67,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.CLEANUP_RUNNER, (data) => ({
+    this.routingRules.set(JobType.CLEANUP_RUNNER, (_data) => ({
       queue: QUEUE_CONFIG.queues.JOB_EXECUTION,
       priority: QUEUE_CONFIG.priorities.LOW,
       jobOptions: {
@@ -89,7 +89,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.DESTROY_CONTAINER, (data) => ({
+    this.routingRules.set(JobType.DESTROY_CONTAINER, (_data) => ({
       queue: QUEUE_CONFIG.queues.CONTAINER_MANAGEMENT,
       priority: QUEUE_CONFIG.priorities.NORMAL,
       jobOptions: {
@@ -98,7 +98,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.HEALTH_CHECK, (data) => ({
+    this.routingRules.set(JobType.HEALTH_CHECK, (_data) => ({
       queue: QUEUE_CONFIG.queues.CONTAINER_MANAGEMENT,
       priority: QUEUE_CONFIG.priorities.LOW,
       jobOptions: {
@@ -137,7 +137,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.UPDATE_STATUS, (data) => ({
+    this.routingRules.set(JobType.UPDATE_STATUS, (_data) => ({
       queue: QUEUE_CONFIG.queues.MONITORING,
       priority: QUEUE_CONFIG.priorities.HIGH,
       jobOptions: {
@@ -159,7 +159,7 @@ export class JobRouter {
       }
     }));
     
-    this.routingRules.set(JobType.SYNC_GITHUB_DATA, (data) => ({
+    this.routingRules.set(JobType.SYNC_GITHUB_DATA, (_data) => ({
       queue: QUEUE_CONFIG.queues.WEBHOOK_PROCESSING,
       priority: QUEUE_CONFIG.priorities.LOW,
       jobOptions: {

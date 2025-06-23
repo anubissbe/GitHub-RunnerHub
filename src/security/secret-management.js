@@ -537,7 +537,7 @@ class SecretManager extends EventEmitter {
     }
   }
   
-  async storeInVault(secretId, encryptedData, metadata) {
+  async storeInVault(secretId, _encryptedData, _metadata) {
     // Simplified Vault storage implementation
     logger.info(`Storing secret ${secretId} in Vault`);
     // Real implementation would use Vault API
@@ -690,7 +690,7 @@ class SecretManager extends EventEmitter {
     }
   }
   
-  async generateSecret(secretId) {
+  async generateSecret(_secretId) {
     // Generate a new secret based on type
     // This is a simplified implementation
     return {

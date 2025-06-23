@@ -338,7 +338,7 @@ class MonitoringOrchestrator extends EventEmitter {
    * Event handlers
    */
   
-  handleMetricsCollected(data) {
+  handleMetricsCollected(_data) {
     this.stats.eventsProcessed++;
     
     // Forward metrics to performance analytics if available

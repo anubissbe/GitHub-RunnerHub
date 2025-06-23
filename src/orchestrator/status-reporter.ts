@@ -332,7 +332,7 @@ export class StatusReporter extends EventEmitter {
       
       // Process each status
       const results = await Promise.allSettled(
-        batch.map(([jobId, status]) => this.reportSingleStatus(status))
+        batch.map(([_jobId, status]) => this.reportSingleStatus(status))
       );
       
       // Remove successfully reported statuses from queue
