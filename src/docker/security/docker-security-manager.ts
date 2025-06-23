@@ -1,7 +1,6 @@
 import { createLogger } from '../../utils/logger';
 import { DockerClient } from '../docker-client';
 import { EventEmitter } from 'events';
-import Docker from 'dockerode';
 import * as crypto from 'crypto';
 
 const logger = createLogger('DockerSecurityManager');
@@ -523,8 +522,8 @@ export class DockerSecurityManager extends EventEmitter {
   private dockerClient: DockerClient;
   private policies: Map<string, SecurityPolicyConfig> = new Map();
   private containerProfiles: Map<string, ContainerSecurityProfile> = new Map();
-  private scanResults: Map<string, SecurityScanResult[]> = new Map();
-  private violations: Map<string, SecurityViolation[]> = new Map();
+  private _scanResults: Map<string, SecurityScanResult[]> = new Map();
+  private _violations: Map<string, SecurityViolation[]> = new Map();
   private isMonitoring = false;
   private monitoringInterval?: NodeJS.Timeout;
 
@@ -947,7 +946,7 @@ export class DockerSecurityManager extends EventEmitter {
     profile: ContainerSecurityProfile,
     action: SecurityAction,
     rule: SecurityRule,
-    policy: SecurityPolicyConfig
+    _policy: SecurityPolicyConfig
   ): Promise<void> {
     switch (action.type) {
       case ActionType.BLOCK:
@@ -1007,10 +1006,9 @@ export class DockerSecurityManager extends EventEmitter {
       // Isolate network access
       await this.isolateContainer(profile, { isolateNetwork: true });
       
-      // Add quarantine label
-      await this.dockerClient.updateContainer(profile.containerId, {
-        labels: { 'security.quarantined': 'true', 'security.quarantine.reason': parameters.reason || 'Policy violation' }
-      });
+      // Note: Docker doesn't support updating container labels after creation
+      // The quarantine status is tracked in our security profile
+      logger.info(`Container ${profile.containerId} quarantined: ${parameters.reason || 'Policy violation'}`);
 
       profile.status = SecurityStatus.QUARANTINED;
       this.emit('container:quarantined', { containerId: profile.containerId });
@@ -1079,7 +1077,7 @@ export class DockerSecurityManager extends EventEmitter {
    */
   private async terminateContainer(
     profile: ContainerSecurityProfile,
-    parameters: Record<string, any>
+    _parameters: Record<string, any>
   ): Promise<void> {
     logger.warn(`Terminating container ${profile.containerId} due to security violation`);
     
@@ -1097,7 +1095,7 @@ export class DockerSecurityManager extends EventEmitter {
    */
   private async isolateContainer(
     profile: ContainerSecurityProfile,
-    parameters: Record<string, any>
+    _parameters: Record<string, any>
   ): Promise<void> {
     logger.warn(`Isolating container ${profile.containerId}`);
     

@@ -641,7 +641,7 @@ export class NetworkManager extends EventEmitter {
     // This is a simplified implementation
     // In a real scenario, you'd integrate with network monitoring tools
     
-    for (const [networkId, config] of this.networks.entries()) {
+    for (const [networkId, _config] of this.networks.entries()) {
       try {
         // Simulate network metrics collection
         const stats: NetworkStats = {
