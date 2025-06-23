@@ -1,9 +1,15 @@
 import { Router } from 'express';
 import { CleanupController } from '../controllers/cleanup-controller';
 import { asyncHandler } from '../middleware/async-handler';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const cleanupController = new CleanupController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Get all cleanup policies
 router.get('/policies', asyncHandler(cleanupController.getCleanupPolicies));
