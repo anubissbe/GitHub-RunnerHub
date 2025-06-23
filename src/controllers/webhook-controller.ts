@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import githubWebhook from '../services/github-webhook';
+import { validateWebhookEventType, sanitizeStringInput } from '../utils/security-validators';
 
 const logger = createLogger('WebhookController');
 
@@ -10,17 +11,21 @@ export class WebhookController {
    */
   async handleGitHubWebhook(req: Request, res: Response): Promise<void> {
     try {
-      const eventType = req.get('X-GitHub-Event');
+      const rawEventType = req.get('X-GitHub-Event');
       const signature = req.get('X-Hub-Signature-256') || '';
       const deliveryId = req.get('X-GitHub-Delivery') || '';
-
-      if (!eventType) {
+      
+      if (!rawEventType) {
         res.status(400).json({
           success: false,
           error: 'Missing X-GitHub-Event header'
         });
         return;
       }
+      
+      // Validate and sanitize event type to prevent format string attacks
+      const eventType = validateWebhookEventType(rawEventType);
+
 
       if (!deliveryId) {
         res.status(400).json({
@@ -30,10 +35,14 @@ export class WebhookController {
         return;
       }
 
+      // Sanitize repository name for logging to prevent format string attacks
+      const repositoryName = req.body.repository?.full_name ? 
+        sanitizeStringInput(req.body.repository.full_name, 200) : 'unknown';
+      
       logger.info('Received GitHub webhook', {
         eventType,
         deliveryId,
-        repository: req.body.repository?.full_name
+        repository: repositoryName
       });
 
       // Process the webhook
@@ -79,8 +88,8 @@ export class WebhookController {
       } = req.query;
 
       const events = await githubWebhook.getWebhookEvents({
-        repository: repository as string,
-        event: event as string,
+        repository: repository ? sanitizeStringInput(repository as string, 200) : undefined,
+        event: event ? sanitizeStringInput(event as string, 50) : undefined,
         limit: parseInt(limit as string, 10),
         offset: parseInt(offset as string, 10)
       });
@@ -162,7 +171,12 @@ export class WebhookController {
    */
   async testWebhook(_req: Request, res: Response): Promise<void> {
     try {
-      const { eventType = 'ping', repository = 'test/repo' } = _req.body;
+      const rawEventType = _req.body.eventType || 'ping';
+      const rawRepository = _req.body.repository || 'test/repo';
+      
+      // Validate and sanitize inputs
+      const eventType = validateWebhookEventType(rawEventType);
+      const repository = sanitizeStringInput(rawRepository, 200);
 
       const testPayload = {
         zen: 'Test webhook from RunnerHub',
@@ -192,8 +206,8 @@ export class WebhookController {
         repository: {
           id: 123456,
           node_id: 'MDEwOlJlcG9zaXRvcnkxMjM0NTY=',
-          name: repository.split('/')[1] || 'repo',
-          full_name: repository,
+          name: sanitizeStringInput(repository.split('/')[1] || 'repo', 100),
+          full_name: sanitizeStringInput(repository, 200),
           private: false
         }
       };

@@ -3,6 +3,7 @@ import { createLogger } from '../utils/logger';
 import config from '../config';
 import * as redis from 'redis';
 import { getGitHubCacheService, GitHubCacheService } from './github-cache-service';
+import { validateGitHubRepository } from '../utils/security-validators';
 
 const logger = createLogger('GitHubAPIEnhanced');
 
@@ -497,13 +498,17 @@ export class GitHubAPIEnhanced {
    * Get repository information with caching
    */
   async getRepository(owner: string, repo: string): Promise<any> {
-    const endpoint = `repos/${owner}/${repo}`;
+    // Validate repository input to prevent SSRF attacks
+    const validatedRepository = validateGitHubRepository(`${owner}/${repo}`);
+    const [validOwner, validRepo] = validatedRepository.split('/');
+    
+    const endpoint = `repos/${validOwner}/${validRepo}`;
     return this.cachedRequest(
       endpoint,
-      () => this.octokit.rest.repos.get({ owner, repo }),
+      () => this.octokit.rest.repos.get({ owner: validOwner, repo: validRepo }),
       { 
         priority: 'normal',
-        cacheTags: [`repo:${owner}/${repo}`, 'type:repos']
+        cacheTags: [`repo:${validOwner}/${validRepo}`, 'type:repos']
       }
     );
   }
@@ -512,15 +517,19 @@ export class GitHubAPIEnhanced {
    * List workflow runs with caching
    */
   async listWorkflowRuns(owner: string, repo: string, options: any = {}): Promise<any> {
-    const endpoint = `repos/${owner}/${repo}/actions/runs`;
+    // Validate repository input to prevent SSRF attacks
+    const validatedRepository = validateGitHubRepository(`${owner}/${repo}`);
+    const [validOwner, validRepo] = validatedRepository.split('/');
+    
+    const endpoint = `repos/${validOwner}/${validRepo}/actions/runs`;
     return this.cachedRequest(
       endpoint,
-      () => this.octokit.rest.actions.listWorkflowRunsForRepo({ owner, repo, ...options }),
+      () => this.octokit.rest.actions.listWorkflowRunsForRepo({ owner: validOwner, repo: validRepo, ...options }),
       { 
         params: options,
         priority: 'normal',
         cacheTTL: 120, // 2 minutes for dynamic data
-        cacheTags: [`repo:${owner}/${repo}`, 'type:runs']
+        cacheTags: [`repo:${validOwner}/${validRepo}`, 'type:runs']
       }
     );
   }
@@ -529,14 +538,18 @@ export class GitHubAPIEnhanced {
    * Get workflow run details with caching
    */
   async getWorkflowRun(owner: string, repo: string, runId: number): Promise<any> {
-    const endpoint = `repos/${owner}/${repo}/actions/runs/${runId}`;
+    // Validate repository input to prevent SSRF attacks
+    const validatedRepository = validateGitHubRepository(`${owner}/${repo}`);
+    const [validOwner, validRepo] = validatedRepository.split('/');
+    
+    const endpoint = `repos/${validOwner}/${validRepo}/actions/runs/${runId}`;
     return this.cachedRequest(
       endpoint,
-      () => this.octokit.rest.actions.getWorkflowRun({ owner, repo, run_id: runId }),
+      () => this.octokit.rest.actions.getWorkflowRun({ owner: validOwner, repo: validRepo, run_id: runId }),
       { 
         priority: 'high',
         cacheTTL: 60, // 1 minute for run details
-        cacheTags: [`repo:${owner}/${repo}`, 'type:runs', `run:${runId}`]
+        cacheTags: [`repo:${validOwner}/${validRepo}`, 'type:runs', `run:${runId}`]
       }
     );
   }
@@ -545,14 +558,18 @@ export class GitHubAPIEnhanced {
    * List workflow jobs with caching
    */
   async listWorkflowJobs(owner: string, repo: string, runId: number): Promise<any> {
-    const endpoint = `repos/${owner}/${repo}/actions/runs/${runId}/jobs`;
+    // Validate repository input to prevent SSRF attacks
+    const validatedRepository = validateGitHubRepository(`${owner}/${repo}`);
+    const [validOwner, validRepo] = validatedRepository.split('/');
+    
+    const endpoint = `repos/${validOwner}/${validRepo}/actions/runs/${runId}/jobs`;
     return this.cachedRequest(
       endpoint,
-      () => this.octokit.rest.actions.listJobsForWorkflowRun({ owner, repo, run_id: runId }),
+      () => this.octokit.rest.actions.listJobsForWorkflowRun({ owner: validOwner, repo: validRepo, run_id: runId }),
       { 
         priority: 'normal',
         cacheTTL: 60, // 1 minute for job lists
-        cacheTags: [`repo:${owner}/${repo}`, 'type:jobs', `run:${runId}`]
+        cacheTags: [`repo:${validOwner}/${validRepo}`, 'type:jobs', `run:${runId}`]
       }
     );
   }
@@ -561,6 +578,11 @@ export class GitHubAPIEnhanced {
    * List repositories for organization with caching
    */
   async listOrgRepos(org: string, options: any = {}): Promise<any> {
+    // Validate organization name to prevent injection attacks
+    if (!org || typeof org !== 'string' || !/^[a-zA-Z0-9-]+$/.test(org) || org.length > 39) {
+      throw new Error('Invalid organization name');
+    }
+    
     const endpoint = `orgs/${org}/repos`;
     return this.cachedRequest(
       endpoint,
@@ -578,14 +600,23 @@ export class GitHubAPIEnhanced {
    * Invalidate cache for a specific repository
    */
   async invalidateRepositoryCache(owner: string, repo: string): Promise<void> {
-    await this.cacheService.invalidateByTag(`repo:${owner}/${repo}`);
-    logger.info(`Invalidated cache for repository: ${owner}/${repo}`);
+    // Validate repository input to prevent injection attacks
+    const validatedRepository = validateGitHubRepository(`${owner}/${repo}`);
+    const [validOwner, validRepo] = validatedRepository.split('/');
+    
+    await this.cacheService.invalidateByTag(`repo:${validOwner}/${validRepo}`);
+    logger.info(`Invalidated cache for repository: ${validOwner}/${validRepo}`);
   }
 
   /**
    * Invalidate cache for a specific organization
    */
   async invalidateOrganizationCache(org: string): Promise<void> {
+    // Validate organization name to prevent injection attacks
+    if (!org || typeof org !== 'string' || !/^[a-zA-Z0-9-]+$/.test(org) || org.length > 39) {
+      throw new Error('Invalid organization name');
+    }
+    
     await this.cacheService.invalidateByTag(`org:${org}`);
     logger.info(`Invalidated cache for organization: ${org}`);
   }

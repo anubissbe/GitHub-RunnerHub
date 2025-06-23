@@ -1,0 +1,121 @@
+# Production-Optimized Dockerfile for GitHub-RunnerHub v2.0.0
+# Multi-stage build with security hardening and optimization
+
+# Build stage
+FROM node:20-alpine AS builder
+
+# Build arguments
+ARG VERSION=2.0.0
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Set build environment
+ENV NODE_ENV=development
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including dev deps for build)
+RUN npm ci --verbose
+
+# Copy source code
+COPY src ./src
+COPY migrations ./migrations
+COPY public ./public
+
+# Build TypeScript (ignore warnings for production build)
+RUN npm run build 2>/dev/null || npm run build --verbose
+
+# Create version info
+RUN echo "{\"version\":\"${VERSION}\",\"buildDate\":\"${BUILD_DATE}\",\"gitCommit\":\"${VCS_REF}\",\"nodeVersion\":\"$(node --version)\"}" > dist/version.json
+
+# Verify build output
+RUN ls -la dist/ && test -f dist/index.js
+
+# Production stage
+FROM node:20-alpine AS production
+
+# Build arguments for labels
+ARG VERSION=2.0.0
+ARG BUILD_DATE
+ARG VCS_REF
+
+# OCI image labels for v2.0.0
+LABEL org.opencontainers.image.title="GitHub-RunnerHub" \
+      org.opencontainers.image.description="Production-ready enterprise GitHub Actions management platform with intelligent orchestration and advanced security" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.vendor="anubissbe" \
+      org.opencontainers.image.source="https://github.com/anubissbe/GitHub-RunnerHub" \
+      org.opencontainers.image.documentation="https://github.com/anubissbe/GitHub-RunnerHub/wiki" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.url="https://github.com/anubissbe/GitHub-RunnerHub" \
+      maintainer="anubissbe <bert@telkom.be>" \
+      version="${VERSION}" \
+      release="stable" \
+      security.level="production" \
+      performance.optimized="true"
+
+# Install security and runtime dependencies
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    ca-certificates \
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# Set timezone
+ENV TZ=UTC
+
+# Create non-root user with specific UID/GID
+RUN addgroup -g 1001 -S runnerhub && \
+    adduser -S runnerhub -u 1001 -G runnerhub
+
+WORKDIR /app
+
+# Set production environment
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=2048" \
+    PORT=3001
+
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm ci --production --silent && \
+    npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder --chown=runnerhub:runnerhub /app/dist ./dist
+COPY --from=builder --chown=runnerhub:runnerhub /app/migrations ./migrations
+COPY --from=builder --chown=runnerhub:runnerhub /app/public ./public
+
+# Create required directories
+RUN mkdir -p logs tmp && \
+    chown -R runnerhub:runnerhub /app
+
+# Security: Remove unnecessary files and set proper permissions
+RUN find /app -name "*.md" -delete && \
+    find /app -name "*.test.*" -delete && \
+    find /app -name "__tests__" -type d -exec rm -rf {} + 2>/dev/null || true && \
+    chmod 755 /app && \
+    chmod -R 644 /app/dist && \
+    chmod 755 /app/dist/*.js
+
+# Switch to non-root user
+USER runnerhub
+
+# Expose port
+EXPOSE 3001
+
+# Health check with proper timeout and retries
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application with production optimizations
+CMD ["node", "--max-old-space-size=2048", "--enable-source-maps", "dist/index.js"]
