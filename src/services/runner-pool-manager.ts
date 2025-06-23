@@ -366,8 +366,10 @@ export class RunnerPoolManager {
   /**
    * Start monitoring loop
    */
+  private monitoringInterval?: NodeJS.Timeout;
+
   private startMonitoring(): void {
-    setInterval(async () => {
+    this.monitoringInterval = setInterval(async () => {
       try {
         // Get all active repositories
         const pools = await database.query<RunnerPool>(
@@ -561,6 +563,29 @@ export class RunnerPoolManager {
 
     } catch (error) {
       logger.error('Failed to release runner', { runnerId, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Graceful shutdown of runner pool manager
+   */
+  async shutdown(): Promise<void> {
+    logger.info('Shutting down RunnerPoolManager...');
+    
+    try {
+      // Clear monitoring interval
+      if (this.monitoringInterval) {
+        clearInterval(this.monitoringInterval);
+        this.monitoringInterval = undefined;
+      }
+      
+      // Clear scaling in progress set
+      this.scalingInProgress.clear();
+      
+      logger.info('RunnerPoolManager shutdown completed');
+    } catch (error) {
+      logger.error('Error during RunnerPoolManager shutdown:', error);
       throw error;
     }
   }

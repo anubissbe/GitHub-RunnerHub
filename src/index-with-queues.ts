@@ -1,7 +1,7 @@
 import { config as dotenvConfig } from 'dotenv';
 import config, { validateConfig } from './config';
 import { createLogger } from './utils/logger';
-import App from './app';
+import App from './app-with-queues';
 import ServiceManager from './services/service-manager';
 import { QueueManager } from './queues/queue-manager';
 import { JobRouter } from './queues/job-router';
@@ -170,14 +170,14 @@ async function shutdown(signal: string) {
     await jobLogSecretScanner.shutdown();
 
     // Stop runner pool manager
-    await runnerPoolManager.stop();
+    await runnerPoolManager.shutdown();
 
     // Stop container orchestrator
     await containerOrchestrator.shutdown();
 
     // Stop service manager
     if (serviceManager) {
-      await serviceManager.stopAll();
+      await serviceManager.shutdown();
     }
 
     logger.info('Graceful shutdown completed');
@@ -191,10 +191,10 @@ async function shutdown(signal: string) {
 async function main() {
   try {
     // Validate configuration
-    validateConfig(config);
+    validateConfig();
 
     // Initialize core services
-    serviceManager = new ServiceManager();
+    serviceManager = ServiceManager.getInstance();
     await serviceManager.initialize();
 
     // Initialize queue system

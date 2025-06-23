@@ -8,10 +8,7 @@ export {
   JobRouter,
   type JobRoutingRequest,
   type JobRoutingResult,
-  type RouterConfig,
-  type RunnerInfo,
   type RoutingDecision,
-  type ExecutionContext,
   type ResourceRequirements,
   type JobMetadata,
   type JobConstraints,
@@ -83,9 +80,34 @@ export {
   ConditionEvaluator,
   JobNodeStatus,
   JobExecutionResult,
-  EscalationAction,
-  FailurePropagationStrategy
+  EscalationAction
 } from './dependency-manager';
+
+// Add missing type definitions for convenience
+export type RouterConfig = {
+  algorithm: RoutingAlgorithm;
+  enableMetrics: boolean;
+  enableAdaptiveRouting: boolean;
+  loadBalancingFactor: number;
+  responseTimeFactor: number;
+  reliabilityFactor: number;
+  capacityFactor: number;
+};
+
+export type RunnerInfo = {
+  id: string;
+  repository: string;
+  status: string;
+  labels: string[];
+  capacity: ResourceRequirements;
+};
+
+export type ExecutionContext = {
+  jobId: string;
+  repository: string;
+  requirements: ResourceRequirements;
+  metadata: JobMetadata;
+};
 
 // Parallel Executor
 export {
