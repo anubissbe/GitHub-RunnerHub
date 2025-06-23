@@ -522,8 +522,10 @@ export class DockerSecurityManager extends EventEmitter {
   private dockerClient: DockerClient;
   private policies: Map<string, SecurityPolicyConfig> = new Map();
   private containerProfiles: Map<string, ContainerSecurityProfile> = new Map();
-  private _scanResults: Map<string, SecurityScanResult[]> = new Map();
-  private _violations: Map<string, SecurityViolation[]> = new Map();
+  // These are prefixed with underscore because they're not used in the current implementation
+  // but are reserved for future use
+  // private _scanResults: Map<string, SecurityScanResult[]> = new Map();
+  // private _violations: Map<string, SecurityViolation[]> = new Map();
   private isMonitoring = false;
   private monitoringInterval?: NodeJS.Timeout;
 

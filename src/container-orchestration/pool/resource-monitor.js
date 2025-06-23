@@ -661,7 +661,7 @@ class ContainerPoolResourceMonitor extends EventEmitter {
    * Analyze system utilization
    */
   analyzeSystemUtilization(systemMetrics) {
-    const trends = this.resourceAnalysis.trends;
+    const _trends = this.resourceAnalysis.trends;
     
     // CPU trend analysis
     this.updateResourceTrend('system_cpu', systemMetrics.cpu.usage);

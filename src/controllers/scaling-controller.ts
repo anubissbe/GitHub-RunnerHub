@@ -205,6 +205,11 @@ export class ScalingController {
           recentScaleUps?: number;
           recentScaleDowns?: number;
           trend?: string;
+          recentActivity?: {
+            scaleUps: number;
+            scaleDowns: number;
+            lastHour: number;
+          };
         }
 
         const recommendation: ScalingRecommendation = {
