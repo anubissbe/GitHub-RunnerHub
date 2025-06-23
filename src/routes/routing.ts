@@ -1,9 +1,15 @@
 import { Router } from 'express';
 import { RoutingController } from '../controllers/routing-controller';
 import { asyncHandler } from '../middleware/async-handler';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const routingController = new RoutingController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Get all routing rules
 router.get('/rules', asyncHandler(routingController.getRoutingRules));
