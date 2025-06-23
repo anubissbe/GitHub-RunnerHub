@@ -6,7 +6,6 @@
 const EventEmitter = require('events');
 const Redis = require('ioredis');
 const LRU = require('lru-cache');
-const crypto = require('crypto');
 const logger = require('../../utils/logger');
 
 class AdvancedCacheManager extends EventEmitter {
@@ -438,7 +437,7 @@ class AdvancedCacheManager extends EventEmitter {
   /**
    * L2 Cache operations (Redis)
    */
-  async getFromL2(key, cacheType) {
+  async getFromL2(key, _cacheType) {
     if (!this.redisClient) return null;
     
     try {
@@ -464,7 +463,7 @@ class AdvancedCacheManager extends EventEmitter {
   /**
    * L3 Cache operations (Redis with long TTL)
    */
-  async getFromL3(key, cacheType) {
+  async getFromL3(key, _cacheType) {
     if (!this.redisClient) return null;
     
     try {
@@ -575,7 +574,7 @@ class AdvancedCacheManager extends EventEmitter {
     for (const [prefetchKey, { key, cacheType }] of entries) {
       try {
         // Check if we have a preload function for this pattern
-        for (const [patternName, { pattern, preloadFunction }] of this.preloadPatterns.entries()) {
+        for (const [_patternName, { pattern, preloadFunction }] of this.preloadPatterns.entries()) {
           if (pattern.test(key)) {
             await preloadFunction(key, cacheType);
             break;

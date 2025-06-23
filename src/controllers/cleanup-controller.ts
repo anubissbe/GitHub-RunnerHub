@@ -236,13 +236,14 @@ export class CleanupController {
           // Simple evaluation logic (simplified from actual implementation)
           const wouldClean = await this.evaluateContainerForPreview(container, policy);
           if (wouldClean) {
-            policyContainers.push({
+            const containerToClean = {
               id: container.id,
               name: container.name,
-              state: container.state,
-              createdAt: container.createdAt,
-              reason: this.getCleanupReason(container, policy)
-            });
+              status: container.state,
+              created: container.createdAt,
+              policy: policy.name
+            };
+            policyContainers.push(containerToClean);
           }
         }
 
@@ -250,7 +251,7 @@ export class CleanupController {
           previewResult.policies.push({
             id: policy.id,
             name: policy.name,
-            containers: policyContainers
+            containersAffected: policyContainers.length
           });
           previewResult.containersToClean.push(...policyContainers);
         }
@@ -269,7 +270,10 @@ export class CleanupController {
   /**
    * Evaluate container for preview (simplified)
    */
-  private async evaluateContainerForPreview(container: any, policy: any): Promise<boolean> {
+  private async evaluateContainerForPreview(
+    container: { state: string; lastActivity?: string; exitCode?: number; runnerId?: string; jobId?: string; createdAt: string },
+    policy: { type: string; conditions?: { idleTimeMinutes?: number; maxLifetimeHours?: number } }
+  ): Promise<boolean> {
     const now = Date.now();
 
     switch (policy.type) {
@@ -297,7 +301,10 @@ export class CleanupController {
   /**
    * Get cleanup reason for container
    */
-  private getCleanupReason(container: any, policy: any): string {
+  private getCleanupReason(
+    container: { lastActivity?: string; exitCode?: number; createdAt: string },
+    policy: { type: string }
+  ): string {
     const now = Date.now();
 
     switch (policy.type) {

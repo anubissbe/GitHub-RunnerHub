@@ -7,17 +7,22 @@ module.exports = {
     '**/?(*.)+(spec|test).(ts|js)'
   ],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
+    '^.+\\.ts$': ['ts-jest', {
       tsconfig: {
         module: 'commonjs',
         target: 'es2020',
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
-        skipLibCheck: true
+        skipLibCheck: true,
+        allowJs: true
       }
     }],
-    '^.+\\.(js|jsx)$': 'babel-jest'
+    '^.+\\.js$': 'babel-jest'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@babel)/)'
+  ],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -41,7 +46,18 @@ module.exports = {
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@models/(.*)$': '<rootDir>/src/models/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@types/(.*)$': '<rootDir>/src/types/$1'
+    '^@types/(.*)$': '<rootDir>/src/types/$1',
+    // Handle relative imports from JS files to TS files
+    '^(\\.{1,2}/.*)\\.js$': '$1'
+  },
+  // Allow Jest to handle both TS and JS files properly
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        allowJs: true,
+        esModuleInterop: true
+      }
+    }
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
   testTimeout: 30000,

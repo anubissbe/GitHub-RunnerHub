@@ -652,7 +652,7 @@ class DemandPredictor extends EventEmitter {
   async generateHybridPredictions() {
     // Combine multiple methods
     const _exponentialForecasts = [];
-    const arimaForecasts = [];
+    const _arimaForecasts = [];
     
     // Get exponential smoothing forecasts
     await this.generateExponentialPredictions();

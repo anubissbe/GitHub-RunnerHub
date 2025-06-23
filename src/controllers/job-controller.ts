@@ -7,8 +7,17 @@ import database from '../services/database';
 import { jobQueue } from '../services/job-queue';
 import jobLogSecretScanner from '../services/job-log-secret-scanner';
 import Docker from 'dockerode';
+import { Server } from 'socket.io';
 
 const logger = createLogger('JobController');
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    username: string;
+    role: string;
+  };
+}
 
 export class JobController {
   private docker: Docker;
@@ -76,7 +85,7 @@ export class JobController {
       });
 
       // Emit WebSocket event
-      const io = (req as any).io;
+      const io = (req as unknown as { io: Server }).io;
       io.to(`repo:${delegatedJob.repository}`).emit('job:delegated', {
         jobId: delegatedJob.id,
         repository: delegatedJob.repository,
@@ -217,7 +226,7 @@ export class JobController {
       );
 
       // Emit WebSocket event
-      const io = (req as any).io;
+      const io = (req as unknown as { io: Server }).io;
       io.to(`repo:${job.repository}`).emit('job:status', {
         jobId: job.id,
         repository: job.repository,
@@ -308,7 +317,7 @@ export class JobController {
           scanResult = await jobLogSecretScanner.scanJobLogs(
             id, 
             rawLogs, 
-            (req as any).user?.id
+            (req as AuthenticatedRequest).user?.id
           );
 
           // Update job record

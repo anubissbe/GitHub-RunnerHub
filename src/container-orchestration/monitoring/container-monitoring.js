@@ -196,7 +196,7 @@ class ContainerMonitor extends EventEmitter {
     let totalRxPackets = 0;
     let totalTxPackets = 0;
 
-    for (const [networkName, networkStats] of Object.entries(stats.networks)) {
+    for (const [_networkName, networkStats] of Object.entries(stats.networks)) {
       totalRxBytes += networkStats.rx_bytes || 0;
       totalTxBytes += networkStats.tx_bytes || 0;
       totalRxPackets += networkStats.rx_packets || 0;
