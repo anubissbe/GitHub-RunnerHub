@@ -254,8 +254,9 @@ jobs:
 
       - name: 📝 Generate SBOM
         uses: anchore/sbom-action@v0
+        continue-on-error: true
         with:
-          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           format: spdx-json
           output-file: sbom.spdx.json
 
