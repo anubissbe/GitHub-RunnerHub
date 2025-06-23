@@ -418,6 +418,8 @@ function addRefreshIndicator() {
     
     // Add refresh countdown
     const parent = lastUpdatedElement.parentElement;
+    if (!parent) return; // Safety check
+    
     const refreshIndicator = document.createElement('span');
     refreshIndicator.id = 'refreshIndicator';
     refreshIndicator.className = 'ml-4 text-sm text-gray-500';
