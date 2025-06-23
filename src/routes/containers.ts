@@ -6,9 +6,9 @@ import { rateLimiter } from '../middleware/rate-limiter';
 const router = Router();
 const containerController = new ContainerController();
 
-// Apply authentication and rate limiting to all routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // Container management
 router.get('/', containerController.listContainers.bind(containerController));

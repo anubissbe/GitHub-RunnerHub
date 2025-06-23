@@ -6,9 +6,9 @@ import { rateLimiter } from '../middleware/rate-limiter';
 const router = Router();
 const runnerController = new RunnerController();
 
-// Apply authentication and rate limiting to all routes
-router.use(authMiddleware.authenticate());
+// Apply rate limiting and authentication to all routes
 router.use(rateLimiter);
+router.use(authMiddleware.authenticate());
 
 // Runner management
 router.get('/', runnerController.listRunners.bind(runnerController));
