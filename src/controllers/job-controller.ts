@@ -544,15 +544,15 @@ export class JobController {
     const timestamp = new Date().toISOString();
     return `${timestamp} [INFO] Starting job ${job.job_name} for repository ${job.repository}
 ${timestamp} [DEBUG] Setting up environment variables
-${timestamp} [DEBUG] API_KEY=sk-1234567890abcdef1234567890abcdef
+${timestamp} [DEBUG] API_KEY=[REDACTED]
 ${timestamp} [INFO] Cloning repository...
-${timestamp} [DEBUG] Using GitHub token: ghp_EXAMPLE_TOKEN_REPLACE_WITH_YOURS56
+${timestamp} [DEBUG] Using GitHub token: [REDACTED]
 ${timestamp} [INFO] Installing dependencies...
-${timestamp} [DEBUG] Database connection: postgresql://user:password123@localhost:5432/mydb
+${timestamp} [DEBUG] Database connection: [REDACTED]
 ${timestamp} [INFO] Running tests...
-${timestamp} [DEBUG] JWT token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+${timestamp} [DEBUG] Authentication token: [REDACTED]
 ${timestamp} [INFO] All tests passed
-${timestamp} [DEBUG] AWS credentials: AKIAIOSFODNN7EXAMPLE / wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+${timestamp} [DEBUG] Cloud credentials: [REDACTED]
 ${timestamp} [INFO] Job completed successfully
 ${timestamp} [INFO] Cleaning up temporary files...`;
   }

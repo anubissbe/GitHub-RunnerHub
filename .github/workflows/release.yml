@@ -188,7 +188,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.DOCKERHUB_IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -271,7 +273,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     needs: container
-    if: github.event_name == 'push' && (contains(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch')
+    if: (github.event_name == 'push' && contains(github.ref, 'refs/tags/')) || github.event_name == 'workflow_dispatch'
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
