@@ -5,6 +5,21 @@ All notable changes to GitHub-RunnerHub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2024-06-23
+
+### Fixed
+- Resolved duplicate identifier error in routing-controller.ts
+- Fixed TypeScript parameter mismatches in app-with-queues.ts
+- Corrected type casting issues in job-controller.ts
+- Fixed unused parameter warnings in docker-security-manager.ts
+- Resolved JavaScript linting errors across security modules
+- Removed unreachable code in resource-monitor.js
+
+### Quality
+- All ESLint and TypeScript errors resolved
+- Code quality checks now passing
+- Ready for production deployment
+
 ## [2.0.0] - 2024-06-23 🎉
 
 ### 🚀 Major Release - Production Ready
