@@ -41,7 +41,7 @@ export class App {
   private server: any;
   private io: Server;
   private queueManager: QueueManager;
-  private serviceManager: ServiceManager;
+  private _serviceManager: ServiceManager; // Prefixed with underscore to indicate intentionally unused
 
   constructor(serviceManager: ServiceManager, queueManager: QueueManager) {
     this.app = express();
@@ -52,7 +52,7 @@ export class App {
         methods: ['GET', 'POST']
       }
     });
-    this.serviceManager = serviceManager;
+    this._serviceManager = serviceManager;
     this.queueManager = queueManager;
     this.setupMiddleware();
     this.setupRoutes();
@@ -117,24 +117,26 @@ export class App {
     }
 
     // Dashboard routes
-    this.app.get('/dashboard', (req, res) => {
+    this.app.get('/dashboard', (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/dashboard.html'));
     });
     
-    this.app.get('/dashboard/queues', (req, res) => {
+    this.app.get('/dashboard/queues', (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/queue-dashboard.html'));
     });
 
     // Monitoring dashboard with enhanced realtime updates
-    this.app.get('/monitoring/dashboard', MonitoringController.getDashboard);
+    this.app.get('/monitoring/dashboard', (_req, res) => {
+      res.sendFile(path.join(__dirname, '../public/monitoring-dashboard.html'));
+    });
     
     // Performance dashboard
-    this.app.get('/dashboard/performance', (req, res) => {
+    this.app.get('/dashboard/performance', (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/performance-dashboard.html'));
     });
 
     // Default route
-    this.app.get('/', (req, res) => {
+    this.app.get('/', (_req, res) => {
       res.json({
         name: 'GitHub RunnerHub',
         version: '1.0.0',
@@ -169,9 +171,10 @@ export class App {
       });
 
       // Handle monitoring requests
-      socket.on('monitoring:request', async (data) => {
+      socket.on('monitoring:request', async (_data) => {
         try {
-          const metrics = await monitoringServiceEnhanced.getCurrentMetrics();
+          // Use getSystemMetrics instead of non-existent getCurrentMetrics
+          const metrics = await monitoringServiceEnhanced.getSystemMetrics();
           socket.emit('monitoring:update', metrics);
         } catch (error) {
           logger.error('Error fetching monitoring data:', error);
@@ -198,7 +201,7 @@ export class App {
     // Emit monitoring updates every 5 seconds
     setInterval(async () => {
       try {
-        const metrics = await monitoringServiceEnhanced.getCurrentMetrics();
+        const metrics = await monitoringServiceEnhanced.getSystemMetrics();
         this.io.to('monitoring').emit('monitoring:update', metrics);
         
         // Also emit queue updates
