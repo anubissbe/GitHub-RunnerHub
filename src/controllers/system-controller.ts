@@ -196,7 +196,7 @@ export class SystemController {
         return;
       }
 
-      const database = serviceManager.getService<any>('database');
+      const database = serviceManager.getService<{ checkHealth: () => Promise<boolean> }>('database');
       const isHealthy = await database.checkHealth();
 
       res.status(isHealthy ? 200 : 503).json({
@@ -676,7 +676,7 @@ export class SystemController {
       }
       
       // Get the Database HA service
-      const databaseHA = (this.haManager as any).databaseHA;
+      const databaseHA = (this.haManager as unknown as { databaseHA?: { performFailover: (target: string, reason: string) => Promise<unknown> } }).databaseHA;
       if (!databaseHA) {
         res.status(500).json({
           success: false,

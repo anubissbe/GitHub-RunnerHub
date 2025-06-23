@@ -515,7 +515,7 @@ class SecretManagementSystem extends EventEmitter {
   /**
    * Check secret access permissions
    */
-  async checkSecretAccess(secretId, purpose) {
+  async checkSecretAccess(secretId, _purpose) {
     const metadata = this.secretMetadata.get(secretId);
     if (!metadata) {
       throw new Error(`Secret ${secretId} not found`);
@@ -585,7 +585,7 @@ class SecretManagementSystem extends EventEmitter {
         logger.debug(`Vault read: ${path}`);
         return null;
       },
-      write: async (path, data) => {
+      write: async (path, _data) => {
         logger.debug(`Vault write: ${path}`);
         return true;
       },
@@ -746,7 +746,7 @@ class SecretManagementSystem extends EventEmitter {
   /**
    * Inject secret as environment variable
    */
-  async injectAsEnvironment(containerId, name, value) {
+  async injectAsEnvironment(containerId, name, _value) {
     // This would integrate with Docker API to set environment variable
     // For security, we'll use a secure method that doesn't expose in docker inspect
     
@@ -756,13 +756,13 @@ class SecretManagementSystem extends EventEmitter {
   /**
    * Inject secret as file
    */
-  async injectAsFile(containerId, name, value) {
+  async injectAsFile(containerId, name, _value) {
     // This would create a temporary file and mount it into the container
     // The file would be deleted after container stops
     
     const tempPath = `/tmp/secrets/${containerId}/${name}`;
     await fs.mkdir(path.dirname(tempPath), { recursive: true });
-    await fs.writeFile(tempPath, value, { mode: 0o400 });
+    await fs.writeFile(tempPath, _value, { mode: 0o400 });
     
     logger.debug(`Injected secret ${name} as file in container ${containerId}`);
   }
@@ -770,7 +770,7 @@ class SecretManagementSystem extends EventEmitter {
   /**
    * Inject secret in memory
    */
-  async injectInMemory(containerId, name, value) {
+  async injectInMemory(containerId, name, _value) {
     // This would use a secure memory injection method
     // For example, using a memory-mapped file or shared memory
     

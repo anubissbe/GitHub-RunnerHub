@@ -25,7 +25,7 @@ describe('DockerIntegrationService', () => {
 
   beforeEach(() => {
     // Reset singleton
-    (DockerIntegrationService as any).instance = undefined;
+    (DockerIntegrationService as unknown as { instance?: DockerIntegrationService }).instance = undefined;
 
     // Mock DockerClient
     mockDockerClient = {
@@ -35,7 +35,7 @@ describe('DockerIntegrationService', () => {
       getConfig: jest.fn().mockReturnValue({ socketPath: '/var/run/docker.sock' }),
       stopContainer: jest.fn().mockResolvedValue(undefined),
       removeContainer: jest.fn().mockResolvedValue(undefined)
-    } as any;
+    } as unknown as jest.Mocked<DockerClient>;
     MockedDockerClient.getInstance.mockReturnValue(mockDockerClient);
 
     // Mock ContainerTemplateManager
@@ -45,7 +45,7 @@ describe('DockerIntegrationService', () => {
         byCategory: { general: 1, nodejs: 1, python: 1, deployment: 1 }
       }),
       createContainerFromTemplate: jest.fn().mockResolvedValue('container-123')
-    } as any;
+    } as unknown as jest.Mocked<ContainerTemplateManager>;
     MockedContainerTemplateManager.getInstance.mockReturnValue(mockTemplateManager);
 
     // Mock NetworkManager
@@ -71,7 +71,7 @@ describe('DockerIntegrationService', () => {
           endpoints: []
         }
       ])
-    } as any;
+    } as unknown as jest.Mocked<NetworkManager>;
     MockedNetworkManager.getInstance.mockReturnValue(mockNetworkManager);
 
     // Mock VolumeManager
@@ -88,7 +88,7 @@ describe('DockerIntegrationService', () => {
       createVolume: jest.fn().mockResolvedValue('volume-789'),
       mountVolume: jest.fn().mockResolvedValue('mount-abc'),
       unmountVolume: jest.fn().mockResolvedValue(undefined)
-    } as any;
+    } as unknown as jest.Mocked<VolumeManager>;
     MockedVolumeManager.getInstance.mockReturnValue(mockVolumeManager);
 
     dockerIntegration = DockerIntegrationService.getInstance();

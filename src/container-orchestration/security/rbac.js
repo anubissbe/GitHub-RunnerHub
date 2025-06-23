@@ -488,7 +488,7 @@ class RBACSystem extends EventEmitter {
     }
     
     // Check custom policies
-    for (const [policyId, policy] of this.customPolicies) {
+    for (const [_policyId, policy] of this.customPolicies) {
       if (policy.effect === 'allow' && await policy.evaluate(user, requiredPermission, context)) {
         return true;
       }
@@ -540,8 +540,8 @@ class RBACSystem extends EventEmitter {
       
       // Check time constraints
       if (role.constraints.timeRestriction) {
-        const now = new Date();
-        const { startTime, endTime, timezone } = role.constraints.timeRestriction;
+        const _now = new Date();
+        const { startTime: _startTime, endTime: _endTime, timezone: _timezone } = role.constraints.timeRestriction;
         // Time-based access control logic here
       }
       

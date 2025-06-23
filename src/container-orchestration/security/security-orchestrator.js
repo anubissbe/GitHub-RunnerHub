@@ -531,7 +531,7 @@ class SecurityOrchestrator extends EventEmitter {
     let score = 100;
     
     // Deduct for failed checks
-    Object.entries(context.checks).forEach(([check, passed]) => {
+    Object.entries(context.checks).forEach(([_check, passed]) => {
       if (!passed) score -= 10;
     });
     

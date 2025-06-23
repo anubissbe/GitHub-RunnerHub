@@ -1,5 +1,5 @@
 import { config as dotenvConfig } from 'dotenv';
-import config, { validateConfig } from './config';
+import { validateConfig } from './config';
 import { createLogger } from './utils/logger';
 import App from './app-with-queues';
 import ServiceManager from './services/service-manager';
@@ -25,7 +25,7 @@ let app: App;
 let serviceManager: ServiceManager;
 let queueManager: QueueManager;
 let jobRouter: JobRouter;
-let retryHandler: RetryHandler;
+let _retryHandler: RetryHandler;
 let jobPersistence: JobPersistence;
 let isShuttingDown = false;
 

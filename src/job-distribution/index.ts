@@ -3,6 +3,10 @@
 // intelligent routing, load balancing, resource-aware scheduling, dependency
 // management, and parallel execution orchestration.
 
+// Import types that are used in this file
+import type { ResourceRequirements, JobMetadata } from './job-router';
+import { RoutingAlgorithm } from './job-router';
+
 // Core Router
 export {
   JobRouter,

@@ -673,7 +673,7 @@ export class DependencyManager extends EventEmitter {
     node.status = JobNodeStatus.COMPLETED;
     node.endTime = new Date();
     node.result = result;
-    node.metadata.actualDuration = result.duration;
+    node.metadata.actualDuration = result.metrics?.duration || 0;
 
     // Clear any timeout timers
     const timeoutId = this.timeoutCheckers.get(jobId);
@@ -1124,7 +1124,7 @@ export class DependencyManager extends EventEmitter {
   private evaluateJsonPathCondition(expression: string, depNode: JobNode): boolean {
     // Simplified JSONPath evaluation
     try {
-      const data = {
+      const _data = {
         result: depNode.result,
         status: depNode.status,
         metadata: depNode.metadata

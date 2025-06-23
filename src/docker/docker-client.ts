@@ -339,7 +339,7 @@ export class DockerClient extends EventEmitter {
         follow: options.follow || false
       };
 
-      const logs = await container.logs(logOptions as any);
+      const logs = await container.logs(logOptions);
       
       return this.parseContainerLogs(logs);
     } catch (error) {
@@ -428,19 +428,19 @@ export class DockerClient extends EventEmitter {
       logger.info(`Pulling image: ${fullImageName}`);
 
       await new Promise((resolve, reject) => {
-        this.docker.pull(fullImageName, (err: any, stream: any) => {
+        this.docker.pull(fullImageName, (err: Error | null, stream: NodeJS.ReadableStream) => {
           if (err) {
             reject(err);
             return;
           }
 
-          this.docker.modem.followProgress(stream, (err: any, res: any) => {
+          this.docker.modem.followProgress(stream, (err: Error | null, res: unknown[]) => {
             if (err) {
               reject(err);
             } else {
               resolve(res);
             }
-          }, (event: any) => {
+          }, (event: Record<string, unknown>) => {
             logger.debug('Pull progress:', event);
             this.emit('image:pull:progress', { image: fullImageName, event });
           });
