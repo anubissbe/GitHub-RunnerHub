@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { MonitoringController } from '../controllers/monitoring-controller';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const monitoringController = new MonitoringController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // System metrics
 router.get('/system', monitoringController.getSystemMetrics.bind(monitoringController));

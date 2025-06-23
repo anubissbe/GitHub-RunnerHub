@@ -112,8 +112,8 @@ export class App {
     const monitoringController = new MonitoringController();
     this.app.get('/metrics', monitoringController.getPrometheusMetrics.bind(monitoringController));
 
-    // Dashboard route - serve index.html
-    this.app.get('/dashboard', (_req, res) => {
+    // Dashboard route - serve index.html with rate limiting
+    this.app.get('/dashboard', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/index.html'));
     });
 

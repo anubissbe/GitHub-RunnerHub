@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { JobController } from '../controllers/job-controller';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const jobController = new JobController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Delegate a job from proxy runner
 router.post('/delegate', jobController.delegateJob.bind(jobController));

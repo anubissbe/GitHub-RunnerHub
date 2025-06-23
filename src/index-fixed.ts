@@ -7,6 +7,7 @@ import path from 'path';
 import { createLogger } from './utils/logger';
 import { validateConfig } from './config';
 import config from './config';
+import { rateLimiter } from './middleware/rate-limiter';
 // import serviceManager from './services/service-manager';
 // import database from './services/database';
 import { initializeJobQueue, shutdownJobQueue } from './services/job-queue-fixed';
@@ -78,8 +79,8 @@ app.use('/api/networks', networkRoutes);
 app.use('/api/security', securityRoutes);
 app.use('/api/audit', auditRoutes);
 
-// Dashboard route
-app.get('/dashboard', (_req, res) => {
+// Dashboard route with rate limiting
+app.get('/dashboard', rateLimiter, (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
