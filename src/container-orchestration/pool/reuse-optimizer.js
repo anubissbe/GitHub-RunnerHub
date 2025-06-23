@@ -302,7 +302,7 @@ class ContainerReuseOptimizer extends EventEmitter {
   /**
    * Calculate performance score
    */
-  calculatePerformanceScore(containerId, jobRequirements) {
+  calculatePerformanceScore(containerId, _jobRequirements) {
     const performanceData = this.performanceTracking.containerPerformance.get(containerId);
     
     if (!performanceData) {

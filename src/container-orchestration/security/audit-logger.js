@@ -399,8 +399,10 @@ class AuditLogger extends EventEmitter {
       return;
     }
     
+    // Define events at the function scope
+    const events = [...this.logBuffer];
+    
     try {
-      const events = [...this.logBuffer];
       this.logBuffer = [];
       
       // Convert to storage format

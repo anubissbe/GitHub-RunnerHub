@@ -41,9 +41,10 @@ export class App {
   private server: import('http').Server | null = null;
   private io: Server;
   private queueManager: QueueManager;
-  private _serviceManager: ServiceManager; // Reserved for future service management integration
+  // Reserved for future service management integration
+  // private _serviceManager: ServiceManager;
 
-  constructor(serviceManager: ServiceManager, queueManager: QueueManager) {
+  constructor(_serviceManager: ServiceManager, queueManager: QueueManager) {
     this.app = express();
     this.server = createServer(this.app);
     this.io = new Server(this.server, {

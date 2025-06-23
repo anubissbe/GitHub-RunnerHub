@@ -1,4 +1,11 @@
 import { Request, Response } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id?: string;
+    username?: string;
+  };
+}
 import { createLogger } from '../utils/logger';
 import securityScanner, { ScanRequest } from '../services/security-scanner';
 import jobLogSecretScanner from '../services/job-log-secret-scanner';
@@ -29,8 +36,8 @@ export class SecurityController {
         imageName,
         imageTag: imageTag || 'latest',
         repository,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         policyId,
         force: force === true
       };
@@ -185,8 +192,8 @@ export class SecurityController {
         eventType: AuditEventType.SYSTEM_CONFIG_CHANGED,
         category: AuditCategory.SECURITY,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         resource: 'security_policy',
@@ -366,8 +373,8 @@ export class SecurityController {
         eventType: AuditEventType.DATA_EXPORTED,
         category: AuditCategory.SECURITY,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         resource: 'security_scan',
@@ -479,8 +486,8 @@ export class SecurityController {
         eventType: AuditEventType.SYSTEM_CONFIG_CHANGED,
         category: AuditCategory.SECURITY,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         resource: 'secret_scanner_config',
@@ -551,8 +558,8 @@ export class SecurityController {
         eventType: AuditEventType.SYSTEM_CONFIG_CHANGED,
         category: AuditCategory.SECURITY,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         resource: 'secret_pattern',
@@ -699,8 +706,8 @@ export class SecurityController {
         eventType: AuditEventType.DATA_EXPORTED,
         category: AuditCategory.SECURITY,
         severity: AuditSeverity.INFO,
-        userId: (req as any).user?.id,
-        username: (req as any).user?.username,
+        userId: (req as AuthenticatedRequest).user?.id,
+        username: (req as AuthenticatedRequest).user?.username,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         resource: 'secret_scan_results',

@@ -141,7 +141,7 @@ export class JobController {
 
       const offset = (page - 1) * limit;
       let whereClause = 'WHERE 1=1';
-      const params: any[] = [];
+      const params: unknown[] = [];
 
       if (repository) {
         params.push(repository);
@@ -487,7 +487,7 @@ export class JobController {
   /**
    * Private helper: Retrieve job logs from container or storage
    */
-  private async retrieveJobLogs(job: any): Promise<string> {
+  private async retrieveJobLogs(job: { container_id?: string; id: string; github_job_id?: number; repository?: string; job_name?: string }): Promise<string> {
     try {
       // Method 1: Try to get logs from running/stopped container
       if (job.container_id) {
@@ -549,7 +549,7 @@ export class JobController {
   /**
    * Generate sample logs for demonstration purposes
    */
-  private generateSampleLogs(job: any): string {
+  private generateSampleLogs(job: { job_name?: string; repository?: string }): string {
     const timestamp = new Date().toISOString();
     return `${timestamp} [INFO] Starting job ${job.job_name} for repository ${job.repository}
 ${timestamp} [DEBUG] Setting up environment variables
@@ -582,7 +582,20 @@ ${timestamp} [INFO] Cleaning up temporary files...`;
   /**
    * Helper: Format job for API response
    */
-  private formatJob(dbJob: any): DelegatedJob {
+  private formatJob(dbJob: { 
+    id: string; 
+    github_job_id: number; 
+    job_name: string; 
+    repository: string; 
+    workflow_name: string; 
+    status: string; 
+    runner_id?: string; 
+    container_id?: string; 
+    labels?: string[]; 
+    started_at?: Date; 
+    completed_at?: Date; 
+    metadata?: Record<string, unknown>; 
+  }): DelegatedJob {
     return {
       id: dbJob.id,
       githubJobId: dbJob.github_job_id,

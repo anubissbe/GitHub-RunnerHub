@@ -255,8 +255,9 @@ export class ImageOptimizer extends EventEmitter {
   private dockerClient: DockerClient;
   private config: ImageOptimizationConfig;
   private optimizedImages: Map<string, OptimizedImage> = new Map();
-  private optimizationQueue: string[] = []; // Reserved for future optimization queue implementation
-  private _isOptimizing = false; // Prefixed with underscore to indicate intentionally unused
+  // Reserved for future optimization queue implementation
+  // private optimizationQueue: string[] = [];
+  // private _isOptimizing = false;
   private cacheDirectory: string;
 
   private constructor() {

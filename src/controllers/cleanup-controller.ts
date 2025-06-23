@@ -303,7 +303,9 @@ export class CleanupController {
 
   /**
    * Get cleanup reason for container
+   * Note: This method is currently unused but kept for future functionality
    */
+  /*
   private getCleanupReason(
     container: { lastActivity?: string; exitCode?: number; createdAt: string },
     policy: { type: string }
@@ -332,4 +334,5 @@ export class CleanupController {
         return 'Unknown reason';
     }
   }
+  */
 }

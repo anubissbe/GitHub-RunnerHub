@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
 import jobRouter from '../services/job-router';
 import { AppError } from '../utils/errors';
+import { DelegatedJob, JobStatus } from '../types';
+import runnerPoolManager from '../services/runner-pool-manager';
 
 const logger = createLogger('RoutingController');
 
@@ -233,7 +235,13 @@ export class RoutingController {
         updatedAt: new Date()
       };
 
-      const decision = await jobRouter.routeJob(mockJob);
+      // Convert to DelegatedJob format
+      const delegatedJob: DelegatedJob = {
+        ...mockJob,
+        status: JobStatus.PENDING
+      };
+      
+      const decision = await jobRouter.routeJob(delegatedJob);
 
       res.json({
         success: true,
@@ -264,6 +272,10 @@ export class RoutingController {
    * Get suggested labels based on existing runners
    */
   async getSuggestedLabels(req: Request, res: Response): Promise<void> {
+    interface RunnerWithLabels {
+      labels?: string[];
+    }
+    
     try {
       const { repository } = req.query;
       
@@ -272,9 +284,6 @@ export class RoutingController {
       
       if (repository) {
         const runners = await runnerPoolManager.getActiveRunners(repository as string);
-        interface RunnerWithLabels {
-          labels?: string[];
-        }
         
         runners.forEach((runner: RunnerWithLabels) => {
           if (runner.labels) {

@@ -401,7 +401,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle failed state
    */
-  async handleFailedState(containerId, metadata) {
+  async handleFailedState(containerId, _metadata) {
     logger.warn(`Container ${containerId.substring(0, 12)} entered failed state: ${metadata.error || 'unknown error'}`);
     
     // Schedule for recovery if auto-recovery is enabled
@@ -413,7 +413,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle recycling state
    */
-  async handleRecyclingState(containerId, metadata) {
+  async handleRecyclingState(containerId, _metadata) {
     logger.debug(`Container ${containerId.substring(0, 12)} is being recycled`);
     
     // Clean up state tracking for recycled container
@@ -425,7 +425,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle stopping state
    */
-  async handleStoppingState(containerId, metadata) {
+  async handleStoppingState(containerId, _metadata) {
     logger.debug(`Container ${containerId.substring(0, 12)} is stopping`);
     
     // Set timeout for forced stop if needed
@@ -443,7 +443,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle available state
    */
-  async handleAvailableState(containerId, metadata) {
+  async handleAvailableState(containerId, _metadata) {
     logger.debug(`Container ${containerId.substring(0, 12)} is now available`);
     
     // Update pool manager's available containers
@@ -458,7 +458,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Handle busy state
    */
-  async handleBusyState(containerId, metadata) {
+  async handleBusyState(containerId, _metadata) {
     logger.debug(`Container ${containerId.substring(0, 12)} is now busy`);
     
     // Update pool manager's busy containers
@@ -737,7 +737,7 @@ class ContainerStateManager extends EventEmitter {
   /**
    * Schedule recovery for failed container
    */
-  scheduleRecovery(containerId, metadata) {
+  scheduleRecovery(containerId, _metadata) {
     const attempts = this.recoveryAttempts.get(containerId) || 0;
     
     if (attempts >= this.config.recovery.maxRecoveryAttempts) {
@@ -896,7 +896,7 @@ class ContainerStateManager extends EventEmitter {
     }
     
     try {
-      const stateData = {
+      const _stateData = {
         timestamp: new Date(),
         containerStates: Object.fromEntries(this.containerStates),
         stateMetrics: {

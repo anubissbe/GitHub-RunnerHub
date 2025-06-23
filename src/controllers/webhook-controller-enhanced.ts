@@ -154,6 +154,7 @@ export class WebhookControllerEnhanced {
         failedEvents: number;
         avgProcessingTimeMs: number;
         eventTypes: number;
+        successRate?: number | string;
       }
 
       interface EnhancedEventStat {
