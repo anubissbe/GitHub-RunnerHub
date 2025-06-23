@@ -562,7 +562,7 @@ class ContainerPrewarmer extends EventEmitter {
   async getAvailableContainers(count = null) {
     const available = [];
     
-    for (const [templateName, containerIds] of this.pools) {
+    for (const [_templateName, containerIds] of this.pools) {
       for (const containerId of containerIds) {
         const container = this.containers.get(containerId);
         if (container && container.status === 'ready') {
