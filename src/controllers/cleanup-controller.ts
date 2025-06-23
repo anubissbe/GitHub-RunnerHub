@@ -235,13 +235,21 @@ export class CleanupController {
         
         for (const container of containers) {
           // Simple evaluation logic (simplified from actual implementation)
-          const wouldClean = await this.evaluateContainerForPreview(container, policy);
+          const wouldClean = await this.evaluateContainerForPreview({
+            state: container.state,
+            createdAt: container.created.toISOString(),
+            // Additional fields would come from container metadata
+            lastActivity: undefined,
+            exitCode: undefined,
+            runnerId: undefined,
+            jobId: undefined
+          }, policy);
           if (wouldClean) {
             const containerToClean = {
               id: container.id,
               name: container.name,
               status: container.state,
-              created: container.createdAt,
+              created: container.created.toISOString(),
               policy: policy.name
             };
             policyContainers.push(containerToClean);

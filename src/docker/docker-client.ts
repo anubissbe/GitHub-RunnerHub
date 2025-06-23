@@ -331,7 +331,7 @@ export class DockerClient extends EventEmitter {
 
     try {
       const container = this.docker.getContainer(containerId);
-      const logOptions: Dockerode.ContainerLogsOptions = {
+      const logOptions: Docker.ContainerLogsOptions = {
         stdout: true,
         stderr: true,
         tail: options.tail || 100,
@@ -547,7 +547,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse container inspection data
    */
-  private parseContainerInfo(inspect: Dockerode.ContainerInspectInfo): ContainerInfo {
+  private parseContainerInfo(inspect: Docker.ContainerInspectInfo): ContainerInfo {
     const state = inspect.State;
     const config = inspect.Config;
     const hostConfig = inspect.HostConfig;
@@ -564,7 +564,7 @@ export class DockerClient extends EventEmitter {
       finished: state.FinishedAt && state.FinishedAt !== '0001-01-01T00:00:00Z' 
         ? new Date(state.FinishedAt) : undefined,
       ports: this.parsePorts(config.ExposedPorts, hostConfig.PortBindings),
-      mounts: (inspect.Mounts || []).map((mount) => ({
+      mounts: (inspect.Mounts || []).map((mount: Docker.MountPoint) => ({
         source: mount.Source,
         destination: mount.Destination,
         mode: mount.Mode as 'ro' | 'rw',
@@ -579,7 +579,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse port mappings
    */
-  private parsePorts(exposedPorts: Record<string, Record<string, unknown>> | undefined, portBindings: Dockerode.PortMap | undefined): PortMapping[] {
+  private parsePorts(exposedPorts: Record<string, Record<string, unknown>> | undefined, portBindings: Docker.PortMap | undefined): PortMapping[] {
     const ports: PortMapping[] = [];
 
     if (exposedPorts) {
@@ -589,7 +589,7 @@ export class DockerClient extends EventEmitter {
         
         const bindings = portBindings?.[portSpec];
         if (bindings && bindings.length > 0) {
-          bindings.forEach((binding) => {
+          bindings.forEach((binding: Docker.PortBinding) => {
             ports.push({
               containerPort,
               hostPort: binding.HostPort ? parseInt(binding.HostPort, 10) : undefined,
@@ -612,7 +612,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse network information
    */
-  private parseNetworks(networks: Record<string, Dockerode.NetworkInfo> | undefined): NetworkInfo[] {
+  private parseNetworks(networks: Record<string, Docker.NetworkInfo> | undefined): NetworkInfo[] {
     const networkInfos: NetworkInfo[] = [];
 
     if (networks) {
@@ -633,7 +633,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse container statistics
    */
-  private parseContainerStats(stats: Dockerode.ContainerStats): ContainerStats {
+  private parseContainerStats(stats: Docker.ContainerStats): ContainerStats {
     const cpuStats = stats.cpu_stats;
     const preCpuStats = stats.precpu_stats;
     const memoryStats = stats.memory_stats;
@@ -684,7 +684,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse container logs
    */
-  private parseContainerLogs(logs: any): ContainerLogs {
+  private parseContainerLogs(logs: Buffer | string): ContainerLogs {
     const logString = logs.toString();
     const lines = logString.split('\n').filter((line: string) => line.trim());
     
@@ -715,7 +715,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse image information
    */
-  private parseImageInfo(image: any): ImageInfo {
+  private parseImageInfo(image: Docker.ImageInfo): ImageInfo {
     const repoTags = image.RepoTags || ['<none>:<none>'];
     const [repository, tag] = repoTags[0].split(':');
 

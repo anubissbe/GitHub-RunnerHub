@@ -1,4 +1,4 @@
-import { ImageOptimizer, OptimizationType, OptimizationActionType, ImageCategory } from '../image-optimizer';
+import { ImageOptimizer, OptimizationType, OptimizationActionType } from '../image-optimizer';
 import { DockerClient } from '../../docker-client';
 import * as fs from 'fs/promises';
 
@@ -56,7 +56,7 @@ describe('ImageOptimizer', () => {
       mockDockerClient.getImageHistory.mockResolvedValue(mockHistory);
 
       // Access private method via any type casting
-      const analysis = await (imageOptimizer as any).analyzeImage(imageId);
+      const analysis = await (imageOptimizer as unknown as { analyzeImage: (id: string) => Promise<unknown> }).analyzeImage(imageId);
 
       expect(analysis).toEqual({
         size: 1000000000,
@@ -72,7 +72,7 @@ describe('ImageOptimizer', () => {
 
     it('should detect package caches', async () => {
       const imageId = 'ubuntu:latest';
-      const caches = await (imageOptimizer as any).detectPackageCaches(imageId);
+      const caches = await (imageOptimizer as unknown as { detectPackageCaches: (id: string) => Promise<unknown[]> }).detectPackageCaches(imageId);
 
       expect(caches).toContain('/var/lib/apt/lists/*');
       expect(caches).toContain('/var/cache/apt/*');
@@ -81,7 +81,7 @@ describe('ImageOptimizer', () => {
 
     it('should detect unused files', async () => {
       const imageId = 'test-image:latest';
-      const unusedFiles = await (imageOptimizer as any).detectUnusedFiles(imageId);
+      const unusedFiles = await (imageOptimizer as unknown as { detectUnusedFiles: (id: string) => Promise<unknown[]> }).detectUnusedFiles(imageId);
 
       expect(unusedFiles).toContain('*.log');
       expect(unusedFiles).toContain('/tmp/*');
@@ -98,7 +98,7 @@ describe('ImageOptimizer', () => {
         unusedFiles: ['*.log']
       };
 
-      const rules = (imageOptimizer as any).selectOptimizationRules(analysis);
+      const rules = (imageOptimizer as unknown as { selectOptimizationRules: (analysis: unknown) => unknown[] }).selectOptimizationRules(analysis);
 
       expect(rules).toBeInstanceOf(Array);
       expect(rules.length).toBeGreaterThan(0);
@@ -113,7 +113,7 @@ describe('ImageOptimizer', () => {
         layers: 2
       };
 
-      const rules = (imageOptimizer as any).selectOptimizationRules(smallImageAnalysis);
+      const rules = (imageOptimizer as unknown as { selectOptimizationRules: (analysis: unknown) => unknown[] }).selectOptimizationRules(smallImageAnalysis);
       
       // Should have fewer rules for small images
       expect(rules.length).toBeLessThanOrEqual(5);
@@ -134,8 +134,8 @@ describe('ImageOptimizer', () => {
         value: '50MB'
       };
 
-      expect((imageOptimizer as any).evaluateCondition(gtCondition, analysis)).toBe(true);
-      expect((imageOptimizer as any).evaluateCondition(ltCondition, analysis)).toBe(false);
+      expect((imageOptimizer as unknown as { evaluateCondition: (condition: unknown, analysis: unknown) => boolean }).evaluateCondition(gtCondition, analysis)).toBe(true);
+      expect((imageOptimizer as unknown as { evaluateCondition: (condition: unknown, analysis: unknown) => boolean }).evaluateCondition(ltCondition, analysis)).toBe(false);
     });
   });
 
@@ -230,7 +230,7 @@ describe('ImageOptimizer', () => {
 
       mockDockerClient.buildImage.mockResolvedValue('cleaned-image-id');
 
-      const result = await (imageOptimizer as any).removePackageCache(imageId, parameters);
+      const result = await (imageOptimizer as unknown as { removePackageCache: (id: string, params: unknown) => Promise<unknown> }).removePackageCache(imageId, parameters);
 
       expect(result).toBe('cleaned-image-id');
       expect(mockDockerClient.buildImage).toHaveBeenCalledWith(
