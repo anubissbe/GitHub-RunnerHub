@@ -41,18 +41,25 @@ set_secret() {
 echo ""
 echo "📝 Setting up required secrets..."
 
-# Docker Hub credentials
-echo "🐳 Docker Hub credentials:"
-read -p "  Enter Docker Hub username: " DOCKERHUB_USERNAME
-read -s -p "  Enter Docker Hub token/password: " DOCKERHUB_TOKEN
+# Docker Hub credentials (optional)
 echo ""
+echo "🐳 Docker Hub credentials (optional - press Enter to skip):"
+read -p "  Enter Docker Hub username (or press Enter to skip): " DOCKERHUB_USERNAME
 
-set_secret "DOCKERHUB_USERNAME" "$DOCKERHUB_USERNAME" "Docker Hub username"
-set_secret "DOCKERHUB_TOKEN" "$DOCKERHUB_TOKEN" "Docker Hub access token"
+if [ -n "$DOCKERHUB_USERNAME" ]; then
+    read -s -p "  Enter Docker Hub token/password: " DOCKERHUB_TOKEN
+    echo ""
+    
+    set_secret "DOCKERHUB_USERNAME" "$DOCKERHUB_USERNAME" "Docker Hub username"
+    set_secret "DOCKERHUB_TOKEN" "$DOCKERHUB_TOKEN" "Docker Hub access token"
+else
+    echo "  Skipping Docker Hub setup"
+fi
 
-# SNYK token (we know this from Vault)
+# SNYK token
 echo ""
 echo "🛡️ Security scanning:"
+echo "  Using SNYK token from Vault..."
 SNYK_TOKEN="f9616fd1-3834-48cb-9562-5d3d5869073e"
 set_secret "SNYK_TOKEN" "$SNYK_TOKEN" "Snyk security scanning token"
 
@@ -60,8 +67,12 @@ echo ""
 echo "✅ GitHub secrets setup complete!"
 echo ""
 echo "📋 Configured secrets:"
-echo "  - DOCKERHUB_USERNAME"
-echo "  - DOCKERHUB_TOKEN"
 echo "  - SNYK_TOKEN"
+if [ -n "$DOCKERHUB_USERNAME" ]; then
+    echo "  - DOCKERHUB_USERNAME"
+    echo "  - DOCKERHUB_TOKEN"
+fi
 echo ""
 echo "Note: GITHUB_TOKEN is automatically available in workflows"
+echo ""
+echo "🚀 Your CI/CD pipeline is now ready to use!"
