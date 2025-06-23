@@ -32,7 +32,7 @@ async function setupDatabase() {
         
         // Now connect to the new database
         const pool = new Pool({
-            connectionString: 'postgresql://user:password@host:5432/database
+            connectionString: 'postgresql://user:password@host:5432/database',
             ssl: false
         });
         
