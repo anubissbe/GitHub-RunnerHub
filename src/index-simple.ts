@@ -3,6 +3,7 @@ import config from './config';
 import { createLogger } from './utils/logger';
 import express from 'express';
 import path from 'path';
+import { rateLimiter } from './middleware/rate-limiter';
 
 // Load environment variables
 dotenvConfig();
@@ -32,8 +33,8 @@ async function startSimpleServer() {
       });
     });
     
-    // Dashboard route
-    app.get('/dashboard', (_req, res) => {
+    // Dashboard route with rate limiting
+    app.get('/dashboard', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/index.html'));
     });
     

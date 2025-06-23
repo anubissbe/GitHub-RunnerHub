@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { RunnerController } from '../controllers/runner-controller';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const runnerController = new RunnerController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Runner management
 router.get('/', runnerController.listRunners.bind(runnerController));

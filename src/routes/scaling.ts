@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { ScalingController } from '../controllers/scaling-controller';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const scalingController = new ScalingController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Scaling policies
 router.get('/policies', scalingController.getPolicies.bind(scalingController));

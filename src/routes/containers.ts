@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { ContainerController } from '../controllers/container-controller';
+import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 const containerController = new ContainerController();
+
+// Apply authentication and rate limiting to all routes
+router.use(authMiddleware.authenticate());
+router.use(rateLimiter);
 
 // Container management
 router.get('/', containerController.listContainers.bind(containerController));
