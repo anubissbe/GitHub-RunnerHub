@@ -30,7 +30,7 @@ import auditRoutes from './routes/audit';
 import securityRoutes from './routes/security';
 import queueRoutes from './routes/queue-routes';
 
-import { MonitoringController } from './controllers/monitoring-controller';
+// import { MonitoringController } from './controllers/monitoring-controller';
 import monitoringServiceEnhanced from './services/monitoring-enhanced';
 import path from 'path';
 
@@ -116,22 +116,22 @@ export class App {
       }
     }
 
-    // Dashboard routes
-    this.app.get('/dashboard', (_req, res) => {
+    // Dashboard routes with rate limiting for file system access
+    this.app.get('/dashboard', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/dashboard.html'));
     });
     
-    this.app.get('/dashboard/queues', (_req, res) => {
+    this.app.get('/dashboard/queues', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/queue-dashboard.html'));
     });
 
     // Monitoring dashboard with enhanced realtime updates
-    this.app.get('/monitoring/dashboard', (_req, res) => {
+    this.app.get('/monitoring/dashboard', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/monitoring-dashboard.html'));
     });
     
     // Performance dashboard
-    this.app.get('/dashboard/performance', (_req, res) => {
+    this.app.get('/dashboard/performance', rateLimiter, (_req, res) => {
       res.sendFile(path.join(__dirname, '../public/performance-dashboard.html'));
     });
 

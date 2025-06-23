@@ -24,6 +24,8 @@ export {
   PruneStrategy
 } from './image-optimizer';
 
+import { ImageOptimizer } from './image-optimizer';
+
 // Convenience function to create and configure image optimizer
 export function createImageOptimizer(config?: any) {
   const optimizer = ImageOptimizer.getInstance();

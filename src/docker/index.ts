@@ -266,7 +266,7 @@ export class DockerIntegrationService {
   private templateManager: ContainerTemplateManager;
   private networkManager: NetworkManager;
   private volumeManager: VolumeManager;
-  private imageOptimizer: ImageOptimizer;
+  private _imageOptimizer: ImageOptimizer;
   private securityManager: DockerSecurityManager;
   private config: DockerIntegrationConfig;
 
@@ -278,7 +278,7 @@ export class DockerIntegrationService {
     this.templateManager = ContainerTemplateManager.getInstance();
     this.networkManager = NetworkManager.getInstance();
     this.volumeManager = VolumeManager.getInstance();
-    this.imageOptimizer = ImageOptimizer.getInstance();
+    this._imageOptimizer = ImageOptimizer.getInstance();
     this.securityManager = DockerSecurityManager.getInstance();
   }
 
@@ -609,7 +609,7 @@ export class DockerIntegrationService {
   }
 
   public get imageOptimizer(): ImageOptimizer {
-    return this.imageOptimizer;
+    return this._imageOptimizer;
   }
 
   public get security(): DockerSecurityManager {

@@ -739,7 +739,7 @@ RUN rm -rf ${paths.join(' ')} || true
    */
   private async mergeLayers(
     imageId: string,
-    parameters: Record<string, any>
+    _parameters: Record<string, any>
   ): Promise<string> {
     // This would require more complex layer manipulation
     // For now, return the original image
@@ -752,7 +752,7 @@ RUN rm -rf ${paths.join(' ')} || true
    */
   private async compressLayers(
     imageId: string,
-    parameters: Record<string, any>
+    _parameters: Record<string, any>
   ): Promise<string> {
     // This would require layer-level compression
     // For now, return the original image
@@ -787,7 +787,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
    */
   private async optimizeDockerfile(
     imageId: string,
-    parameters: Record<string, any>,
+    _parameters: Record<string, any>,
     buildContext?: BuildContext
   ): Promise<string> {
     if (!buildContext?.dockerfile) {
@@ -839,7 +839,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Detect package caches in image
    */
-  private async detectPackageCaches(imageId: string): Promise<string[]> {
+  private async detectPackageCaches(_imageId: string): Promise<string[]> {
     // This would involve scanning the image filesystem
     // For now, return common cache locations
     return [
@@ -854,7 +854,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Detect unused files in image
    */
-  private async detectUnusedFiles(imageId: string): Promise<string[]> {
+  private async detectUnusedFiles(_imageId: string): Promise<string[]> {
     // This would involve filesystem analysis
     // For now, return common unused file patterns
     return [
