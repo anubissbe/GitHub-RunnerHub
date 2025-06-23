@@ -31,6 +31,7 @@ This comprehensive documentation provides everything you need to successfully de
 - **[Container Pool Management](../CONTAINER_POOL_MANAGEMENT_SUMMARY.md)** - Advanced orchestration
 - **[Resource Management](../RESOURCE_MANAGEMENT_SYSTEM_SUMMARY.md)** - Resource control
 - **[Monitoring System](../MONITORING_SYSTEM_SUMMARY.md)** - Comprehensive monitoring
+- **[Docker Integration](DOCKER_INTEGRATION.md)** - Enterprise Docker management
 
 ### 🔍 Troubleshooting & Support
 - **[Troubleshooting Guide](troubleshooting/README.md)** - Problem resolution
