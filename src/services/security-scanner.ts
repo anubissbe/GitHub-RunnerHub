@@ -577,7 +577,25 @@ export class SecurityScanner extends EventEmitter {
 
   private async checkTrivyInstallation(): Promise<void> {
     try {
-      const { stdout } = await execAsync('trivy --version');
+      // Use safe spawn instead of execAsync
+      const trivyProcess = spawn('trivy', ['--version']);
+      let stdout = '';
+      
+      trivyProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+      
+      await new Promise<void>((resolve, reject) => {
+        trivyProcess.on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`trivy exited with code ${code}`));
+          }
+        });
+        trivyProcess.on('error', reject);
+      });
+      
       logger.info('Trivy scanner detected', { version: stdout.trim() });
     } catch (error) {
       logger.warn('Trivy not found, will use Docker image', { error: (error as Error).message });
@@ -590,7 +608,25 @@ export class SecurityScanner extends EventEmitter {
     logger.info('Pulling Trivy Docker image');
     
     try {
-      await execAsync(`docker pull aquasec/trivy:${this.trivyVersion}`);
+      // Validate trivy version to prevent injection
+      if (!/^[a-zA-Z0-9\.-]+$/.test(this.trivyVersion)) {
+        throw new Error('Invalid trivy version format');
+      }
+      
+      // Use safe spawn instead of execAsync
+      const dockerProcess = spawn('docker', ['pull', `aquasec/trivy:${this.trivyVersion}`]);
+      
+      await new Promise<void>((resolve, reject) => {
+        dockerProcess.on('close', (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`docker pull exited with code ${code}`));
+          }
+        });
+        dockerProcess.on('error', reject);
+      });
+      
       logger.info('Trivy Docker image pulled successfully');
     } catch (error) {
       throw new Error(`Failed to pull Trivy image: ${(error as Error).message}`);
@@ -619,14 +655,32 @@ export class SecurityScanner extends EventEmitter {
     const outputFile = path.join(this.scanDirectory, `${uuidv4()}.json`);
 
     try {
-      // Run Trivy scan
-      const trivyCommand = `trivy image --format json --output ${outputFile} --timeout ${this.scanTimeout / 1000}s ${imageRef}`;
+      // Validate and sanitize inputs
+      const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9.\/:_-]/g, '');
+      const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9.\/_-]/g, '');
+      const timeoutSeconds = Math.floor(this.scanTimeout / 1000);
       
-      logger.debug('Running Trivy scan', { command: trivyCommand });
+      // Prepare safe command arguments
+      const trivyArgs = [
+        'image',
+        '--format', 'json',
+        '--output', sanitizedOutputFile,
+        '--timeout', `${timeoutSeconds}s`,
+        sanitizedImageRef
+      ];
+      
+      logger.debug('Running Trivy scan', { args: trivyArgs });
       
       try {
-        // Try native Trivy first
-        await execAsync(trivyCommand);
+        // Try native Trivy first using spawn for safety
+        const { spawn } = require('child_process');
+        const trivyProcess = spawn('trivy', trivyArgs);
+        await new Promise((resolve, reject) => {
+          trivyProcess.on('close', (code: number) => {
+            if (code === 0) resolve(code);
+            else reject(new Error(`Trivy command failed with code ${code}`));
+          });
+        });
       } catch (nativeError) {
         // Fallback to Docker
         logger.debug('Falling back to Docker Trivy');

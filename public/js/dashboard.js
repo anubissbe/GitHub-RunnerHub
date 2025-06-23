@@ -239,16 +239,21 @@ function updateJobTimeline(timeline) {
 // Update recent jobs table
 function updateRecentJobs(jobs) {
     const tbody = document.getElementById('recentJobsTable');
-    tbody.innerHTML = '';
+    
+    // Clear table body safely
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
     
     if (jobs.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                    No recent jobs found. Jobs will appear here once GitHub Actions workflows are triggered.
-                </td>
-            </tr>
-        `;
+        // Create and append no data row safely
+        const noDataRow = document.createElement('tr');
+        const noDataCell = document.createElement('td');
+        noDataCell.colSpan = 4;
+        noDataCell.className = 'px-6 py-4 text-center text-sm text-gray-500';
+        noDataCell.textContent = 'No recent jobs found. Jobs will appear here once GitHub Actions workflows are triggered.';
+        noDataRow.appendChild(noDataCell);
+        tbody.appendChild(noDataRow);
         return;
     }
     
@@ -281,27 +286,59 @@ function updateRecentJobs(jobs) {
         const repoMatch = job.repository && job.repository.includes('/') ? job.repository : 
                          job.id && job.id.startsWith('github-') ? 'GitHub Job' : 'Local Job';
         
-        row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">${job.workflow || job.name || 'Unknown'}</div>
-                ${job.labels && job.labels.length > 0 ? 
-                    `<div class="text-xs text-gray-500 mt-1">Labels: ${job.labels.slice(0, 3).join(', ')}</div>` : 
-                    ''}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">${repoMatch}</div>
-                ${job.head_branch ? `<div class="text-xs text-gray-500">${job.head_branch}</div>` : ''}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm ${statusClass}">
-                    <span class="inline-block">${statusIcon}</span>
-                    ${job.status}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${duration}
-            </td>
-        `;
+        // Create table cells safely using DOM methods
+        const workflowCell = document.createElement('td');
+        workflowCell.className = 'px-6 py-4 whitespace-nowrap';
+        
+        const workflowDiv = document.createElement('div');
+        workflowDiv.className = 'text-sm font-medium text-gray-900';
+        workflowDiv.textContent = job.workflow || job.name || 'Unknown';
+        workflowCell.appendChild(workflowDiv);
+        
+        if (job.labels && job.labels.length > 0) {
+            const labelsDiv = document.createElement('div');
+            labelsDiv.className = 'text-xs text-gray-500 mt-1';
+            labelsDiv.textContent = 'Labels: ' + job.labels.slice(0, 3).join(', ');
+            workflowCell.appendChild(labelsDiv);
+        }
+        
+        const repoCell = document.createElement('td');
+        repoCell.className = 'px-6 py-4 whitespace-nowrap';
+        
+        const repoDiv = document.createElement('div');
+        repoDiv.className = 'text-sm text-gray-900';
+        repoDiv.textContent = repoMatch;
+        repoCell.appendChild(repoDiv);
+        
+        if (job.head_branch) {
+            const branchDiv = document.createElement('div');
+            branchDiv.className = 'text-xs text-gray-500';
+            branchDiv.textContent = job.head_branch;
+            repoCell.appendChild(branchDiv);
+        }
+        
+        const statusCell = document.createElement('td');
+        statusCell.className = 'px-6 py-4 whitespace-nowrap';
+        
+        const statusSpan = document.createElement('span');
+        statusSpan.className = `text-sm ${statusClass}`;
+        
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'inline-block';
+        iconSpan.textContent = statusIcon;
+        
+        statusSpan.appendChild(iconSpan);
+        statusSpan.appendChild(document.createTextNode(' ' + job.status));
+        statusCell.appendChild(statusSpan);
+        
+        const durationCell = document.createElement('td');
+        durationCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+        durationCell.textContent = duration;
+        
+        row.appendChild(workflowCell);
+        row.appendChild(repoCell);
+        row.appendChild(statusCell);
+        row.appendChild(durationCell);
         
         tbody.appendChild(row);
     });
@@ -310,7 +347,11 @@ function updateRecentJobs(jobs) {
 // Update runner health table
 function updateRunnerHealth(runners) {
     const tbody = document.getElementById('runnerHealthTable');
-    tbody.innerHTML = '';
+    
+    // Clear table body safely
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
     
     // Only show real GitHub runners (filter out any remaining mock data)
     const githubRunners = runners.filter(runner => 
@@ -318,13 +359,14 @@ function updateRunnerHealth(runners) {
     );
     
     if (githubRunners.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">
-                    No GitHub runners found. Deploy runners using the setup scripts.
-                </td>
-            </tr>
-        `;
+        // Create and append no data row safely
+        const noDataRow = document.createElement('tr');
+        const noDataCell = document.createElement('td');
+        noDataCell.colSpan = 4;
+        noDataCell.className = 'px-6 py-4 text-center text-sm text-gray-500';
+        noDataCell.textContent = 'No GitHub runners found. Deploy runners using the setup scripts.';
+        noDataRow.appendChild(noDataCell);
+        tbody.appendChild(noDataRow);
         return;
     }
     
@@ -339,20 +381,31 @@ function updateRunnerHealth(runners) {
             'offline': '○'
         }[runner.healthStatus] || '?';
         
-        row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                ${runner.name}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${runner.type}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                ${runner.status}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm font-bold ${healthClass}">${healthIcon} ${runner.healthStatus}</span>
-            </td>
-        `;
+        // Create table cells safely using DOM methods
+        const nameCell = document.createElement('td');
+        nameCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
+        nameCell.textContent = runner.name;
+        
+        const typeCell = document.createElement('td');
+        typeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+        typeCell.textContent = runner.type;
+        
+        const statusCell = document.createElement('td');
+        statusCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+        statusCell.textContent = runner.status;
+        
+        const healthCell = document.createElement('td');
+        healthCell.className = 'px-6 py-4 whitespace-nowrap';
+        
+        const healthSpan = document.createElement('span');
+        healthSpan.className = `text-sm font-bold ${healthClass}`;
+        healthSpan.textContent = `${healthIcon} ${runner.healthStatus}`;
+        healthCell.appendChild(healthSpan);
+        
+        row.appendChild(nameCell);
+        row.appendChild(typeCell);
+        row.appendChild(statusCell);
+        row.appendChild(healthCell);
         
         tbody.appendChild(row);
     });
@@ -365,6 +418,8 @@ function addRefreshIndicator() {
     
     // Add refresh countdown
     const parent = lastUpdatedElement.parentElement;
+    if (!parent) return; // Safety check
+    
     const refreshIndicator = document.createElement('span');
     refreshIndicator.id = 'refreshIndicator';
     refreshIndicator.className = 'ml-4 text-sm text-gray-500';
@@ -374,9 +429,13 @@ function addRefreshIndicator() {
     let countdown = 10;
     const updateCountdown = () => {
         if (isLoading) {
-            refreshIndicator.innerHTML = '<span class="text-blue-600">⟳ Refreshing...</span>';
+            refreshIndicator.innerHTML = '<span class="text-blue-600">⟳ Refreshing...</span>'; // Safe: static content
         } else {
-            refreshIndicator.innerHTML = `<span class="text-gray-400">⟳ Auto-refresh in ${countdown}s</span>`;
+            const refreshSpan = document.createElement('span');
+            refreshSpan.className = 'text-gray-400';
+            refreshSpan.textContent = `⟳ Auto-refresh in ${countdown}s`;
+            refreshIndicator.innerHTML = ''; // Clear first
+            refreshIndicator.appendChild(refreshSpan);
             countdown--;
             if (countdown < 0) countdown = 10;
         }
@@ -404,24 +463,41 @@ async function loadTrackedRepositories() {
 // Update repository list UI
 function updateRepositoryList() {
     const listElement = document.getElementById('repositoryList');
-    listElement.innerHTML = '';
+    
+    // Clear list safely
+    while (listElement.firstChild) {
+        listElement.removeChild(listElement.firstChild);
+    }
     
     if (trackedRepositories.length === 0) {
-        listElement.innerHTML = '<span class="text-gray-500 text-sm">No repositories tracked. Add one to get started.</span>';
+        const noRepoSpan = document.createElement('span');
+        noRepoSpan.className = 'text-gray-500 text-sm';
+        noRepoSpan.textContent = 'No repositories tracked. Add one to get started.';
+        listElement.appendChild(noRepoSpan);
         return;
     }
     
     trackedRepositories.forEach(repo => {
         const tag = document.createElement('div');
         tag.className = 'inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full';
-        tag.innerHTML = `
-            <span>${repo}</span>
-            <button onclick="removeRepository('${repo}')" class="ml-2 text-blue-600 hover:text-blue-800">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        `;
+        
+        // Create span element safely
+        const span = document.createElement('span');
+        span.textContent = repo; // Use textContent to prevent XSS
+        
+        // Create button element safely
+        const button = document.createElement('button');
+        button.className = 'ml-2 text-blue-600 hover:text-blue-800';
+        button.onclick = () => removeRepository(repo); // Use function reference instead of string
+        button.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        `; // Safe: static SVG content, no user input
+        
+        // Append elements safely
+        tag.appendChild(span);
+        tag.appendChild(button);
         listElement.appendChild(tag);
     });
 }
@@ -509,17 +585,21 @@ function updateGitHubStatus(integration) {
             statusText = 'Limited';
         }
         
-        statusElement.innerHTML = `
-            <span class="inline-block w-2 h-2 ${statusColor} rounded-full mr-1"></span>
-            ${statusText}
-        `;
+        const statusIndicator = document.createElement('span');
+        statusIndicator.className = `inline-block w-2 h-2 ${statusColor} rounded-full mr-1`;
+        
+        statusElement.innerHTML = ''; // Clear first
+        statusElement.appendChild(statusIndicator);
+        statusElement.appendChild(document.createTextNode(' ' + statusText));
         
         rateLimitElement.textContent = `${integration.rateLimitStatus.remaining}/${integration.rateLimitStatus.limit} (${Math.round(percentUsed)}% used)`;
     } else {
-        statusElement.innerHTML = `
-            <span class="inline-block w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
-            Disconnected
-        `;
+        const statusIndicator = document.createElement('span');
+        statusIndicator.className = 'inline-block w-2 h-2 bg-gray-400 rounded-full mr-1';
+        
+        statusElement.innerHTML = ''; // Clear first
+        statusElement.appendChild(statusIndicator);
+        statusElement.appendChild(document.createTextNode(' Disconnected'));
         rateLimitElement.textContent = 'N/A';
     }
 }

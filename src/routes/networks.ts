@@ -1,12 +1,17 @@
 import { Router } from 'express';
 import networkController from '../controllers/network-controller';
 import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 
 /**
  * Network isolation routes
+ * Rate limiting applied to prevent abuse
  */
+
+// Apply rate limiting to all network routes
+router.use(rateLimiter);
 
 // GET /api/networks/stats - Get network statistics
 router.get('/stats', networkController.getNetworkStats.bind(networkController));
