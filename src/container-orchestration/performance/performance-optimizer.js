@@ -436,12 +436,13 @@ class PerformanceOptimizer extends EventEmitter {
     };
     
     switch (opportunity.strategy) {
-      case 'increase_prewarm_pool':
+      case 'increase_prewarm_pool': {
         const currentPoolSize = this.startupOptimizer.config.preWarmPoolSize;
         const newPoolSize = Math.min(currentPoolSize + 2, 10);
         this.startupOptimizer.config.preWarmPoolSize = newPoolSize;
         optimization.actions.push(`Increased pre-warm pool size from ${currentPoolSize} to ${newPoolSize}`);
         break;
+      }
         
       case 'enable_image_caching':
         this.startupOptimizer.config.enableImageCaching = true;
@@ -561,13 +562,14 @@ class PerformanceOptimizer extends EventEmitter {
         }
         break;
         
-      case 'enable_memory_limits':
+      case 'enable_memory_limits': {
         // Enforce stricter memory limits on containers
         const currentLimit = this.dockerAPI.config.resourceLimits.memory;
         const newLimit = Math.floor(parseInt(currentLimit) * 0.9).toString();
         this.dockerAPI.config.resourceLimits.memory = newLimit;
         optimization.actions.push(`Reduced container memory limit from ${currentLimit} to ${newLimit}`);
         break;
+      }
     }
     
     logger.info(`Applied memory optimization: ${optimization.actions.join(', ')}`);
@@ -671,7 +673,7 @@ class PerformanceOptimizer extends EventEmitter {
   /**
    * Estimate optimization impact
    */
-  estimateOptimizationImpact(type, currentPerformance) {
+  estimateOptimizationImpact(type, _currentPerformance) {
     // This would use ML models in a production system
     // For now, we'll use heuristics
     
@@ -705,7 +707,7 @@ class PerformanceOptimizer extends EventEmitter {
       case 'conservative':
         return availableStrategies[availableStrategies.length - 1]; // Least risky
       case 'adaptive':
-      default:
+      default: {
         // Select based on current conditions
         const performanceScore = this.calculatePerformanceScore(currentPerformance);
         if (performanceScore < 0.6) {
@@ -715,6 +717,7 @@ class PerformanceOptimizer extends EventEmitter {
         } else {
           return availableStrategies[Math.floor(availableStrategies.length / 2)]; // Moderate approach
         }
+      }
     }
   }
 
@@ -730,7 +733,7 @@ class PerformanceOptimizer extends EventEmitter {
         return opportunities.filter(o => o.priority > 0.7); // Only high-priority optimizations
         
       case 'adaptive':
-      default:
+      default: {
         // Apply optimizations based on current system state
         const systemLoad = this.getCurrentSystemLoad();
         if (systemLoad > 0.8) {
@@ -738,6 +741,7 @@ class PerformanceOptimizer extends EventEmitter {
         } else {
           return opportunities.filter(o => o.priority > 0.5);
         }
+      }
     }
   }
 
@@ -988,7 +992,7 @@ class PerformanceOptimizer extends EventEmitter {
    */
   evaluateTargetCompliance() {
     const compliance = {};
-    const targets = this.config.performanceTargets;
+    const _targets = this.config.performanceTargets;
     
     // This would be populated with actual metric comparisons
     // For now, we'll create a placeholder structure
@@ -1043,7 +1047,7 @@ class PerformanceOptimizer extends EventEmitter {
   /**
    * Update optimization models with new data
    */
-  async updateOptimizationModels(cycleRecord) {
+  async updateOptimizationModels(_cycleRecord) {
     // This would implement actual ML model updates
     // For now, we'll just log the update
     logger.debug('Optimization models updated with new cycle data');
@@ -1052,7 +1056,7 @@ class PerformanceOptimizer extends EventEmitter {
   /**
    * Update performance models with new metrics
    */
-  updatePerformanceModels(metrics) {
+  updatePerformanceModels(_metrics) {
     // Update internal performance tracking
     // This would feed into ML models in a production system
   }
@@ -1098,7 +1102,7 @@ class PerformanceOptimizer extends EventEmitter {
   /**
    * Update optimization targets from bottlenecks
    */
-  updateOptimizationTargetsFromBottlenecks(analysis) {
+  updateOptimizationTargetsFromBottlenecks(_analysis) {
     // Adjust optimization targets based on bottleneck patterns
     // This would implement dynamic target adjustment
   }
@@ -1106,7 +1110,7 @@ class PerformanceOptimizer extends EventEmitter {
   /**
    * Update optimization targets based on performance trends
    */
-  async updateOptimizationTargets(metrics) {
+  async updateOptimizationTargets(_metrics) {
     // This would implement adaptive target adjustment
     // based on performance trends and system capabilities
   }

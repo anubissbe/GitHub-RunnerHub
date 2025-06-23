@@ -205,7 +205,21 @@ export class RoutingController {
       }
 
       // Create a mock job for routing preview
-      const mockJob: any = {
+      interface MockJob {
+        id: string;
+        githubJobId: number;
+        jobId: string;
+        runId: string;
+        repository: string;
+        workflow: string;
+        runnerName: string;
+        status: string;
+        labels: string[];
+        createdAt: Date;
+        updatedAt: Date;
+      }
+
+      const mockJob: MockJob = {
         id: 'preview',
         githubJobId: 1,
         jobId: 'preview-job',
@@ -258,7 +272,11 @@ export class RoutingController {
       
       if (repository) {
         const runners = await runnerPoolManager.getActiveRunners(repository as string);
-        runners.forEach((runner: any) => {
+        interface RunnerWithLabels {
+          labels?: string[];
+        }
+        
+        runners.forEach((runner: RunnerWithLabels) => {
           if (runner.labels) {
             runner.labels.forEach((label: string) => labelSet.add(label));
           }
@@ -268,7 +286,7 @@ export class RoutingController {
         const pools = await runnerPoolManager.getAllPools();
         for (const pool of pools) {
           const runners = await runnerPoolManager.getActiveRunners(pool.repository);
-          runners.forEach((runner: any) => {
+          runners.forEach((runner: RunnerWithLabels) => {
             if (runner.labels) {
               runner.labels.forEach((label: string) => labelSet.add(label));
             }

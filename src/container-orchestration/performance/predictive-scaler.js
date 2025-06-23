@@ -230,7 +230,7 @@ class PredictiveScaler extends EventEmitter {
   async createJobDurationModel() {
     return {
       type: 'duration',
-      predict: async (jobType, features) => {
+      predict: async (jobType, _features) => {
         const historicalDurations = this.getHistoricalJobDurations(jobType);
         if (historicalDurations.length === 0) {
           return { duration: 300000, confidence: 0.5 }; // Default 5 minutes
@@ -491,7 +491,7 @@ class PredictiveScaler extends EventEmitter {
   /**
    * Detect custom pattern
    */
-  async detectCustomPattern(data, patternConfig) {
+  async detectCustomPattern(_data, _patternConfig) {
     // Implement custom pattern detection based on configuration
     return null;
   }
@@ -661,7 +661,7 @@ class PredictiveScaler extends EventEmitter {
   /**
    * Get historical job durations
    */
-  getHistoricalJobDurations(jobType) {
+  getHistoricalJobDurations(_jobType) {
     // In a real implementation, this would query historical job data
     return [300000, 320000, 280000, 350000, 290000]; // Sample durations in ms
   }

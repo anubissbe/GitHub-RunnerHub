@@ -455,7 +455,7 @@ class DynamicScaler extends EventEmitter {
    * Execute scale down
    */
   async executeScaleDown(count) {
-    const poolStatus = this.poolManager.getPoolStatus();
+    const _poolStatus = this.poolManager.getPoolStatus();
     const availableContainers = Array.from(this.poolManager.availableContainers);
     
     if (availableContainers.length === 0) {

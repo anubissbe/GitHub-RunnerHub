@@ -439,7 +439,7 @@ class ContainerPoolManager extends EventEmitter {
   /**
    * Select best container based on requirements
    */
-  selectBestContainer(requirements = {}) {
+  selectBestContainer(_requirements = {}) {
     const availableIds = Array.from(this.availableContainers);
     
     if (availableIds.length === 0) {

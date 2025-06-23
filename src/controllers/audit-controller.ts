@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { createLogger } from '../utils/logger';
-import auditLogger, { AuditEventType, AuditCategory, AuditSeverity, AuditQuery } from '../services/audit-logger';
+import auditLogger, { AuditEventType, AuditCategory, AuditSeverity, AuditQuery, AuditEvent } from '../services/audit-logger';
 
 interface AuthenticatedRequest extends Request {
   user?: {

@@ -487,7 +487,7 @@ class ContainerStartupOptimizer extends EventEmitter {
   /**
    * Pre-allocate volumes
    */
-  async preAllocateVolumes(binds) {
+  async preAllocateVolumes(_binds) {
     // Pre-allocate volume space if needed
     // This is a placeholder for volume optimization
     return Promise.resolve();

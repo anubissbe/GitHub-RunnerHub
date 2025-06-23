@@ -147,7 +147,24 @@ export class WebhookControllerEnhanced {
       );
 
       // Calculate totals
-      const summary = stats.reduce((acc: any, stat: any) => {
+      interface EnhancedStatSummary {
+        totalEvents: number;
+        processedEvents: number;
+        pendingEvents: number;
+        failedEvents: number;
+        avgProcessingTimeMs: number;
+        eventTypes: number;
+      }
+
+      interface EnhancedEventStat {
+        total: number;
+        processed: number;
+        pending: number;
+        failed: number;
+        avgProcessingTimeMs: number;
+      }
+
+      const summary = stats.reduce((acc: EnhancedStatSummary, stat: EnhancedEventStat) => {
         acc.totalEvents += stat.total;
         acc.processedEvents += stat.processed;
         acc.pendingEvents += stat.pending;
@@ -298,7 +315,28 @@ export class WebhookControllerEnhanced {
       } = req.body;
 
       // Generate test payload based on event type
-      let testPayload: any = {
+      interface TestPayload {
+        repository: {
+          id: number;
+          node_id: string;
+          name: string;
+          full_name: string;
+          private: boolean;
+          owner: {
+            login: string;
+            id: number;
+            type: string;
+          };
+        };
+        sender: {
+          login: string;
+          id: number;
+          type: string;
+        };
+        [key: string]: unknown;
+      }
+
+      let testPayload: TestPayload = {
         repository: {
           id: 123456,
           node_id: 'MDEwOlJlcG9zaXRvcnkxMjM0NTY=',

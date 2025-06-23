@@ -278,7 +278,7 @@ export class CleanupController {
 
     switch (policy.type) {
       case 'idle':
-        if (container.state === 'running' && container.lastActivity) {
+        if (container.state === 'running' && container.lastActivity && policy.conditions) {
           const idleTime = now - new Date(container.lastActivity).getTime();
           return idleTime > (policy.conditions.idleTimeMinutes || 30) * 60 * 1000;
         }
@@ -291,8 +291,11 @@ export class CleanupController {
         return !container.runnerId && !container.jobId;
 
       case 'expired':
-        const lifetime = now - new Date(container.createdAt).getTime();
-        return lifetime > (policy.conditions.maxLifetimeHours || 24) * 60 * 60 * 1000;
+        if (policy.conditions) {
+          const lifetime = now - new Date(container.createdAt).getTime();
+          return lifetime > (policy.conditions.maxLifetimeHours || 24) * 60 * 60 * 1000;
+        }
+        return false;
     }
 
     return false;

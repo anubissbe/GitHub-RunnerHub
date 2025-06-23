@@ -205,7 +205,7 @@ class ResourcePredictor extends EventEmitter {
   async buildJobProfiles() {
     logger.info('Building job profiles');
     
-    for (const [jobId, metrics] of this.jobHistory) {
+    for (const [_jobId, metrics] of this.jobHistory) {
       const jobType = metrics.jobType;
       
       if (!this.jobProfiles.has(jobType)) {
@@ -217,7 +217,7 @@ class ResourcePredictor extends EventEmitter {
     }
     
     // Calculate statistics for each profile
-    for (const [jobType, profile] of this.jobProfiles) {
+    for (const [_jobType, profile] of this.jobProfiles) {
       this.calculateProfileStatistics(profile);
     }
     
@@ -499,8 +499,8 @@ class ResourcePredictor extends EventEmitter {
     // Cost optimization
     if (this.config.optimization.costOptimization) {
       // Implement cost-aware resource allocation
-      const costPerCPU = 0.05; // Example cost
-      const costPerGB = 0.01;
+      const _costPerCPU = 0.05; // Example cost
+      const _costPerGB = 0.01;
       
       // Optimize for cost while maintaining performance
       if (optimized.confidence < 0.8) {
@@ -749,7 +749,7 @@ class ResourcePredictor extends EventEmitter {
   prepareTrainingData() {
     const trainingData = [];
     
-    for (const [jobId, metrics] of this.jobHistory) {
+    for (const [_jobId, metrics] of this.jobHistory) {
       if (metrics.actualResources) {
         trainingData.push({
           features: this.extractJobConfigFeatures(metrics),

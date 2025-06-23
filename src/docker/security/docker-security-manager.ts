@@ -1175,7 +1175,7 @@ export class DockerSecurityManager extends EventEmitter {
   /**
    * Generate mock security findings for demonstration
    */
-  private async generateMockFindings(scanType: ScanType): Promise<SecurityFinding[]> {
+  private async generateMockFindings(_scanType: ScanType): Promise<SecurityFinding[]> {
     const findings: SecurityFinding[] = [];
 
     if (scanType === ScanType.VULNERABILITY) {
@@ -1289,8 +1289,7 @@ export class DockerSecurityManager extends EventEmitter {
   /**
    * Get container security configuration
    */
-  private async getContainerSecurityConfig(containerId: string): Promise<ContainerSecurityConfig> {
-    const _containerInfo = await this.dockerClient.getContainerInfo(containerId);
+  private async getContainerSecurityConfig(_containerId: string): Promise<ContainerSecurityConfig> {
     
     return {
       securityContext: {
