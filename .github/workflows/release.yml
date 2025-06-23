@@ -237,8 +237,10 @@ jobs:
 
       - name: 🔍 Scan Container Image
         uses: aquasecurity/trivy-action@master
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           format: 'sarif'
           output: 'container-scan-results.sarif'
 
