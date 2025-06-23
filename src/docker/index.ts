@@ -193,7 +193,7 @@ export {
 } from './security';
 
 // Utility Functions and Factory Methods
-export function createDockerClient(config?: any): DockerClient {
+export function createDockerClient(config?: DockerClientConfig): DockerClient {
   return DockerClient.getInstance(config);
 }
 
@@ -335,14 +335,14 @@ export class DockerIntegrationService {
           },
           allowedRegistries: ['docker.io', 'ghcr.io', 'gcr.io'],
           blockedImages: [],
-          vulnerabilityThreshold: 'high' as any
+          vulnerabilityThreshold: 'high' as VulnerabilityLevel
         },
         cleanup: {
           enabled: this.config.imageOptimization.cleanupOldOptimizations ?? true,
           schedule: '0 2 * * *',
           removeUnused: true,
           removeDangling: true,
-          pruneStrategy: 'balanced' as any,
+          pruneStrategy: 'balanced' as PruneStrategy,
           retentionPeriod: 168,
           excludeImages: ['ubuntu:latest', 'node:18-alpine', 'python:3.11-slim']
         }
@@ -421,12 +421,15 @@ export class DockerIntegrationService {
    * Get comprehensive system metrics
    */
   public getSystemMetrics(): {
-    docker: any;
-    templates: any;
-    networks: any;
-    volumes: any;
-    imageOptimization: any;
-    security: any;
+    docker: {
+      connected: boolean;
+      config: DockerClientConfig;
+    };
+    templates: unknown;
+    networks: unknown;
+    volumes: unknown;
+    imageOptimization: unknown;
+    security: unknown;
   } {
     return {
       docker: {
@@ -519,7 +522,7 @@ export class DockerIntegrationService {
       if (result.containerId) {
         try {
           await this.dockerClient.removeContainer(result.containerId, true);
-        } catch (cleanupError) {
+        } catch (_cleanupError) {
           // Log but don't throw
         }
       }
@@ -527,7 +530,7 @@ export class DockerIntegrationService {
       if (result.networkId) {
         try {
           await this.networkManager.removeNetwork(result.networkId);
-        } catch (cleanupError) {
+        } catch (_cleanupError) {
           // Log but don't throw
         }
       }
@@ -535,7 +538,7 @@ export class DockerIntegrationService {
       for (const mountId of result.volumeMounts) {
         try {
           await this.volumeManager.unmountVolume(mountId);
-        } catch (cleanupError) {
+        } catch (_cleanupError) {
           // Log but don't throw
         }
       }
@@ -562,32 +565,28 @@ export class DockerIntegrationService {
       ...options
     };
 
-    try {
-      // Get container network info before removal
-      const networkInfo = await this.networkManager.getContainerNetworkInfo(containerId);
+    // Get container network info before removal
+    const networkInfo = await this.networkManager.getContainerNetworkInfo(containerId);
 
-      // Stop and remove container
-      await this.dockerClient.stopContainer(containerId);
-      await this.dockerClient.removeContainer(containerId, opts.force);
+    // Stop and remove container
+    await this.dockerClient.stopContainer(containerId);
+    await this.dockerClient.removeContainer(containerId, opts.force);
 
-      // Remove networks if requested
-      if (opts.removeNetwork) {
-        for (const network of networkInfo) {
-          try {
-            await this.networkManager.removeNetwork(network.networkId);
-          } catch (error) {
-            // Log but continue
-          }
+    // Remove networks if requested
+    if (opts.removeNetwork) {
+      for (const network of networkInfo) {
+        try {
+          await this.networkManager.removeNetwork(network.networkId);
+        } catch (_error) {
+          // Log but continue
         }
       }
+    }
 
-      // Remove volumes if requested
-      if (opts.removeVolumes) {
-        // This would require tracking volume mounts by container
-        // Implementation depends on how mount tracking is implemented
-      }
-    } catch (error) {
-      throw error;
+    // Remove volumes if requested
+    if (opts.removeVolumes) {
+      // This would require tracking volume mounts by container
+      // Implementation depends on how mount tracking is implemented
     }
   }
 

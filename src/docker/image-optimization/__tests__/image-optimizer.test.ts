@@ -1,4 +1,4 @@
-import { ImageOptimizer, OptimizationType, OptimizationActionType } from '../image-optimizer';
+import { ImageOptimizer, OptimizationType, OptimizationActionType, CompressionAlgorithm } from '../image-optimizer';
 import { DockerClient } from '../../docker-client';
 import * as fs from 'fs/promises';
 
@@ -249,7 +249,7 @@ describe('ImageOptimizer', () => {
 
       mockDockerClient.buildImage.mockResolvedValue('cleaned-image-id');
 
-      const result = await (imageOptimizer as any).removeUnusedFiles(imageId, parameters);
+      const result = await (imageOptimizer as unknown as { removeUnusedFiles: (id: string, params: unknown) => Promise<unknown> }).removeUnusedFiles(imageId, parameters);
 
       expect(result).toBe('cleaned-image-id');
       expect(mockDockerClient.buildImage).toHaveBeenCalled();
@@ -261,7 +261,7 @@ describe('ImageOptimizer', () => {
 
       mockDockerClient.buildImage.mockResolvedValue('new-image-id');
 
-      const result = await (imageOptimizer as any).buildOptimizedImage(dockerfile, tag);
+      const result = await (imageOptimizer as unknown as { buildOptimizedImage: (dockerfile: string, tag: string) => Promise<unknown> }).buildOptimizedImage(dockerfile, tag);
 
       expect(result).toBe('new-image-id');
       expect(mockFs.mkdir).toHaveBeenCalled();
@@ -290,7 +290,7 @@ describe('ImageOptimizer', () => {
         enabled: false,
         compression: {
           enabled: false,
-          algorithm: 'gzip' as any,
+          algorithm: 'gzip' as CompressionAlgorithm,
           level: 9,
           excludeExtensions: ['.jpg'],
           parallelize: false,
@@ -359,7 +359,7 @@ describe('ImageOptimizer', () => {
         }
       };
 
-      (imageOptimizer as any).optimizedImages.set('image1:latest', testImage1);
+      (imageOptimizer as unknown as { optimizedImages: Map<string, unknown> }).optimizedImages.set('image1:latest', testImage1);
     });
 
     it('should get optimization statistics', () => {
@@ -456,8 +456,8 @@ describe('ImageOptimizer', () => {
         }
       };
 
-      (imageOptimizer as any).optimizedImages.set('old-image:latest', oldOptimization);
-      (imageOptimizer as any).optimizedImages.set('recent-image:latest', recentOptimization);
+      (imageOptimizer as unknown as { optimizedImages: Map<string, unknown> }).optimizedImages.set('old-image:latest', oldOptimization);
+      (imageOptimizer as unknown as { optimizedImages: Map<string, unknown> }).optimizedImages.set('recent-image:latest', recentOptimization);
     });
 
     it('should cleanup old optimizations', async () => {
@@ -485,7 +485,7 @@ describe('ImageOptimizer', () => {
 
   describe('Utility Functions', () => {
     it('should parse size strings correctly', () => {
-      const parseSize = (imageOptimizer as any).parseSize;
+      const parseSize = (imageOptimizer as unknown as { parseSize: (size: string) => number }).parseSize;
 
       expect(parseSize('1024B')).toBe(1024);
       expect(parseSize('1KB')).toBe(1024);
@@ -495,7 +495,7 @@ describe('ImageOptimizer', () => {
     });
 
     it('should compare values correctly', () => {
-      const compareValues = (imageOptimizer as any).compareValues;
+      const compareValues = (imageOptimizer as unknown as { compareValues: (a: unknown, b: unknown) => number }).compareValues;
 
       expect(compareValues(1000000000, '500MB')).toBeGreaterThan(0);
       expect(compareValues(500000000, '1GB')).toBeLessThan(0);
@@ -505,7 +505,7 @@ describe('ImageOptimizer', () => {
     });
 
     it('should calculate optimization score correctly', () => {
-      const calculateOptimizationScore = (imageOptimizer as any).calculateOptimizationScore;
+      const calculateOptimizationScore = (imageOptimizer as unknown as { calculateOptimizationScore: (before: number, after: number) => number }).calculateOptimizationScore;
 
       expect(calculateOptimizationScore(1000, 800)).toBe(20); // 20% reduction
       expect(calculateOptimizationScore(1000, 500)).toBe(50); // 50% reduction
@@ -514,8 +514,8 @@ describe('ImageOptimizer', () => {
     });
 
     it('should generate unique optimization IDs', () => {
-      const generateId1 = (imageOptimizer as any).generateOptimizationId('image1:latest');
-      const generateId2 = (imageOptimizer as any).generateOptimizationId('image1:latest');
+      const generateId1 = (imageOptimizer as unknown as { generateOptimizationId: (id: string) => string }).generateOptimizationId('image1:latest');
+      const generateId2 = (imageOptimizer as unknown as { generateOptimizationId: (id: string) => string }).generateOptimizationId('image1:latest');
 
       expect(generateId1).toBeDefined();
       expect(generateId2).toBeDefined();
@@ -561,7 +561,7 @@ describe('ImageOptimizer', () => {
       const tag = 'test-image';
 
       await expect(
-        (imageOptimizer as any).buildOptimizedImage(dockerfile, tag)
+        (imageOptimizer as unknown as { buildOptimizedImage: (dockerfile: string, tag: string) => Promise<unknown> }).buildOptimizedImage(dockerfile, tag)
       ).rejects.toThrow('Permission denied');
     });
   });

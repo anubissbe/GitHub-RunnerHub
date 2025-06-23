@@ -4,7 +4,6 @@ import { createLogger } from '../utils/logger';
 import database from './database';
 import auditLogger, { AuditEventType, AuditCategory, AuditSeverity } from './audit-logger';
 import { spawn } from 'child_process';
-import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';

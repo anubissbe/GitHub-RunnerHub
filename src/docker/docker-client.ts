@@ -339,9 +339,18 @@ export class DockerClient extends EventEmitter {
         follow: options.follow || false
       };
 
-      const logs = await container.logs(logOptions);
+      const stream = await container.logs(logOptions);
       
-      return this.parseContainerLogs(logs);
+      // Convert stream to buffer
+      const chunks: Buffer[] = [];
+      return new Promise((resolve, reject) => {
+        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+        stream.on('end', () => {
+          const logs = Buffer.concat(chunks);
+          resolve(this.parseContainerLogs(logs));
+        });
+        stream.on('error', reject);
+      });
     } catch (error) {
       logger.error(`Failed to get container logs ${containerId}:`, error);
       throw error;
@@ -564,7 +573,7 @@ export class DockerClient extends EventEmitter {
       finished: state.FinishedAt && state.FinishedAt !== '0001-01-01T00:00:00Z' 
         ? new Date(state.FinishedAt) : undefined,
       ports: this.parsePorts(config.ExposedPorts, hostConfig.PortBindings),
-      mounts: (inspect.Mounts || []).map((mount: Docker.MountPoint) => ({
+      mounts: (inspect.Mounts || []).map((mount) => ({
         source: mount.Source,
         destination: mount.Destination,
         mode: mount.Mode as 'ro' | 'rw',

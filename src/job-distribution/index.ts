@@ -5,10 +5,11 @@
 
 // Import types that are used in this file
 import type { ResourceRequirements, JobMetadata } from './job-router';
-import { RoutingAlgorithm } from './job-router';
-import { LoadBalancingAlgorithm } from './load-balancer';
-import { SchedulingAlgorithm } from './resource-scheduler';
-import { DependencyResolutionStrategy } from './dependency-manager';
+import { RoutingAlgorithm, JobRouter } from './job-router';
+import { LoadBalancingAlgorithm, LoadBalancer, BackoffStrategy } from './load-balancer';
+import { SchedulingAlgorithm, ResourceScheduler } from './resource-scheduler';
+import { DependencyResolutionStrategy, DependencyManager } from './dependency-manager';
+import { ParallelExecutor } from './parallel-executor';
 
 // Core Router
 export {
@@ -216,7 +217,7 @@ export const createDefaultJobDistributionConfig = () => ({
       retryPolicy: {
         enabled: true,
         maxRetries: 3,
-        backoffStrategy: BackoffStrategy.Exponential,
+        backoffStrategy: BackoffStrategy.EXPONENTIAL,
         retryableErrors: ['timeout', 'network', 'resource']
       }
     },

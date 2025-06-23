@@ -138,10 +138,10 @@ export function validateURL(url: string, allowedDomains: string[] = ['api.github
     throw new Error('URL must be a non-empty string');
   }
 
-  let parsedUrl: URL;
+  let parsedUrl: globalThis.URL;
   try {
-    parsedUrl = new URL(url);
-  } catch (_error) {
+    parsedUrl = new globalThis.URL(url);
+  } catch {
     throw new Error('Invalid URL format');
   }
 
