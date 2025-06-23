@@ -219,9 +219,9 @@ export class CleanupController {
       const policies = containerCleanup.getCleanupPolicies();
       
       const previewResult = {
-        containersToClean: [] as any[],
+        containersToClean: [] as Array<{ id: string; name: string; status: string; created: string; policy: string }>,
         totalContainers: containers.length,
-        policies: [] as any[]
+        policies: [] as Array<{ id: string; name: string; containersAffected: number }>
       };
 
       // Filter by specific policy if provided

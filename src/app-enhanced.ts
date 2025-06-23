@@ -1,4 +1,4 @@
-import express, { Application } from 'express';
+import express, { Application, Request } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -100,7 +100,7 @@ export class AppEnhanced {
 
     // Make io available in req
     this.app.use((req, _res, next) => {
-      (req as Request & { io: Server }).io = this.io;
+      (req as unknown as Request & { io: Server }).io = this.io;
       next();
     });
   }
@@ -412,7 +412,7 @@ export class AppEnhanced {
       });
 
       // Start the server
-      this.server.listen(port, () => {
+      this.server?.listen(port, () => {
         logger.info(`Enhanced server running on port ${port}`);
         logger.info(`Dashboard available at http://localhost:${port}/dashboard`);
         logger.info(`WebSocket server integrated on same port`);
@@ -442,7 +442,7 @@ export class AppEnhanced {
       this.io.close();
       
       // Close HTTP server
-      this.server.close(() => {
+      this.server?.close(() => {
         logger.info('Enhanced server stopped');
         resolve();
       });

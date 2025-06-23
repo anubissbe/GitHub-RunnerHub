@@ -847,7 +847,7 @@ class ContainerPrewarmer extends EventEmitter {
   async removeExpiredContainers() {
     const expired = [];
     
-    for (const [containerId, container] of this.containers) {
+    for (const [_containerId, container] of this.containers) {
       const age = Date.now() - container.createdAt.getTime();
       
       if (age > this.config.containerMaxAge && container.status === 'ready') {

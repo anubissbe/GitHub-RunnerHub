@@ -257,7 +257,7 @@ class CostOptimizer extends EventEmitter {
     };
     
     // Get running instances
-    for (const [instanceId, instance] of this.instances) {
+    for (const [_instanceId, instance] of this.instances) {
       if (instance.state === 'running') {
         const hourlyCost = this.calculateInstanceHourlyCost(instance);
         costs.hourly += hourlyCost;
@@ -321,7 +321,7 @@ class CostOptimizer extends EventEmitter {
       other: 0
     };
     
-    for (const [instanceId, instance] of this.instances) {
+    for (const [_instanceId, instance] of this.instances) {
       if (instance.state === 'running') {
         const cost = this.calculateInstanceHourlyCost(instance);
         
@@ -556,7 +556,7 @@ class CostOptimizer extends EventEmitter {
   /**
    * Get instance utilization
    */
-  async getInstanceUtilization(instanceId) {
+  async getInstanceUtilization(_instanceId) {
     // This would integrate with CloudWatch or monitoring system
     // For now, return simulated data
     
@@ -571,7 +571,7 @@ class CostOptimizer extends EventEmitter {
   /**
    * Recommend smaller instance
    */
-  recommendSmallerInstance(instance, utilization) {
+  recommendSmallerInstance(instance, _utilization) {
     const downsizeMap = {
       't3.2xlarge': 't3.xlarge',
       't3.xlarge': 't3.large',
