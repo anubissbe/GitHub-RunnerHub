@@ -630,8 +630,29 @@ export class SecurityScanner extends EventEmitter {
       } catch (nativeError) {
         // Fallback to Docker
         logger.debug('Falling back to Docker Trivy');
-        const dockerCommand = `docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${outputFile}:${outputFile} aquasec/trivy:${this.trivyVersion} image --format json --output ${outputFile} ${imageRef}`;
-        await execAsync(dockerCommand);
+        // Validate and sanitize inputs
+        const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9.\/:_-]/g, '');
+        const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9.\/_-]/g, '');
+        const sanitizedVersion = this.trivyVersion.replace(/[^a-zA-Z0-9._-]/g, '');
+        
+        const dockerArgs = [
+          'run', '--rm',
+          '-v', '/var/run/docker.sock:/var/run/docker.sock',
+          '-v', `${sanitizedOutputFile}:${sanitizedOutputFile}`,
+          `aquasec/trivy:${sanitizedVersion}`,
+          'image', '--format', 'json',
+          '--output', sanitizedOutputFile,
+          sanitizedImageRef
+        ];
+        
+        const { spawn } = require('child_process');
+        const dockerProcess = spawn('docker', dockerArgs);
+        await new Promise((resolve, reject) => {
+          dockerProcess.on('close', (code: number) => {
+            if (code === 0) resolve(code);
+            else reject(new Error(`Docker command failed with code ${code}`));
+          });
+        });
       }
 
       // Read and parse results
