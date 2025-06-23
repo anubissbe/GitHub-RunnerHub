@@ -1126,14 +1126,15 @@ export class DependencyManager extends EventEmitter {
   private evaluateJsonPathCondition(expression: string, depNode: JobNode): boolean {
     // Simplified JSONPath evaluation
     try {
-      const _data = {
+      // Data for JSONPath evaluation
+      const data = {
         result: depNode.result,
         status: depNode.status,
         metadata: depNode.metadata
       };
       
       // Basic JSONPath support (would use jsonpath library in production)
-      return expression.includes('success') ? depNode.result?.success === true : false;
+      return expression.includes('success') ? data.status === JobNodeStatus.COMPLETED : false;
     } catch (error) {
       return false;
     }

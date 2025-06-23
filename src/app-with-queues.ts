@@ -42,9 +42,10 @@ export class App {
   private io: Server;
   private queueManager: QueueManager;
   // Reserved for future service management integration
-  private _serviceManager: ServiceManager;
+  private serviceManager: ServiceManager;
 
-  constructor(_serviceManager: ServiceManager, queueManager: QueueManager) {
+  constructor(serviceManager: ServiceManager, queueManager: QueueManager) {
+    this.serviceManager = serviceManager;
     this.app = express();
     this.server = createServer(this.app);
     this.io = new Server(this.server, {

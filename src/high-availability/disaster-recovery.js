@@ -10,8 +10,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const { spawn } = require('child_process');
 const crypto = require('crypto');
-const { Client } = require('pg');
-const Redis = require('ioredis');
+// Database clients - will be used for recovery operations
+const { Client: _PgClient } = require('pg');
+const _Redis = require('ioredis');
 
 class DisasterRecoveryManager extends EventEmitter {
   constructor(options = {}) {

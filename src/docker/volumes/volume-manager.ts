@@ -947,7 +947,8 @@ export class VolumeManager extends EventEmitter {
     }
 
     const retention = config.metadata.retention;
-    const _cutoffDate = new Date(Date.now() - (retention.maxAge * 24 * 60 * 60 * 1000));
+    const cutoffDate = new Date(Date.now() - (retention.maxAge * 24 * 60 * 60 * 1000));
+    logger.debug(`Cleanup cutoff date: ${cutoffDate.toISOString()}`);
 
     logger.info(`Performing cleanup for volume ${volumeId} (strategy: ${retention.cleanupStrategy})`);
 

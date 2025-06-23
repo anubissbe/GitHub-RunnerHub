@@ -339,18 +339,25 @@ export class DockerClient extends EventEmitter {
         follow: options.follow || false
       };
 
-      const stream = await container.logs(logOptions);
+      const logOptionsWithFollow = { ...logOptions, follow: false };
+      const result = await container.logs(logOptionsWithFollow);
       
-      // Convert stream to buffer
-      const chunks: Buffer[] = [];
-      return new Promise((resolve, reject) => {
-        stream.on('data', (chunk: Buffer) => chunks.push(chunk));
-        stream.on('end', () => {
-          const logs = Buffer.concat(chunks);
-          resolve(this.parseContainerLogs(logs));
+      // Handle different return types based on options
+      if (result instanceof Buffer) {
+        return this.parseContainerLogs(result);
+      } else {
+        // Handle stream case
+        const stream = result as NodeJS.ReadableStream;
+        const chunks: Buffer[] = [];
+        return new Promise((resolve, reject) => {
+          stream.on('data', (chunk: Buffer) => chunks.push(chunk));
+          stream.on('end', () => {
+            const logs = Buffer.concat(chunks);
+            resolve(this.parseContainerLogs(logs));
+          });
+          stream.on('error', reject);
         });
-        stream.on('error', reject);
-      });
+      }
     } catch (error) {
       logger.error(`Failed to get container logs ${containerId}:`, error);
       throw error;

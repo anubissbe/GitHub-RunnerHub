@@ -25,7 +25,7 @@ let app: App;
 let serviceManager: ServiceManager;
 let queueManager: QueueManager;
 let jobRouter: JobRouter;
-let _retryHandler: RetryHandler;
+// RetryHandler is initialized but not used in this context
 let jobPersistence: JobPersistence;
 let isShuttingDown = false;
 

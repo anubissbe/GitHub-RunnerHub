@@ -335,14 +335,14 @@ export class DockerIntegrationService {
           },
           allowedRegistries: ['docker.io', 'ghcr.io', 'gcr.io'],
           blockedImages: [],
-          vulnerabilityThreshold: 'high'
+          vulnerabilityThreshold: 'high' as 'high'
         },
         cleanup: {
           enabled: this.config.imageOptimization.cleanupOldOptimizations ?? true,
           schedule: '0 2 * * *',
           removeUnused: true,
           removeDangling: true,
-          pruneStrategy: 'balanced',
+          pruneStrategy: 'balanced' as 'balanced',
           retentionPeriod: 168,
           excludeImages: ['ubuntu:latest', 'node:18-alpine', 'python:3.11-slim']
         }
@@ -522,7 +522,7 @@ export class DockerIntegrationService {
       if (result.containerId) {
         try {
           await this.dockerClient.removeContainer(result.containerId, true);
-        } catch (_cleanupError) {
+        } catch {
           // Log but don't throw
         }
       }
@@ -530,7 +530,7 @@ export class DockerIntegrationService {
       if (result.networkId) {
         try {
           await this.networkManager.removeNetwork(result.networkId);
-        } catch (_cleanupError) {
+        } catch {
           // Log but don't throw
         }
       }
@@ -538,7 +538,7 @@ export class DockerIntegrationService {
       for (const mountId of result.volumeMounts) {
         try {
           await this.volumeManager.unmountVolume(mountId);
-        } catch (_cleanupError) {
+        } catch {
           // Log but don't throw
         }
       }
@@ -577,7 +577,7 @@ export class DockerIntegrationService {
       for (const network of networkInfo) {
         try {
           await this.networkManager.removeNetwork(network.networkId);
-        } catch (_error) {
+        } catch {
           // Log but continue
         }
       }
