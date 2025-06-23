@@ -1,15 +1,17 @@
 import { Router } from 'express';
 import securityController from '../controllers/security-controller';
 import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 
 /**
  * Security scanning routes
- * All routes require authentication
+ * All routes require authentication and rate limiting
  */
 
-// Apply authentication to all security routes
+// Apply rate limiting and authentication to all security routes
+router.use(rateLimiter);
 router.use(authMiddleware.authenticate());
 
 // POST /api/security/scan - Scan an image (operator+)

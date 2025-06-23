@@ -619,14 +619,32 @@ export class SecurityScanner extends EventEmitter {
     const outputFile = path.join(this.scanDirectory, `${uuidv4()}.json`);
 
     try {
-      // Run Trivy scan
-      const trivyCommand = `trivy image --format json --output ${outputFile} --timeout ${this.scanTimeout / 1000}s ${imageRef}`;
+      // Validate and sanitize inputs
+      const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9.\/:_-]/g, '');
+      const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9.\/_-]/g, '');
+      const timeoutSeconds = Math.floor(this.scanTimeout / 1000);
       
-      logger.debug('Running Trivy scan', { command: trivyCommand });
+      // Prepare safe command arguments
+      const trivyArgs = [
+        'image',
+        '--format', 'json',
+        '--output', sanitizedOutputFile,
+        '--timeout', `${timeoutSeconds}s`,
+        sanitizedImageRef
+      ];
+      
+      logger.debug('Running Trivy scan', { args: trivyArgs });
       
       try {
-        // Try native Trivy first
-        await execAsync(trivyCommand);
+        // Try native Trivy first using spawn for safety
+        const { spawn } = require('child_process');
+        const trivyProcess = spawn('trivy', trivyArgs);
+        await new Promise((resolve, reject) => {
+          trivyProcess.on('close', (code: number) => {
+            if (code === 0) resolve(code);
+            else reject(new Error(`Trivy command failed with code ${code}`));
+          });
+        });
       } catch (nativeError) {
         // Fallback to Docker
         logger.debug('Falling back to Docker Trivy');

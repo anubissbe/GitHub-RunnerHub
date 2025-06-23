@@ -6,13 +6,15 @@ import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 
-// Public webhook endpoint (GitHub will call this)
+// Public webhook endpoint (GitHub will call this) with rate limiting
 router.post(
   '/github',
+  rateLimiter,
   asyncHandler(webhookControllerEnhanced.handleGitHubWebhook.bind(webhookControllerEnhanced))
 );
 
 // Protected management endpoints
+router.use(rateLimiter); // Apply rate limiting to all protected routes
 router.use(authenticate.authenticate()); // All routes below require authentication
 
 // Get webhook events with filtering

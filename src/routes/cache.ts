@@ -2,8 +2,12 @@ import { Router } from 'express';
 import cacheController from '../controllers/cache-controller';
 import authMiddleware from '../middleware/auth';
 import { asyncHandler } from '../middleware/async-handler';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
+
+// Apply rate limiting to all cache routes
+router.use(rateLimiter);
 
 // Get cache metrics
 router.get('/metrics', asyncHandler(cacheController.getMetrics));

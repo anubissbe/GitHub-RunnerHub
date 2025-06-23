@@ -1,12 +1,17 @@
 import { Router } from 'express';
 import authController from '../controllers/auth-controller';
 import authMiddleware from '../middleware/auth';
+import { rateLimiter } from '../middleware/rate-limiter';
 
 const router = Router();
 
 /**
  * Authentication routes
+ * Rate limiting applied to prevent brute force attacks
  */
+
+// Apply rate limiting to all auth routes
+router.use(rateLimiter);
 
 // POST /api/auth/login - User login
 router.post('/login', authController.login.bind(authController));
