@@ -197,7 +197,6 @@ jobs:
             type=semver,pattern={{version}},value=v${{ steps.version.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=v${{ steps.version.outputs.version }}
             type=semver,pattern={{major}},value=v${{ steps.version.outputs.version }}
-            type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: 🔐 Setup QEMU
