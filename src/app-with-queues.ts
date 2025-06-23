@@ -54,7 +54,7 @@ export class App {
         methods: ['GET', 'POST']
       }
     });
-    this._serviceManager = _serviceManager;
+    // serviceManager is now stored in constructor
     this.queueManager = queueManager;
     this.setupMiddleware();
     this.setupRoutes();

@@ -339,7 +339,10 @@ export class DockerClient extends EventEmitter {
         follow: options.follow || false
       };
 
-      const logOptionsWithFollow = { ...logOptions, follow: false };
+      const logOptionsWithFollow: Docker.ContainerLogsOptions & { follow: false } = { 
+        ...logOptions, 
+        follow: false 
+      };
       const result = await container.logs(logOptionsWithFollow);
       
       // Handle different return types based on options
