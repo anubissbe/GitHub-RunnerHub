@@ -9,7 +9,8 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const { exec, spawn } = require('child_process');
+const { URL } = require('url');
+const { exec, _spawn } = require('child_process');
 const { promisify } = require('util');
 
 const execAsync = promisify(exec);
@@ -144,7 +145,7 @@ class LoadTestFramework {
 
         // Analyze results
         const responseTimes = [];
-        responses.forEach((result, index) => {
+        responses.forEach((result, _index) => {
             if (result.status === 'fulfilled') {
                 results.successfulJobs++;
                 responseTimes.push(result.value.responseTime);
@@ -198,7 +199,7 @@ class LoadTestFramework {
         const startTime = Date.now();
         let jobIndex = 0;
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve, _reject) => {
             const submitJob = async () => {
                 if (jobIndex >= totalJobs) {
                     const endTime = Date.now();
@@ -615,11 +616,7 @@ class LoadTestFramework {
     }
 
     async executeOperation(operation) {
-        try {
-            return await operation();
-        } catch (error) {
-            throw error;
-        }
+        return await operation();
     }
 
     async monitorSystemResources(results) {
@@ -828,7 +825,7 @@ if (require.main === module) {
     const loadTester = new LoadTestFramework(options);
     
     loadTester.executeLoadTestSuite()
-        .then((results) => {
+        .then((_results) => {
             console.log('✅ Load testing completed successfully');
             process.exit(0);
         })

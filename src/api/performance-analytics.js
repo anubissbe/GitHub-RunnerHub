@@ -93,7 +93,7 @@ router.get('/widgets/:widgetName', ensureDashboard, (req, res) => {
 router.get('/metrics/:metricName', ensureDashboard, (req, res) => {
   try {
     const { metricName } = req.params;
-    const { start, end, interval } = req.query;
+    const { start, end, _interval } = req.query;
     
     const dashboardData = performanceDashboard.getDashboardData();
     const timeSeries = dashboardData.performance.timeSeries[metricName];
@@ -137,7 +137,7 @@ router.get('/metrics/:metricName', ensureDashboard, (req, res) => {
  */
 router.get('/reports/generate', ensureDashboard, async (req, res) => {
   try {
-    const { period = '24h', format = 'json' } = req.query;
+    const { period = '24h', _format = 'json' } = req.query;
     
     const report = await performanceDashboard.generateAnalyticsReport({ period });
     

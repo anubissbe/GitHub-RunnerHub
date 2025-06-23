@@ -129,11 +129,11 @@ export class ContainerTemplateManager {
   private static instance: ContainerTemplateManager;
   private dockerClient: DockerClient;
   private templates: Map<string, TemplateConfig> = new Map();
-  private templateRegistry: string;
+  private _templateRegistry: string;
 
   private constructor() {
     this.dockerClient = DockerClient.getInstance();
-    this.templateRegistry = process.env.TEMPLATE_REGISTRY || 'default';
+    this._templateRegistry = process.env.TEMPLATE_REGISTRY || 'default';
     this.initializeDefaultTemplates();
   }
 
@@ -733,7 +733,10 @@ export class ContainerTemplateManager {
           : undefined,
         PortBindings: portBindings,
         Binds: binds,
-        RestartPolicy: template.restartPolicy,
+        RestartPolicy: {
+          Name: template.restartPolicy.name,
+          MaximumRetryCount: template.restartPolicy.maximumRetryCount || 0
+        },
         Privileged: template.securityOptions.privileged,
         ReadonlyRootfs: template.securityOptions.readOnlyRootfs,
         SecurityOpt: this.buildSecurityOptions(template.securityOptions),

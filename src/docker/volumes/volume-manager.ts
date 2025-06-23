@@ -2,7 +2,7 @@ import { createLogger } from '../../utils/logger';
 import { DockerClient } from '../docker-client';
 import { EventEmitter } from 'events';
 import Docker from 'dockerode';
-import * as path from 'path';
+import * as _path from 'path';
 
 const logger = createLogger('VolumeManager');
 
@@ -911,7 +911,7 @@ export class VolumeManager extends EventEmitter {
    * Collect volume metrics
    */
   private async collectVolumeMetrics(): Promise<void> {
-    for (const [volumeId, config] of this.volumes.entries()) {
+    for (const [volumeId, _config] of this.volumes.entries()) {
       try {
         await this.getVolumeUsage(volumeId);
       } catch (error) {
@@ -947,7 +947,7 @@ export class VolumeManager extends EventEmitter {
     }
 
     const retention = config.metadata.retention;
-    const cutoffDate = new Date(Date.now() - (retention.maxAge * 24 * 60 * 60 * 1000));
+    const _cutoffDate = new Date(Date.now() - (retention.maxAge * 24 * 60 * 60 * 1000));
 
     logger.info(`Performing cleanup for volume ${volumeId} (strategy: ${retention.cleanupStrategy})`);
 

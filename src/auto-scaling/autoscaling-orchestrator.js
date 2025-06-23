@@ -624,7 +624,7 @@ class AutoScalingOrchestrator extends EventEmitter {
   /**
    * Apply scaling policies
    */
-  applyScalingPolicies(targetRunners, metrics) {
+  applyScalingPolicies(targetRunners, _metrics) {
     let finalTarget = targetRunners;
     const currentRunners = this.scalingState.currentRunners;
     
