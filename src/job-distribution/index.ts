@@ -6,6 +6,9 @@
 // Import types that are used in this file
 import type { ResourceRequirements, JobMetadata } from './job-router';
 import { RoutingAlgorithm } from './job-router';
+import { LoadBalancingAlgorithm } from './load-balancer';
+import { SchedulingAlgorithm } from './resource-scheduler';
+import { DependencyResolutionStrategy } from './dependency-manager';
 
 // Core Router
 export {
@@ -152,7 +155,7 @@ export {
 // Convenience factory functions for creating configurations
 export const createDefaultJobDistributionConfig = () => ({
   router: {
-    algorithm: RoutingAlgorithm.Intelligent,
+    algorithm: RoutingAlgorithm.INTELLIGENT,
     enableMetrics: true,
     enableAdaptiveRouting: true,
     loadBalancingFactor: 0.3,
@@ -164,7 +167,7 @@ export const createDefaultJobDistributionConfig = () => ({
     maxConcurrentJobs: 100,
     maxQueueSize: 1000,
     loadBalancingStrategy: {
-      algorithm: LoadBalancingAlgorithm.WeightedRoundRobin,
+      algorithm: LoadBalancingAlgorithm.WEIGHTED_ROUND_ROBIN,
       weights: {},
       stickyness: {
         enabled: false,
@@ -180,7 +183,7 @@ export const createDefaultJobDistributionConfig = () => ({
     preemptionEnabled: false
   },
   scheduler: {
-    schedulingAlgorithm: SchedulingAlgorithm.Intelligent,
+    schedulingAlgorithm: SchedulingAlgorithm.MULTI_OBJECTIVE,
     resourcePools: [],
     schedulingInterval: 5000,
     preemptionEnabled: false,
@@ -200,7 +203,7 @@ export const createDefaultJobDistributionConfig = () => ({
   dependencyManager: {
     maxDependencyDepth: 10,
     circularDependencyDetection: true,
-    dependencyResolution: DependencyResolutionStrategy.Topological,
+    dependencyResolution: DependencyResolutionStrategy.STRICT,
     timeoutHandling: {
       enabled: true,
       defaultTimeout: 3600000,

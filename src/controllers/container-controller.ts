@@ -53,7 +53,7 @@ export class ContainerController {
       if (container.state === 'running') {
         try {
           stats = await containerLifecycle.getContainerStats(id);
-        } catch (error) {
+        } catch (_error) {
           // Stats might not be available
         }
       }

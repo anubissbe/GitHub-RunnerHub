@@ -46,7 +46,7 @@ async function initializeQueueSystem() {
     jobRouter = JobRouter.getInstance();
     
     // Initialize retry handler
-    retryHandler = RetryHandler.getInstance();
+    _retryHandler = RetryHandler.getInstance();
     
     // Attach retry handler to all workers
     const queues = Object.values(QUEUE_CONFIG.queues);

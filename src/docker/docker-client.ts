@@ -331,7 +331,7 @@ export class DockerClient extends EventEmitter {
 
     try {
       const container = this.docker.getContainer(containerId);
-      const logOptions = {
+      const logOptions: Dockerode.ContainerLogsOptions = {
         stdout: true,
         stderr: true,
         tail: options.tail || 100,
@@ -547,7 +547,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse container inspection data
    */
-  private parseContainerInfo(inspect: any): ContainerInfo {
+  private parseContainerInfo(inspect: Dockerode.ContainerInspectInfo): ContainerInfo {
     const state = inspect.State;
     const config = inspect.Config;
     const hostConfig = inspect.HostConfig;
@@ -564,7 +564,7 @@ export class DockerClient extends EventEmitter {
       finished: state.FinishedAt && state.FinishedAt !== '0001-01-01T00:00:00Z' 
         ? new Date(state.FinishedAt) : undefined,
       ports: this.parsePorts(config.ExposedPorts, hostConfig.PortBindings),
-      mounts: (inspect.Mounts || []).map((mount: any) => ({
+      mounts: (inspect.Mounts || []).map((mount) => ({
         source: mount.Source,
         destination: mount.Destination,
         mode: mount.Mode as 'ro' | 'rw',
@@ -579,7 +579,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse port mappings
    */
-  private parsePorts(exposedPorts: any, portBindings: any): PortMapping[] {
+  private parsePorts(exposedPorts: Record<string, Record<string, unknown>> | undefined, portBindings: Dockerode.PortMap | undefined): PortMapping[] {
     const ports: PortMapping[] = [];
 
     if (exposedPorts) {
@@ -589,7 +589,7 @@ export class DockerClient extends EventEmitter {
         
         const bindings = portBindings?.[portSpec];
         if (bindings && bindings.length > 0) {
-          bindings.forEach((binding: any) => {
+          bindings.forEach((binding) => {
             ports.push({
               containerPort,
               hostPort: binding.HostPort ? parseInt(binding.HostPort, 10) : undefined,
@@ -612,11 +612,11 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse network information
    */
-  private parseNetworks(networks: any): NetworkInfo[] {
+  private parseNetworks(networks: Record<string, Dockerode.NetworkInfo> | undefined): NetworkInfo[] {
     const networkInfos: NetworkInfo[] = [];
 
     if (networks) {
-      Object.entries(networks).forEach(([name, network]: [string, any]) => {
+      Object.entries(networks).forEach(([name, network]) => {
         networkInfos.push({
           name,
           id: network.NetworkID,
@@ -633,7 +633,7 @@ export class DockerClient extends EventEmitter {
   /**
    * Parse container statistics
    */
-  private parseContainerStats(stats: any): ContainerStats {
+  private parseContainerStats(stats: Dockerode.ContainerStats): ContainerStats {
     const cpuStats = stats.cpu_stats;
     const preCpuStats = stats.precpu_stats;
     const memoryStats = stats.memory_stats;
@@ -650,7 +650,7 @@ export class DockerClient extends EventEmitter {
     let networkRx = 0;
     let networkTx = 0;
     if (networkStats) {
-      Object.values(networkStats).forEach((network: any) => {
+      Object.values(networkStats).forEach((network) => {
         networkRx += network.rx_bytes || 0;
         networkTx += network.tx_bytes || 0;
       });
@@ -660,7 +660,7 @@ export class DockerClient extends EventEmitter {
     let blockRead = 0;
     let blockWrite = 0;
     if (blockStats?.io_service_bytes_recursive) {
-      blockStats.io_service_bytes_recursive.forEach((entry: any) => {
+      blockStats.io_service_bytes_recursive.forEach((entry) => {
         if (entry.op === 'Read') blockRead += entry.value;
         if (entry.op === 'Write') blockWrite += entry.value;
       });

@@ -580,7 +580,7 @@ class SecurityOrchestrator extends EventEmitter {
    * Setup component event handlers
    */
   setupAuditLoggerHandlers() {
-    this.components.auditLogger.on('auditEvent', (event) => {
+    this.components.auditLogger.on('auditEvent', (_event) => {
       this.stats.auditEvents++;
     });
   }
@@ -654,7 +654,7 @@ class SecurityOrchestrator extends EventEmitter {
    */
   updateSecurityState() {
     // Update component status
-    for (const [name, component] of Object.entries(this.components)) {
+    for (const [name, _component] of Object.entries(this.components)) {
       this.securityState.componentStatus[name] = 'active';
     }
     
@@ -742,24 +742,24 @@ class SecurityOrchestrator extends EventEmitter {
     return info.Image;
   }
 
-  async getJobContainers(jobId) {
+  async getJobContainers(_jobId) {
     // This would get all containers for a job
     return [];
   }
 
-  async getContainerJobId(containerId) {
+  async getContainerJobId(_containerId) {
     // This would look up job ID from container
     return null;
   }
 
-  async getResourceUsageReport(jobId) {
+  async getResourceUsageReport(_jobId) {
     if (!this.components.resourceQuotas) return null;
     
     // Get resource usage data
     return {};
   }
 
-  async getNetworkActivityReport(jobId) {
+  async getNetworkActivityReport(_jobId) {
     if (!this.components.networkIsolation) return null;
     
     // Get network activity data

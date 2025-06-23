@@ -215,7 +215,8 @@ export class CleanupController {
       const { policyId } = req.query;
 
       // Get containers that would be cleaned up
-      const containers = require('../services/container-lifecycle').default.getAllContainers();
+      const containerLifecycle = (await import('../services/container-lifecycle')).default;
+      const containers = containerLifecycle.getAllContainers();
       const policies = containerCleanup.getCleanupPolicies();
       
       const previewResult = {

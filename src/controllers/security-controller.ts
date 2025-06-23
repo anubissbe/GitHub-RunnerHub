@@ -536,7 +536,7 @@ export class SecurityController {
       // Validate regex pattern
       try {
         new RegExp(patternData.regex);
-      } catch (regexError) {
+      } catch (_regexError) {
         res.status(400).json({
           success: false,
           error: 'Invalid regex pattern'
@@ -646,7 +646,7 @@ export class SecurityController {
       let regexPattern: RegExp;
       try {
         regexPattern = new RegExp(regex, regexFlags || 'gi');
-      } catch (regexError) {
+      } catch (_regexError) {
         res.status(400).json({
           success: false,
           error: 'Invalid regex pattern'
