@@ -6,10 +6,10 @@ import { JobConclusion } from '../status-reporter';
 jest.mock('../../utils/logger');
 jest.mock('../../queues/queue-manager');
 jest.mock('../../queues/job-router');
-jest.mock('../../services/database-service');
+jest.mock('../../services/database');
 jest.mock('../../services/github-service');
 jest.mock('../../container-orchestration/pool/integrated-pool-orchestrator');
-jest.mock('../../services/metrics-collector');
+jest.mock('../../services/monitoring');
 jest.mock('../status-reporter');
 
 describe('RunnerOrchestrator', () => {
@@ -44,7 +44,7 @@ describe('RunnerOrchestrator', () => {
 
     it('should handle initialization failure', async () => {
       // Mock container pool initialization failure
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       mockContainerPool.getInstance.mockReturnValue({
         initialize: jest.fn().mockRejectedValue(new Error('Container pool init failed'))
       });
@@ -145,7 +145,7 @@ describe('RunnerOrchestrator', () => {
       await orchestrator.handleWorkflowJobEvent(workflowJobEvent);
 
       // Verify database service was called to update job status
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const mockDatabaseService = jest.requireMock('../../services/database').DatabaseService;
       expect(mockDatabaseService.getInstance().updateJobStatus).toHaveBeenCalledWith(
         '123',
         expect.objectContaining({
@@ -185,7 +185,7 @@ describe('RunnerOrchestrator', () => {
       expect(activeJobs.has('123')).toBe(false);
 
       // Verify container was released
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       expect(mockContainerPool.getInstance().releaseContainer).toHaveBeenCalledWith('container-1');
     });
   });
@@ -219,7 +219,7 @@ describe('RunnerOrchestrator', () => {
         name: 'test-container'
       };
 
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       mockContainerPool.getInstance().acquireContainer.mockResolvedValue(mockContainer);
 
       const assignment = await orchestrator.assignContainer('123');
@@ -254,7 +254,7 @@ describe('RunnerOrchestrator', () => {
       orchestrator.getPendingJobs().set('123', jobRequest);
 
       // Mock no available containers
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       mockContainerPool.getInstance().acquireContainer.mockResolvedValue(null);
 
       const assignment = await orchestrator.assignContainer('123');
@@ -495,7 +495,7 @@ describe('RunnerOrchestrator', () => {
       orchestrator.getActiveJobs().set('123', mockAssignment);
 
       // Mock container pool release
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       mockContainerPool.getInstance().releaseContainer.mockResolvedValue(undefined);
 
       const shutdownPromise = orchestrator.shutdown();
@@ -518,7 +518,7 @@ describe('RunnerOrchestrator', () => {
 
     it('should handle database errors gracefully', async () => {
       // Mock database error
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const mockDatabaseService = jest.requireMock('../../services/database').DatabaseService;
       mockDatabaseService.getInstance().createContainerAssignment.mockRejectedValue(
         new Error('Database connection failed')
       );
@@ -540,7 +540,7 @@ describe('RunnerOrchestrator', () => {
       orchestrator.getPendingJobs().set('123', jobRequest);
 
       // Mock container acquisition
-      const mockContainerPool = require('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
+      const mockContainerPool = jest.requireMock('../../container-orchestration/pool/integrated-pool-orchestrator').ContainerPoolManager;
       mockContainerPool.getInstance().acquireContainer.mockResolvedValue({
         id: 'container-1',
         name: 'test-container'
@@ -553,7 +553,7 @@ describe('RunnerOrchestrator', () => {
     });
 
     it('should report job failures correctly', async () => {
-      const mockStatusReporter = require('../status-reporter').StatusReporter;
+      const mockStatusReporter = jest.requireMock('../status-reporter').StatusReporter;
       const mockReportJobCompleted = jest.fn();
       mockStatusReporter.getInstance.mockReturnValue({
         reportJobCompleted: mockReportJobCompleted

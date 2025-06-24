@@ -1,7 +1,7 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
-import { DatabaseService } from '../services/database-service';
-import { MetricsCollector } from '../services/metrics-collector';
+import database from '../services/database';
+import monitoringService from '../services/monitoring';
 
 const logger = createLogger('ContainerAssignment');
 
@@ -92,16 +92,16 @@ export class ContainerAssignmentManager extends EventEmitter {
   private containers: Map<string, Container> = new Map();
   private assignments: Map<string, string> = new Map(); // jobId -> containerId
   private loadBalancingStrategy: LoadBalancingStrategy;
-  private databaseService: DatabaseService;
-  private metricsCollector: MetricsCollector;
+  private databaseService: typeof database;
+  private metricsCollector: typeof monitoringService;
   
   private roundRobinIndex = 0;
   private assignmentHistory: Map<string, Date> = new Map();
   
   private constructor() {
     super();
-    this.databaseService = DatabaseService.getInstance();
-    this.metricsCollector = MetricsCollector.getInstance();
+    this.databaseService = database;
+    this.metricsCollector = monitoringService;
     this.loadBalancingStrategy = {
       type: 'resource-aware' // Default strategy
     };
@@ -128,7 +128,9 @@ export class ContainerAssignmentManager extends EventEmitter {
   
   private async loadContainers(): Promise<void> {
     try {
-      const containers = await this.databaseService.getActiveContainers();
+      const containers = await this.databaseService.query<Container>(
+        `SELECT * FROM runnerhub.containers WHERE status = 'active'`
+      );
       
       for (const container of containers) {
         this.containers.set(container.id, container);
@@ -147,7 +149,11 @@ export class ContainerAssignmentManager extends EventEmitter {
     logger.info(`Registering container ${container.id}`);
     
     this.containers.set(container.id, container);
-    await this.databaseService.saveContainer(container);
+    await this.databaseService.query(
+      `INSERT INTO runnerhub.containers (id, name, status, created_at) VALUES ($1, $2, $3, $4)
+       ON CONFLICT (id) DO UPDATE SET name = $2, status = $3, updated_at = NOW()`,
+      [container.id, container.name, container.status, new Date()]
+    );
     
     this.emit('container:registered', container);
   }
@@ -167,7 +173,10 @@ export class ContainerAssignmentManager extends EventEmitter {
     }
     
     this.containers.delete(containerId);
-    await this.databaseService.removeContainer(containerId);
+    await this.databaseService.query(
+      `DELETE FROM runnerhub.containers WHERE id = $1`,
+      [containerId]
+    );
     
     this.emit('container:unregistered', container);
   }
@@ -524,14 +533,13 @@ export class ContainerAssignmentManager extends EventEmitter {
     this.assignmentHistory.set(container.id, new Date());
     
     // Save to database
-    await this.databaseService.createAssignment({
-      jobId,
-      containerId: container.id,
-      assignedAt: new Date()
-    });
+    await this.databaseService.query(
+      `INSERT INTO runnerhub.container_assignments (job_id, container_id, assigned_at) VALUES ($1, $2, $3)`,
+      [jobId, container.id, new Date()]
+    );
     
     // Update metrics
-    await this.metricsCollector.recordAssignment({
+    this.metricsCollector.emit('assignment:created', {
       jobId,
       containerId: container.id,
       strategy: this.loadBalancingStrategy.type
@@ -565,7 +573,10 @@ export class ContainerAssignmentManager extends EventEmitter {
     this.assignments.delete(jobId);
     
     // Update database
-    await this.databaseService.completeAssignment(jobId);
+    await this.databaseService.query(
+      `UPDATE runnerhub.container_assignments SET completed_at = NOW() WHERE job_id = $1`,
+      [jobId]
+    );
     
     logger.info(`Released container ${containerId} from job ${jobId}`);
     this.emit('container:released', { container, jobId });

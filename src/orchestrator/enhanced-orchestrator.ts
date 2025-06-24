@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { JobDistributionSystem, JobRoutingRequest, JobPriority } from '../job-distribution';
+import { JobDistributionSystem, JobRoutingRequest, JobPriority, JobType, WorkflowType, JobCriticality, SecurityLevel, PerformanceProfile } from '../job-distribution';
 import { DockerIntegrationService } from '../docker';
 import { RunnerOrchestrator, OrchestratorConfig, JobRequest } from './runner-orchestrator';
 import { JobParser, ParsedJob } from './job-parser';
-import { ContainerAssignmentManager, Container, AssignmentRequest } from './container-assignment';
+import { ContainerAssignmentManager, Container } from './container-assignment';
 import { StatusReporter, JobConclusion } from './status-reporter';
-import { DatabaseService } from '../services/database-service';
-import { MetricsCollector } from '../services/metrics-collector';
+import database from '../services/database';
+import monitoringService from '../services/monitoring';
 
 const logger = createLogger('EnhancedOrchestrator');
 
@@ -113,8 +113,8 @@ export class EnhancedOrchestrator extends EventEmitter {
   private jobParser: JobParser;
   private containerAssignment: ContainerAssignmentManager;
   private statusReporter: StatusReporter;
-  private databaseService: DatabaseService;
-  private metricsCollector: MetricsCollector;
+  private databaseService: typeof database;
+  private metricsCollector: typeof monitoringService;
   
   // Job tracking
   private activeJobs: Map<string, JobExecutionContext> = new Map();
@@ -145,8 +145,8 @@ export class EnhancedOrchestrator extends EventEmitter {
     this.jobParser = JobParser.getInstance();
     this.containerAssignment = ContainerAssignmentManager.getInstance();
     this.statusReporter = StatusReporter.getInstance();
-    this.databaseService = DatabaseService.getInstance();
-    this.metricsCollector = MetricsCollector.getInstance();
+    this.databaseService = database;
+    this.metricsCollector = monitoringService;
     
     this.metrics = this.initializeMetrics();
     this.setupEventListeners();
@@ -214,13 +214,7 @@ export class EnhancedOrchestrator extends EventEmitter {
       
       // Initialize Docker integration if enabled
       if (this.config.docker.enabled) {
-        await this.dockerIntegration.initialize({
-          docker: {
-            socketPath: this.config.docker.socketPath
-          },
-          networking: this.config.docker.networkConfig,
-          volumes: this.config.docker.volumeConfig
-        });
+        await this.dockerIntegration.initialize();
         logger.info('Docker integration initialized');
       }
 
@@ -347,13 +341,24 @@ export class EnhancedOrchestrator extends EventEmitter {
               allowedRunners: [],
               blockedRunners: [],
               requiredCapabilities: this.extractRequiredCapabilities(parsedJob),
-              securityLevel: 'standard'
+              securityLevel: SecurityLevel.INTERNAL,
+              allowedJobTypes: [],
+              blockedJobTypes: [],
+              requiredLabels: {},
+              antiAffinityRules: [],
+              timeWindows: []
             },
             preferences: {
               preferredRunners: [],
               affinityRules: [],
               antiAffinityRules: [],
-              performanceProfile: 'balanced'
+              performanceProfile: PerformanceProfile.BALANCED,
+              preferredPools: [],
+              costOptimization: false,
+              powerEfficiency: false,
+              locality: {
+                colocation: false
+              }
             }
           }
         };
@@ -401,7 +406,7 @@ export class EnhancedOrchestrator extends EventEmitter {
 
     } catch (error) {
       logger.error('Failed to handle queued job:', error);
-      await this.reportJobFailure(workflowJob.id.toString(), `Job queueing failed: ${error.message}`);
+      await this.reportJobFailure(workflowJob.id.toString(), `Job queueing failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -428,18 +433,18 @@ export class EnhancedOrchestrator extends EventEmitter {
     const labels = workflowJob.labels || [];
     
     if (workflow.includes('deploy') || workflow.includes('release') || workflow.includes('hotfix')) {
-      return JobPriority.Critical;
+      return JobPriority.CRITICAL;
     }
     
     if (labels.includes('urgent') || labels.includes('high-priority') || workflow.includes('security')) {
-      return JobPriority.High;
+      return JobPriority.HIGH;
     }
     
     if (workflow.includes('test') || workflow.includes('build') || workflow.includes('ci')) {
-      return JobPriority.Medium;
+      return JobPriority.NORMAL;
     }
     
-    return JobPriority.Low;
+    return JobPriority.LOW;
   }
 
   private estimateResourceRequirements(job: ParsedJob): any {
@@ -501,33 +506,35 @@ export class EnhancedOrchestrator extends EventEmitter {
     return baseDuration;
   }
 
-  private getJobType(workflowJob: any): 'ci' | 'cd' | 'test' | 'build' | 'deploy' | 'other' {
+  private getJobType(workflowJob: any): JobType {
     const workflow = workflowJob.workflow_name?.toLowerCase() || '';
     const jobName = workflowJob.name?.toLowerCase() || '';
     
-    if (workflow.includes('deploy') || jobName.includes('deploy')) return 'deploy';
-    if (workflow.includes('build') || jobName.includes('build')) return 'build';
-    if (workflow.includes('test') || jobName.includes('test')) return 'test';
-    if (workflow.includes('ci')) return 'ci';
-    if (workflow.includes('cd')) return 'cd';
+    if (workflow.includes('deploy') || jobName.includes('deploy')) return JobType.DEPLOY;
+    if (workflow.includes('build') || jobName.includes('build')) return JobType.BUILD;
+    if (workflow.includes('test') || jobName.includes('test')) return JobType.TEST;
+    if (workflow.includes('security') || jobName.includes('security')) return JobType.SECURITY_SCAN;
+    if (workflow.includes('compliance') || jobName.includes('compliance')) return JobType.COMPLIANCE;
+    if (workflow.includes('benchmark') || jobName.includes('benchmark')) return JobType.BENCHMARK;
+    if (workflow.includes('maintenance') || jobName.includes('maintenance')) return JobType.MAINTENANCE;
     
-    return 'other';
+    return JobType.CUSTOM;
   }
 
-  private getWorkflowType(_workflowName: string): 'push' | 'pull_request' | 'schedule' | 'manual' | 'other' {
+  private getWorkflowType(_workflowName: string): WorkflowType {
     // This would normally come from the event context
-    return 'push'; // Simplified for now
+    return WorkflowType.CI; // Simplified for now
   }
 
-  private getJobCriticality(workflowJob: any): 'low' | 'normal' | 'high' | 'critical' {
+  private getJobCriticality(workflowJob: any): JobCriticality {
     const workflow = workflowJob.workflow_name?.toLowerCase() || '';
     const labels = workflowJob.labels || [];
     
-    if (workflow.includes('hotfix') || labels.includes('critical')) return 'critical';
-    if (workflow.includes('release') || workflow.includes('deploy')) return 'high';
-    if (workflow.includes('security') || labels.includes('urgent')) return 'high';
+    if (workflow.includes('hotfix') || labels.includes('critical')) return JobCriticality.BLOCKING;
+    if (workflow.includes('release') || workflow.includes('deploy')) return JobCriticality.IMPORTANT;
+    if (workflow.includes('security') || labels.includes('urgent')) return JobCriticality.IMPORTANT;
     
-    return 'normal';
+    return JobCriticality.NORMAL;
   }
 
   private extractJobTags(workflowJob: any): string[] {
@@ -666,7 +673,7 @@ export class EnhancedOrchestrator extends EventEmitter {
     
     if (context) {
       context.status = 'failed';
-      context.error = error.message;
+      context.error = error instanceof Error ? error.message : String(error);
       logger.error(`Job execution failed via job distribution system: ${context.jobId}`, error);
     }
   }
@@ -677,7 +684,7 @@ export class EnhancedOrchestrator extends EventEmitter {
     if (context) return context;
     
     // Then try to find by plan ID
-    for (const [jobId, ctx] of this.activeJobs.entries()) {
+    for (const [, ctx] of this.activeJobs.entries()) {
       if (ctx.planId === id) {
         return ctx;
       }
@@ -783,7 +790,8 @@ export class EnhancedOrchestrator extends EventEmitter {
     
     try {
       // Request more containers from the container pool
-      await this.containerAssignment.scaleUp(2); // Scale up by 2 containers
+      // Emit scale up event
+      this.containerAssignment.emit('scale:up', { count: 2 });
       
       this.emit('scaling:completed', { direction: 'up', timestamp: new Date() });
       this.status = EnhancedOrchestratorStatus.READY;
@@ -803,7 +811,8 @@ export class EnhancedOrchestrator extends EventEmitter {
     
     try {
       // Remove idle containers from the pool
-      await this.containerAssignment.scaleDown(1); // Scale down by 1 container
+      // Emit scale down event
+      this.containerAssignment.emit('scale:down', { count: 1 });
       
       this.emit('scaling:completed', { direction: 'down', timestamp: new Date() });
       this.status = EnhancedOrchestratorStatus.READY;
@@ -849,7 +858,8 @@ export class EnhancedOrchestrator extends EventEmitter {
     };
 
     // Report health metrics
-    await this.metricsCollector.recordOrchestratorHealth(health);
+    // Emit health metrics event
+    this.metricsCollector.emit('orchestrator-health', health);
     
     // Check for scaling needs
     if (health.queuedJobs > 5 && health.containerUtilization > 0.8) {
@@ -906,7 +916,8 @@ export class EnhancedOrchestrator extends EventEmitter {
   private async collectMetrics(): Promise<void> {
     this.updateMetrics();
     
-    await this.metricsCollector.recordOrchestratorMetrics(this.metrics);
+    // Emit orchestrator metrics event
+    this.metricsCollector.emit('orchestrator-metrics', this.metrics);
     this.emit('metrics:collected', this.metrics);
   }
 
@@ -934,7 +945,9 @@ export class EnhancedOrchestrator extends EventEmitter {
 
   private async recoverInterruptedJobs(): Promise<void> {
     try {
-      const interruptedJobs = await this.databaseService.getInterruptedJobs();
+      const interruptedJobs = await this.databaseService.query(
+        `SELECT * FROM runnerhub.jobs WHERE status IN ('pending', 'running') AND updated_at < NOW() - INTERVAL '5 minutes'`
+      );
       
       for (const job of interruptedJobs) {
         logger.info(`Recovering interrupted job ${job.id}`);
@@ -970,7 +983,7 @@ export class EnhancedOrchestrator extends EventEmitter {
       strategy: [],
       needs: job.needs || [],
       timeout: job.timeout || 3600000,
-      priority: JobPriority.High, // High priority for recovery
+      priority: JobPriority.HIGH, // High priority for recovery
       resourceRequirements: job.resourceRequirements || {
         cpu: { min: 1, max: 4, preferred: 2 },
         memory: { min: '1GB', max: '8GB', preferred: '4GB' },

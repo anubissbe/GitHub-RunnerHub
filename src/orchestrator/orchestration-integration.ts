@@ -4,8 +4,8 @@ import { EnhancedOrchestrator, EnhancedOrchestratorConfig } from './enhanced-orc
 import { DockerIntegrationService } from '../docker';
 import { JobDistributionSystem } from '../job-distribution';
 import { WebhookHandler } from './webhook-handler';
-import { DatabaseService } from '../services/database-service';
-import { MetricsCollector } from '../services/metrics-collector';
+import database from '../services/database';
+import monitoringService from '../services/monitoring';
 
 const logger = createLogger('OrchestrationIntegration');
 

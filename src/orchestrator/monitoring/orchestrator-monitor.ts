@@ -3,8 +3,8 @@ import { EventEmitter } from 'events';
 import { RunnerOrchestrator } from '../runner-orchestrator';
 import { ContainerAssignmentManager } from '../container-assignment';
 import { StatusReporter } from '../status-reporter';
-import { DatabaseService } from '../../services/database-service';
-import { MetricsCollector } from '../../services/metrics-collector';
+import database from '../../services/database';
+import monitoringService from '../../services/monitoring';
 
 const logger = createLogger('OrchestratorMonitor');
 
@@ -93,8 +93,8 @@ export class OrchestratorMonitor extends EventEmitter {
   private orchestrator: RunnerOrchestrator;
   private containerAssignmentManager: ContainerAssignmentManager;
   private statusReporter: StatusReporter;
-  private databaseService: DatabaseService;
-  private metricsCollector: MetricsCollector;
+  private databaseService: typeof database;
+  private metricsCollector: typeof monitoringService;
   
   private healthCheckInterval?: NodeJS.Timer;
   private metricsInterval?: NodeJS.Timer;
@@ -112,8 +112,8 @@ export class OrchestratorMonitor extends EventEmitter {
     this.orchestrator = RunnerOrchestrator.getInstance();
     this.containerAssignmentManager = ContainerAssignmentManager.getInstance();
     this.statusReporter = StatusReporter.getInstance();
-    this.databaseService = DatabaseService.getInstance();
-    this.metricsCollector = MetricsCollector.getInstance();
+    this.databaseService = database;
+    this.metricsCollector = monitoringService;
     
     this.currentHealth = this.initializeHealthStatus();
   }

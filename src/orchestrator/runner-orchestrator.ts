@@ -3,10 +3,10 @@ import { createLogger } from '../utils/logger';
 import { QueueManager } from '../queues/queue-manager';
 import { JobRouter } from '../queues/job-router';
 import { JobType, QUEUE_CONFIG } from '../queues/config/redis-config';
-import { DatabaseService } from '../services/database-service';
+import database from '../services/database';
 import { GitHubService } from '../services/github-service';
 import { ContainerPoolManager } from '../container-orchestration/pool/integrated-pool-orchestrator';
-import { MetricsCollector } from '../services/metrics-collector';
+import monitoringService from '../services/monitoring';
 import { StatusReporter, JobConclusion } from './status-reporter';
 
 const logger = createLogger('RunnerOrchestrator');

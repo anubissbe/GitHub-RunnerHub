@@ -1,8 +1,8 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { GitHubService } from '../services/github-service';
-import { DatabaseService } from '../services/database-service';
-import { MetricsCollector } from '../services/metrics-collector';
+import database from '../services/database';
+import monitoringService from '../services/monitoring';
 
 const logger = createLogger('StatusReporter');
 

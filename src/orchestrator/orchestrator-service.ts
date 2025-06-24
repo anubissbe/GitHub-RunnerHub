@@ -5,7 +5,7 @@ import { ContainerAssignmentManager } from './container-assignment';
 import { JobParser } from './job-parser';
 import { StatusReporter } from './status-reporter';
 import { OrchestratorWebhookHandler } from './webhook-handler';
-import { DatabaseService } from '../services/database-service';
+import database from '../services/database';
 
 const logger = createLogger('OrchestratorService');
 

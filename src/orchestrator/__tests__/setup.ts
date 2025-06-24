@@ -2,6 +2,16 @@
 
 import { jest, beforeEach, afterEach, expect } from '@jest/globals';
 
+// Declare global types
+declare global {
+  var createMockDatabase: () => any;
+  var createMockMetricsCollector: () => any;
+  var createMockGitHubService: () => any;
+  var createMockContainerService: () => any;
+  var createMockServiceManager: () => any;
+  var createMockJobQueue: () => any;
+}
+
 // Mock console methods to reduce noise during tests
 global.console = {
   ...console,
@@ -93,7 +103,8 @@ jest.mock('../../utils/logger', () => ({
   createLogger: jest.fn(() => global.createMockLogger())
 }));
 
-jest.mock('../../services/database-service', () => ({
+jest.mock('../../services/database', () => ({
+  default: global.createMockDatabase(),
   DatabaseService: {
     getInstance: jest.fn(() => global.createMockDatabase())
   }
@@ -111,8 +122,9 @@ jest.mock('../../container-orchestration/pool/integrated-pool-orchestrator', () 
   }
 }));
 
-jest.mock('../../services/metrics-collector', () => ({
-  MetricsCollector: {
+jest.mock('../../services/monitoring', () => ({
+  default: global.createMockMetricsCollector(),
+  MonitoringService: {
     getInstance: jest.fn(() => global.createMockMetricsCollector())
   }
 }));
