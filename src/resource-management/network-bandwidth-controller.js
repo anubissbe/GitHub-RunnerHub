@@ -510,7 +510,7 @@ class NetworkBandwidthController extends EventEmitter {
   /**
    * Apply network latency
    */
-  async applyNetworkLatency(interface, latency) {
+  async applyNetworkLatency(networkInterface, latency) {
     try {
       // Parse latency value
       const latencyMs = parseInt(latency);
@@ -518,7 +518,7 @@ class NetworkBandwidthController extends EventEmitter {
       
       // Add netem qdisc for latency
       await execAsync(
-        `tc qdisc add dev ${interface} root netem delay ${latency}`
+        `tc qdisc add dev ${networkInterface} root netem delay ${latency}`
       );
       
     } catch (error) {
@@ -783,11 +783,11 @@ class NetworkBandwidthController extends EventEmitter {
    */
   async monitorContainerTraffic(containerId, bandwidthInfo) {
     try {
-      const interface = bandwidthInfo.interface;
-      if (!interface) return;
+      const networkInterface = bandwidthInfo.interface;
+      if (!networkInterface) return;
       
       // Get interface statistics
-      const stats = await this.getInterfaceStatistics(interface);
+      const stats = await this.getInterfaceStatistics(networkInterface);
       
       // Get previous stats
       const prevStats = this.trafficStats.get(containerId);
