@@ -191,10 +191,8 @@ export function validateWebhookPayload(
 }
 
 // Extend Request interface to include timestamp
-declare global {
-  namespace Express {
-    interface Request {
-      timestamp: number;
-    }
+declare module 'express-serve-static-core' {
+  interface Request {
+    timestamp: number;
   }
 }

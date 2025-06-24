@@ -377,22 +377,13 @@ class ContainerPoolResourceMonitor extends EventEmitter {
    * Get system process count
    */
   async getSystemProcessCount() {
-    try {
-      // This would typically use system calls or parse /proc
-      // Simplified implementation
-      return {
-        total: 100, // Placeholder
-        running: 5, // Placeholder
-        sleeping: 90 // Placeholder
-      };
-    } catch (error) {
-      logger.error('Failed to get system process count:', error);
-      return {
-        total: 0,
-        running: 0,
-        sleeping: 0
-      };
-    }
+    // This would typically use system calls or parse /proc
+    // Simplified implementation
+    return {
+      total: 100, // Placeholder
+      running: 5, // Placeholder
+      sleeping: 90 // Placeholder
+    };
   }
 
   /**

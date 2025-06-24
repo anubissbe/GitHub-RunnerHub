@@ -663,23 +663,16 @@ class HealthChecker extends EventEmitter {
    * Orchestrator Health Check Implementation
    */
   async checkOrchestratorHealth() {
-    try {
-      // Check if orchestrator processes are running
-      // This would integrate with your container orchestration system
-      
-      return {
-        healthy: true,
-        details: {
-          status: 'active',
-          containersManaged: 0 // Would be actual count
-        }
-      };
-    } catch (error) {
-      return {
-        healthy: false,
-        error: error.message
-      };
-    }
+    // Check if orchestrator processes are running
+    // This would integrate with your container orchestration system
+    
+    return {
+      healthy: true,
+      details: {
+        status: 'active',
+        containersManaged: 0 // Would be actual count
+      }
+    };
   }
   
   /**

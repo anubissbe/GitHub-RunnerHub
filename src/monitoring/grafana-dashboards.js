@@ -806,7 +806,7 @@ class GrafanaDashboards {
    * Create dashboard files
    */
   async createDashboardFiles() {
-    for (const [name, config] of this.dashboardConfigs) {
+    for (const [_name, config] of this.dashboardConfigs) {
       try {
         const filePath = path.join(this.config.dashboards.outputDir, config.filename);
         const dashboardJSON = JSON.stringify(config.dashboard, null, 2);
@@ -824,7 +824,7 @@ class GrafanaDashboards {
    * Import dashboards to Grafana
    */
   async importDashboards() {
-    for (const [name, config] of this.dashboardConfigs) {
+    for (const [_name, config] of this.dashboardConfigs) {
       try {
         const payload = {
           dashboard: config.dashboard,

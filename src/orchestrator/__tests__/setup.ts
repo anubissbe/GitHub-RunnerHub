@@ -1,6 +1,6 @@
 // Jest setup file for orchestrator tests
 
-import { jest } from '@jest/globals';
+import { jest, beforeEach, afterEach, expect } from '@jest/globals';
 
 // Mock console methods to reduce noise during tests
 global.console = {
@@ -155,15 +155,15 @@ expect.extend({
 
 // Declare custom matcher types
 declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toBeWithinRange(floor: number, ceiling: number): R;
-    }
-  }
-
   var createMockLogger: () => any;
   var createMockDatabase: () => any;
   var createMockGitHubService: () => any;
   var createMockContainerPool: () => any;
   var createMockMetricsCollector: () => any;
+}
+
+declare module '@jest/expect' {
+  interface Matchers<R> {
+    toBeWithinRange(floor: number, ceiling: number): R;
+  }
 }

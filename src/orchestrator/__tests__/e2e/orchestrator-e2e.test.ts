@@ -5,7 +5,6 @@ import { createApp } from '../../../app';
 import { OrchestratorService } from '../../orchestrator-service';
 import { ContainerAssignmentManager } from '../../container-assignment';
 import { StatusReporter } from '../../status-reporter';
-import { DatabaseService } from '../../../services/database-service';
 
 // Mock external dependencies
 jest.mock('../../../services/github-service');
@@ -366,7 +365,8 @@ describe('Orchestrator System E2E Tests', () => {
     });
 
     it('should report job status to GitHub', async () => {
-      const mockGitHubService = require('../../../services/github-service').GitHubService;
+      const { GitHubService } = await import('../../../services/github-service');
+      const mockGitHubService = GitHubService;
       mockGitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123456 });
       mockGitHubService.getInstance().updateCheckRun.mockResolvedValue(undefined);
 
@@ -524,7 +524,7 @@ describe('Orchestrator System E2E Tests', () => {
   describe('Error Handling E2E', () => {
     it('should handle database connection failures gracefully', async () => {
       // Mock database error
-      const mockDatabase = require('../../../services/database-service').DatabaseService;
+      const { DatabaseService: mockDatabase } = await import('../../../services/database-service');
       mockDatabase.getInstance().query.mockRejectedValueOnce(new Error('Database connection failed'));
 
       const response = await request(app)
@@ -537,7 +537,7 @@ describe('Orchestrator System E2E Tests', () => {
     });
 
     it('should handle GitHub API failures gracefully', async () => {
-      const mockGitHubService = require('../../../services/github-service').GitHubService;
+      const { GitHubService: mockGitHubService } = await import('../../../services/github-service');
       mockGitHubService.getInstance().createCheckRun.mockRejectedValue(new Error('GitHub API error'));
 
       const statusReporter = StatusReporter.getInstance();

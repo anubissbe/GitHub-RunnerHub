@@ -632,12 +632,12 @@ class RealtimeMonitoringUI extends EventEmitter {
    * Stream data to connected clients
    */
   streamToClients() {
-    for (const [clientId, client] of this.clients) {
+    for (const [_clientId, client] of this.clients) {
       if (client.ws.readyState === WebSocket.OPEN) {
         for (const widget of client.subscribedWidgets) {
           const widgetData = this.widgetData.get(widget);
           if (widgetData) {
-            this.sendToClient(clientId, {
+            this.sendToClient(_clientId, {
               type: 'widget_update',
               widget,
               data: widgetData,
@@ -672,12 +672,12 @@ class RealtimeMonitoringUI extends EventEmitter {
   broadcast(message) {
     const data = JSON.stringify(message);
     
-    for (const [clientId, client] of this.clients) {
+    for (const [_clientId, client] of this.clients) {
       if (client.ws.readyState === WebSocket.OPEN) {
         try {
           client.ws.send(data);
         } catch (error) {
-          logger.error(`Failed to broadcast to client ${clientId}:`, error);
+          logger.error(`Failed to broadcast to client ${_clientId}:`, error);
         }
       }
     }
@@ -690,11 +690,11 @@ class RealtimeMonitoringUI extends EventEmitter {
     setInterval(() => {
       this.stats.lastHeartbeat = new Date();
       
-      for (const [clientId, client] of this.clients) {
+      for (const [_clientId, client] of this.clients) {
         if (client.isAlive === false) {
-          logger.info(`Terminating inactive client: ${clientId}`);
+          logger.info(`Terminating inactive client: ${_clientId}`);
           client.ws.terminate();
-          this.handleClientDisconnect(clientId);
+          this.handleClientDisconnect(_clientId);
         } else {
           client.isAlive = false;
           client.ws.ping();
@@ -863,7 +863,7 @@ class RealtimeMonitoringUI extends EventEmitter {
     this.stopDataStreaming();
     
     // Close all client connections
-    for (const [clientId, client] of this.clients) {
+    for (const [_clientId, client] of this.clients) {
       client.ws.close();
     }
     

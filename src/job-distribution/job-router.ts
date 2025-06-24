@@ -1,7 +1,6 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { ContainerAssignmentManager } from '../orchestrator/container-assignment';
-import { DockerIntegrationService } from '../docker';
 
 const logger = createLogger('JobRouter');
 
@@ -269,7 +268,6 @@ export enum RoutingFactor {
 export class JobRouter extends EventEmitter {
   private static instance: JobRouter;
   private _containerManager: ContainerAssignmentManager;
-  private _dockerIntegration: DockerIntegrationService;
   private routingCache: Map<string, JobRoutingResult> = new Map();
   private performanceHistory: Map<string, PerformanceHistory[]> = new Map();
   private routingAlgorithms: Map<RoutingAlgorithm, RoutingAlgorithmImpl> = new Map();
@@ -277,7 +275,6 @@ export class JobRouter extends EventEmitter {
   private constructor() {
     super();
     this._containerManager = ContainerAssignmentManager.getInstance();
-    this._dockerIntegration = DockerIntegrationService.getInstance();
     this.initializeRoutingAlgorithms();
     
     // Initialize containerManager for future use

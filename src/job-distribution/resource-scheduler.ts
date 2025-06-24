@@ -711,7 +711,7 @@ export class ResourceScheduler extends EventEmitter {
   /**
    * Calculate multi-objective score for runner
    */
-  private calculateMultiObjectiveScore(pool: ResourcePool, runner: PoolRunner, request: SchedulingRequest): number {
+  private calculateMultiObjectiveScore(_pool: ResourcePool, runner: PoolRunner, request: SchedulingRequest): number {
     let score = 0;
     let factors = 0;
 
@@ -901,7 +901,7 @@ export class ResourceScheduler extends EventEmitter {
   /**
    * Find jobs that can be preempted
    */
-  private findPreemptibleJobs(pools: ResourcePool[], request: SchedulingRequest): ScheduledJob[] {
+  private findPreemptibleJobs(_pools: ResourcePool[], request: SchedulingRequest): ScheduledJob[] {
     const preemptible: ScheduledJob[] = [];
 
     for (const job of this.scheduledJobs.values()) {
@@ -1237,7 +1237,7 @@ export class ResourceScheduler extends EventEmitter {
     };
   }
 
-  private createQueuedResult(request: SchedulingRequest, processingTime: number): SchedulingResult {
+  private createQueuedResult(_request: SchedulingRequest, processingTime: number): SchedulingResult {
     return {
       success: true,
       alternatives: [],
@@ -1271,7 +1271,7 @@ export class ResourceScheduler extends EventEmitter {
     };
   }
 
-  private createErrorResult(request: SchedulingRequest, error: Error, processingTime: number): SchedulingResult {
+  private createErrorResult(_request: SchedulingRequest, error: Error, processingTime: number): SchedulingResult {
     return {
       success: false,
       alternatives: [],
@@ -1418,7 +1418,7 @@ class AutoScaler {
 }
 
 class FairShareCalculator {
-  calculateFairShares(request: SchedulingRequest, pools: ResourcePool[]): Map<string, number> {
+  calculateFairShares(_request: SchedulingRequest, pools: ResourcePool[]): Map<string, number> {
     const shares = new Map<string, number>();
     
     // Simple equal share for now

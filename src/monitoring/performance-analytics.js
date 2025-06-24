@@ -336,7 +336,6 @@ class PerformanceAnalytics extends EventEmitter {
    * Aggregate metric data for specific interval
    */
   aggregateMetricData(data, intervalMs) {
-    const now = Date.now();
     const aggregated = [];
     
     // Group data by intervals
@@ -364,7 +363,7 @@ class PerformanceAnalytics extends EventEmitter {
       
       // Aggregate each value type
       const firstPoint = points[0];
-      for (const [key, value] of Object.entries(firstPoint.values)) {
+      for (const [key, _value] of Object.entries(firstPoint.values)) {
         const values = points.map(p => p.values[key]).filter(v => v !== undefined);
         
         if (values.length > 0) {
