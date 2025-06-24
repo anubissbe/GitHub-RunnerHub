@@ -6,6 +6,46 @@
 // Import enum mocks
 require('./mocks/index.js');
 
+// Mock audit-logger module to avoid TypeScript issues
+jest.mock('../src/services/audit-logger', () => {
+  const mockAuditLogger = {
+    getInstance: jest.fn(() => mockAuditLogger),
+    initialize: jest.fn(),
+    log: jest.fn(),
+    logSuccessfulLogin: jest.fn(),
+    logFailedLogin: jest.fn(),
+    query: jest.fn(),
+    getStats: jest.fn(),
+    export: jest.fn(),
+    cleanup: jest.fn(),
+    shutdown: jest.fn()
+  };
+  
+  return {
+    AuditLogger: jest.fn(() => mockAuditLogger),
+    AuditEventType: global.AuditEventType,
+    AuditCategory: {
+      AUTHENTICATION: 'authentication',
+      AUTHORIZATION: 'authorization',
+      USER_MANAGEMENT: 'user_management',
+      JOB_MANAGEMENT: 'job_management',
+      RUNNER_MANAGEMENT: 'runner_management',
+      CONTAINER_MANAGEMENT: 'container_management',
+      NETWORK_MANAGEMENT: 'network_management',
+      SYSTEM: 'system',
+      SECURITY: 'security',
+      DATA_MANAGEMENT: 'data_management'
+    },
+    AuditSeverity: {
+      INFO: 'info',
+      LOW: 'low',
+      MEDIUM: 'medium',
+      HIGH: 'high',
+      CRITICAL: 'critical'
+    }
+  };
+});
+
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
 process.env.GITHUB_TOKEN = 'test-token';

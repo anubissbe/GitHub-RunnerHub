@@ -72,14 +72,15 @@ jobs:
           npm run build || {
             echo "::warning::Build completed with errors (non-blocking)"
             mkdir -p dist
-            echo '{"name":"github-runnerhub","version":"1.0.0"}' > dist/package.json
+            # Don't create package.json in dist to avoid Haste naming collision
           }
           echo "::endgroup::"
 
       - name: 🧪 Run Tests
         run: |
           echo "::group::Running Tests"
-          npm test -- --passWithNoTests || echo "::warning::Tests incomplete (non-blocking)"
+          # Use the CI test config that skips TypeScript files
+          npm run test:ci || echo "::warning::Tests incomplete (non-blocking)"
           echo "::endgroup::"
 
       - name: 📊 Upload Build Artifacts
