@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import { EnhancedOrchestrator, EnhancedOrchestratorConfig } from './enhanced-orchestrator';
 import { DockerIntegrationService } from '../docker';
 import { JobDistributionSystem } from '../job-distribution';
-import { WebhookHandler } from './webhook-handler';
+import WebhookHandler from './webhook-handler';
 // import database from '../services/database';
 // import monitoringService from '../services/monitoring';
 import { DatabaseService } from '../services/database';
@@ -67,12 +67,12 @@ export class OrchestrationIntegration extends EventEmitter {
   private startTime: Date;
   
   // Core components
-  private orchestrator: EnhancedOrchestrator;
-  private jobDistributionSystem: JobDistributionSystem;
-  private dockerIntegration: DockerIntegrationService;
-  private webhookHandler: WebhookHandler;
-  private databaseService: DatabaseService;
-  private metricsCollector: MonitoringService;
+  private orchestrator!: EnhancedOrchestrator;
+  private jobDistributionSystem!: JobDistributionSystem;
+  private dockerIntegration!: DockerIntegrationService;
+  private webhookHandler!: WebhookHandler;
+  private databaseService!: DatabaseService;
+  private metricsCollector!: MonitoringService;
   
   // Health and metrics
   private systemHealth: SystemHealth;

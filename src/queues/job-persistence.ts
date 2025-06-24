@@ -1,6 +1,7 @@
 import { Job, QueueEvents } from 'bullmq';
-import { logger } from '../utils/logger';
-import { DatabaseService } from '../services/database-service';
+import { createLogger } from '../utils/logger';
+const logger = createLogger('JobPersistence');
+import { DatabaseService } from '../services/database';
 import { QueueManager } from './queue-manager';
 import { JobType, QUEUE_CONFIG } from './config/redis-config';
 import * as fs from 'fs/promises';

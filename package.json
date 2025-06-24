@@ -6,6 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "build": "tsc",
+    "build:ci": "tsc --project tsconfig.ci.json",
     "dev": "tsx watch src/index.ts",
     "dev:enhanced": "tsx watch src/index-enhanced.ts",
     "start": "node dist/index.js",
@@ -25,6 +26,7 @@
     "test:e2e:runner": "./scripts/run-e2e-tests.sh",
     "test:webhooks": "./scripts/test-enhanced-webhooks.sh",
     "typecheck": "tsc --noEmit",
+    "typecheck:ci": "tsc --project tsconfig.ci.json --noEmit",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",

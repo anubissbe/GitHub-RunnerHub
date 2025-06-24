@@ -19,7 +19,7 @@ describe('NetworkManager', () => {
 
   beforeEach(() => {
     // Reset singleton
-    (NetworkManager as any).instance = undefined;
+    (NetworkManager as unknown as { instance: undefined }).instance = undefined;
     
     // Mock DockerClient
     mockDockerClient = {
@@ -29,7 +29,7 @@ describe('NetworkManager', () => {
       docker: {
         getNetwork: jest.fn()
       }
-    } as any;
+    } as unknown as DockerClient;
     
     MockedDockerClient.getInstance.mockReturnValue(mockDockerClient);
     

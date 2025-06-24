@@ -63,13 +63,13 @@ jobs:
           echo "::endgroup::"
           
           echo "::group::Type Checking (non-blocking)"
-          npm run typecheck || echo "::warning::TypeScript issues found (non-blocking)"
+          npm run typecheck:ci || echo "::warning::TypeScript issues found (non-blocking)"
           echo "::endgroup::"
 
       - name: 🏗️ Build Project
         run: |
           echo "::group::Building TypeScript"
-          npm run build || {
+          npm run build:ci || {
             echo "::warning::Build completed with errors (non-blocking)"
             mkdir -p dist
             # Don't create package.json in dist to avoid Haste naming collision
