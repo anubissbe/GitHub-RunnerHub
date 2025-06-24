@@ -201,7 +201,7 @@ export class GitHubAPIService {
         try {
           await this.removeRunner(repository, runner.id);
           removed++;
-        } catch (err) {
+        } catch {
           logger.warn('Failed to remove offline runner', {
             repository,
             runnerId: runner.id,

@@ -13,7 +13,7 @@ const router = Router();
 router.use(AuthMiddleware.authenticate());
 
 // Queue statistics endpoint
-router.get('/stats', async (req: Request, res: Response) => {
+router.get('/stats', async (_req: Request, res: Response) => {
   try {
     const queueManager = QueueManager.getInstance();
     const stats = await queueManager.getAllQueuesStats();

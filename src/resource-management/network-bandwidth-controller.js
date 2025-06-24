@@ -488,17 +488,17 @@ class NetworkBandwidthController extends EventEmitter {
   /**
    * Apply ingress policing
    */
-  async applyIngressPolicing(interface, rate, burst) {
+  async applyIngressPolicing(networkInterface, rate, burst) {
     try {
       // Remove existing ingress qdisc if any
-      await execAsync(`tc qdisc del dev ${interface} ingress 2>/dev/null || true`);
+      await execAsync(`tc qdisc del dev ${networkInterface} ingress 2>/dev/null || true`);
       
       // Add ingress qdisc
-      await execAsync(`tc qdisc add dev ${interface} ingress`);
+      await execAsync(`tc qdisc add dev ${networkInterface} ingress`);
       
       // Add policer
       await execAsync(
-        `tc filter add dev ${interface} parent ffff: protocol ip prio 1 u32 ` +
+        `tc filter add dev ${networkInterface} parent ffff: protocol ip prio 1 u32 ` +
         `match u32 0 0 police rate ${rate} burst ${burst} drop flowid :1`
       );
       

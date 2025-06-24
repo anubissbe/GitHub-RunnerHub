@@ -226,7 +226,7 @@ export class OrchestratorMonitor extends EventEmitter {
     await this.metricsCollector.recordOrchestratorHealth(health);
   }
   
-  private async checkOrchestratorHealth(): ComponentHealth {
+  private async checkOrchestratorHealth(): Promise<ComponentHealth> {
     try {
       const status = this.orchestrator.getStatus();
       const metrics = this.orchestrator.getMetrics();
@@ -262,7 +262,7 @@ export class OrchestratorMonitor extends EventEmitter {
     }
   }
   
-  private async checkContainerAssignmentHealth(): ComponentHealth {
+  private async checkContainerAssignmentHealth(): Promise<ComponentHealth> {
     try {
       const stats = this.containerAssignmentManager.getStatistics();
       
@@ -308,7 +308,7 @@ export class OrchestratorMonitor extends EventEmitter {
     }
   }
   
-  private async checkStatusReporterHealth(): ComponentHealth {
+  private async checkStatusReporterHealth(): Promise<ComponentHealth> {
     try {
       const stats = this.statusReporter.getStatistics();
       
@@ -343,7 +343,7 @@ export class OrchestratorMonitor extends EventEmitter {
     }
   }
   
-  private async checkDatabaseHealth(): ComponentHealth {
+  private async checkDatabaseHealth(): Promise<ComponentHealth> {
     try {
       const startTime = Date.now();
       await this.databaseService.query('SELECT 1');
@@ -380,7 +380,7 @@ export class OrchestratorMonitor extends EventEmitter {
     }
   }
   
-  private async checkQueueHealth(): ComponentHealth {
+  private async checkQueueHealth(): Promise<ComponentHealth> {
     try {
       // This would check Redis queue health in a real implementation
       return {

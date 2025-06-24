@@ -478,7 +478,7 @@ export class JobLogSecretScanner extends EventEmitter {
       {
         name: 'Generic API Key',
         description: 'Generic API key pattern',
-        regex: /\b(api[_-]?key[_-]?[=:][\s]*["\']?([a-zA-Z0-9_-]{16,})["\']?)\b/i,
+        regex: /\b(api[_-]?key[_-]?[=:][\s]*["']?([a-zA-Z0-9_-]{16,})["']?)\b/i,
         enabled: true,
         severity: SecretSeverity.HIGH,
         category: SecretCategory.API_KEY,
@@ -487,7 +487,7 @@ export class JobLogSecretScanner extends EventEmitter {
       {
         name: 'Password in URL',
         description: 'Password embedded in connection string or URL',
-        regex: /(password[_-]?[=:][\s]*["\']?([^"\s\n]{8,})["\']?)/i,
+        regex: /(password[_-]?[=:][\s]*["']?([^"\s\n]{8,})["']?)/i,
         enabled: true,
         severity: SecretSeverity.HIGH,
         category: SecretCategory.PASSWORD,
@@ -513,7 +513,7 @@ export class JobLogSecretScanner extends EventEmitter {
       {
         name: 'Database Connection String',
         description: 'Database connection string with credentials',
-        regex: /(postgresql|mysql|mongodb|redis):\/\/[^:]*:[^@]*@[^\/\s]*/i,
+        regex: /(postgresql|mysql|mongodb|redis):\/\/[^:]*:[^@]*@[^/\s]*/i,
         enabled: true,
         severity: SecretSeverity.HIGH,
         category: SecretCategory.DATABASE_URL

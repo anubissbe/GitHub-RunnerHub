@@ -606,7 +606,7 @@ export class SecurityScanner extends EventEmitter {
     
     try {
       // Validate trivy version to prevent injection
-      if (!/^[a-zA-Z0-9\.-]+$/.test(this.trivyVersion)) {
+      if (!/^[a-zA-Z0-9.-]+$/.test(this.trivyVersion)) {
         throw new Error('Invalid trivy version format');
       }
       

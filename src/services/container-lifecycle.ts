@@ -551,7 +551,7 @@ export class ContainerLifecycleManager extends EventEmitter {
                 limit: stats.memoryLimit 
               });
             }
-          } catch (error) {
+          } catch {
             // Container might have stopped
             logger.debug('Failed to get stats for container', { containerId });
           }

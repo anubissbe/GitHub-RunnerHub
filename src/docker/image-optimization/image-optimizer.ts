@@ -1177,7 +1177,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Get optimization statistics
    */
-  public getOptimizationStats(): { totalOptimizations: number; totalSavings: number; averageImpact: number; optimizationsByType: Record<string, number>; } {
+  public getOptimizationStats(): { totalOptimizations: number; totalSizeReduction: number; averageReduction: number; totalBuildTime: number; optimizationsByType?: Record<string, number>; } {
     const optimizations = Array.from(this.optimizedImages.values());
     
     if (optimizations.length === 0) {
