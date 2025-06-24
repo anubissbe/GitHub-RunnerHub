@@ -7,8 +7,8 @@ import { ContainerAssignmentManager } from '../../container-assignment';
 import { StatusReporter } from '../../status-reporter';
 
 // Mock external dependencies
-jest.mock('../../../services/github-service');
-jest.mock('../../../services/database-service');
+jest.mock('../../../services/github-api');
+jest.mock('../../../services/database');
 jest.mock('../../../container-orchestration/pool/integrated-pool-orchestrator');
 
 describe('Orchestrator System E2E Tests', () => {
@@ -17,7 +17,8 @@ describe('Orchestrator System E2E Tests', () => {
 
   beforeAll(async () => {
     // Initialize test application
-    app = createApp();
+    const appInstance = new App();
+    app = appInstance.getApp();
     
     // Initialize orchestrator with test configuration
     orchestratorService = OrchestratorService.getInstance({

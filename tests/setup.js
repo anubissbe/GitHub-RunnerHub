@@ -3,6 +3,9 @@
  * Provides mocks and environment setup without requiring Redis/DB
  */
 
+// Import enum mocks
+require('./mocks/index.js');
+
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
 process.env.GITHUB_TOKEN = 'test-token';
