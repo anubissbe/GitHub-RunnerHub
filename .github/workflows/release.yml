@@ -191,7 +191,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ env.DOCKERHUB_IMAGE }}
+            ${{ github.event_name != 'pull_request' && env.DOCKERHUB_IMAGE || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
