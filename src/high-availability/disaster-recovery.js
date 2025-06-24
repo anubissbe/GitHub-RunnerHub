@@ -610,7 +610,7 @@ class DisasterRecoveryManager extends EventEmitter {
   async decryptFile(inputFile, outputFile) {
     const encryptedData = await fs.readFile(inputFile);
     
-    const iv = encryptedData.slice(0, 16);
+    const _iv = encryptedData.slice(0, 16);
     const encrypted = encryptedData.slice(16);
     
     const decipher = crypto.createDecipher(this.config.encryption.algorithm, this.encryptionKey);

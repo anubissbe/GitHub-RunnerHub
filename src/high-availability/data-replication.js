@@ -309,7 +309,7 @@ class DataReplicationManager extends EventEmitter {
       const walResult = await this.clients.postgresql.primary.query(
         'SELECT pg_current_wal_lsn() as current_lsn'
       );
-      const primaryLSN = walResult.rows[0].current_lsn;
+      const _primaryLSN = walResult.rows[0].current_lsn;
       
       // Check each replica
       for (let i = 0; i < this.clients.postgresql.replicas.length; i++) {
@@ -325,8 +325,8 @@ class DataReplicationManager extends EventEmitter {
             'SELECT pg_last_wal_receive_lsn() as receive_lsn, pg_last_wal_replay_lsn() as replay_lsn'
           );
           
-          const receiveLSN = replicaResult.rows[0].receive_lsn;
-          const replayLSN = replicaResult.rows[0].replay_lsn;
+          const _receiveLSN = replicaResult.rows[0].receive_lsn;
+          const _replayLSN = replicaResult.rows[0].replay_lsn;
           
           // Calculate replication lag
           const lagResult = await this.clients.postgresql.primary.query(
@@ -606,7 +606,7 @@ class DataReplicationManager extends EventEmitter {
    */
   stop() {
     // Clear all monitoring timers
-    for (const [name, timer] of this.monitoringTimers) {
+    for (const [_name, timer] of this.monitoringTimers) {
       clearInterval(timer);
     }
     this.monitoringTimers.clear();

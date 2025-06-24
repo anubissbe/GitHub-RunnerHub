@@ -450,7 +450,7 @@ class HealthChecker extends EventEmitter {
    * Calculate overall system health
    */
   calculateOverallHealth(results) {
-    const criticalServices = Array.from(this.services.values()).filter(s => s.critical);
+    const _criticalServices = Array.from(this.services.values()).filter(s => s.critical);
     const criticalResults = Array.from(results.values()).filter(r => 
       this.services.get(r.service)?.critical
     );
@@ -698,7 +698,7 @@ class HealthChecker extends EventEmitter {
       await fs.unlink(testPath);
       
       // Check disk space
-      const stats = await fs.stat('/');
+      const _stats = await fs.stat('/');
       
       return {
         healthy: readData === testData,

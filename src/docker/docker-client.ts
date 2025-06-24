@@ -350,7 +350,7 @@ export class DockerClient extends EventEmitter {
         return this.parseContainerLogs(result);
       } else {
         // Handle stream case
-        const stream = result as NodeJS.ReadableStream;
+        const stream = result as unknown as NodeJS.ReadableStream;
         const chunks: Buffer[] = [];
         return new Promise((resolve, reject) => {
           stream.on('data', (chunk: Buffer) => chunks.push(chunk));

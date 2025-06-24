@@ -335,14 +335,14 @@ export class DockerIntegrationService {
           },
           allowedRegistries: ['docker.io', 'ghcr.io', 'gcr.io'],
           blockedImages: [],
-          vulnerabilityThreshold: 'high' as 'high'
+          vulnerabilityThreshold: 'high' as const
         },
         cleanup: {
           enabled: this.config.imageOptimization.cleanupOldOptimizations ?? true,
           schedule: '0 2 * * *',
           removeUnused: true,
           removeDangling: true,
-          pruneStrategy: 'balanced' as 'balanced',
+          pruneStrategy: 'balanced' as const,
           retentionPeriod: 168,
           excludeImages: ['ubuntu:latest', 'node:18-alpine', 'python:3.11-slim']
         }

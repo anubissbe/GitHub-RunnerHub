@@ -6,7 +6,7 @@
  */
 
 const EventEmitter = require('events');
-const { promisify } = require('util');
+const { promisify: _promisify } = require('util');
 const http = require('http');
 const https = require('https');
 
