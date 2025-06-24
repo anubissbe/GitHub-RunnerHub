@@ -499,7 +499,7 @@ class ResourceOptimizationEngine extends EventEmitter {
     }
     
     // Generate predictions for each container
-    for (const [containerId, resource] of resourceSnapshot.containers) {
+    for (const [containerId, _resource] of resourceSnapshot.containers) {
       const historical = this.getHistoricalData(containerId);
       
       if (historical.length >= this.config.ml.minDataPoints) {

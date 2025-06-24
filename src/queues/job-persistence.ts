@@ -150,9 +150,9 @@ export class JobPersistence {
     }
     
     const {
-      recoverFailed = true,
-      recoverStalled = true,
-      recoverIncomplete = true,
+      _recoverFailed = true,
+      _recoverStalled = true,
+      _recoverIncomplete = true,
       maxAge = 24 * 60 * 60 * 1000, // 24 hours default
       batchSize = 100
     } = options;

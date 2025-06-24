@@ -524,7 +524,7 @@ export class ImageOptimizer extends EventEmitter {
       // Apply optimizations
       const appliedOptimizations: AppliedOptimization[] = [];
       let currentImageId = imageId;
-      let currentSize = imageInfo.size;
+      let currentSize = (imageInfo as any)?.size || 0;
 
       for (const rule of applicableRules) {
         try {
@@ -554,7 +554,7 @@ export class ImageOptimizer extends EventEmitter {
       // Create optimized image record
       const optimizedImage = this.createOptimizedImage(
         currentImageId,
-        { ...imageInfo, size: currentSize },
+        Object.assign({}, imageInfo, { size: currentSize }),
         appliedOptimizations
       );
 
@@ -1081,11 +1081,11 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
    */
   private createOptimizedImage(
     imageId: string,
-    imageInfo: unknown,
+    imageInfo: any,
     appliedOptimizations: AppliedOptimization[]
   ): OptimizedImage {
-    const sizeBefore = imageInfo.originalSize || imageInfo.size;
-    const sizeAfter = imageInfo.size;
+    const sizeBefore = imageInfo?.originalSize || imageInfo?.size || 0;
+    const sizeAfter = imageInfo?.size || 0;
     const reductionPercent = sizeBefore > 0 
       ? Math.round(((sizeBefore - sizeAfter) / sizeBefore) * 100)
       : 0;
@@ -1093,8 +1093,8 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
     return {
       id: this.generateOptimizationId(imageId),
       originalId: imageId,
-      name: imageInfo.name || 'unknown',
-      tag: imageInfo.tag || 'latest',
+      name: imageInfo?.name || 'unknown',
+      tag: imageInfo?.tag || 'latest',
       optimizations: appliedOptimizations,
       sizeBefore,
       sizeAfter,
@@ -1103,9 +1103,9 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
       createdAt: new Date(),
       metadata: {
         size: sizeAfter,
-        layers: imageInfo.layers || 0,
-        architecture: imageInfo.architecture || 'unknown',
-        os: imageInfo.os || 'unknown',
+        layers: imageInfo?.layers || 0,
+        architecture: imageInfo?.architecture || 'unknown',
+        os: imageInfo?.os || 'unknown',
         created: new Date(),
         lastUsed: new Date(),
         usageCount: 1,

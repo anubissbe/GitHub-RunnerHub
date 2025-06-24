@@ -43,7 +43,7 @@ export async function optimizeImage(
   options?: {
     force?: boolean;
     optimizations?: string[];
-    buildContext?: BuildContext;
+    buildContext?: any;
   }
 ) {
   const optimizer = ImageOptimizer.getInstance();
