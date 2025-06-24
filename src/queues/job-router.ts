@@ -328,7 +328,7 @@ export class JobRouter {
   }
   
   // Utility methods
-  public getRoutingRules(): Map<JobType, Function> {
+  public getRoutingRules(): Map<JobType, (job: any) => Promise<any>> {
     return new Map(this.routingRules);
   }
   

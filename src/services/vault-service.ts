@@ -444,7 +444,7 @@ export class VaultService extends EventEmitter {
       try {
         await this.getSecret(path);
         logger.debug('Verified access to secret path', { path });
-      } catch (error) {
+      } catch {
         logger.warn('Cannot access secret path - may need to be created', { path });
       }
     }

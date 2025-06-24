@@ -846,30 +846,30 @@ class NetworkBandwidthController extends EventEmitter {
   /**
    * Get interface statistics
    */
-  async getInterfaceStatistics(interface) {
+  async getInterfaceStatistics(networkInterface) {
     try {
-      const { stdout } = await execAsync(`cat /sys/class/net/${interface}/statistics/rx_bytes`);
+      const { stdout } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/rx_bytes`);
       const rxBytes = parseInt(stdout.trim()) || 0;
       
-      const { stdout: txOut } = await execAsync(`cat /sys/class/net/${interface}/statistics/tx_bytes`);
+      const { stdout: txOut } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/tx_bytes`);
       const txBytes = parseInt(txOut.trim()) || 0;
       
-      const { stdout: rxPkts } = await execAsync(`cat /sys/class/net/${interface}/statistics/rx_packets`);
+      const { stdout: rxPkts } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/rx_packets`);
       const rxPackets = parseInt(rxPkts.trim()) || 0;
       
-      const { stdout: txPkts } = await execAsync(`cat /sys/class/net/${interface}/statistics/tx_packets`);
+      const { stdout: txPkts } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/tx_packets`);
       const txPackets = parseInt(txPkts.trim()) || 0;
       
-      const { stdout: rxErr } = await execAsync(`cat /sys/class/net/${interface}/statistics/rx_errors`);
+      const { stdout: rxErr } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/rx_errors`);
       const rxErrors = parseInt(rxErr.trim()) || 0;
       
-      const { stdout: txErr } = await execAsync(`cat /sys/class/net/${interface}/statistics/tx_errors`);
+      const { stdout: txErr } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/tx_errors`);
       const txErrors = parseInt(txErr.trim()) || 0;
       
-      const { stdout: rxDrop } = await execAsync(`cat /sys/class/net/${interface}/statistics/rx_dropped`);
+      const { stdout: rxDrop } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/rx_dropped`);
       const rxDropped = parseInt(rxDrop.trim()) || 0;
       
-      const { stdout: txDrop } = await execAsync(`cat /sys/class/net/${interface}/statistics/tx_dropped`);
+      const { stdout: txDrop } = await execAsync(`cat /sys/class/net/${networkInterface}/statistics/tx_dropped`);
       const txDropped = parseInt(txDrop.trim()) || 0;
       
       return {
@@ -955,7 +955,7 @@ class NetworkBandwidthController extends EventEmitter {
     let totalTxRate = 0;
     let activeContainers = 0;
     
-    for (const [containerId, stats] of this.trafficStats) {
+    for (const [_containerId, stats] of this.trafficStats) {
       if (stats.rates) {
         totalRxRate += stats.rates.rx;
         totalTxRate += stats.rates.tx;
@@ -1055,7 +1055,7 @@ class NetworkBandwidthController extends EventEmitter {
       await execAsync(`tc qdisc del dev ${iface} root 2>/dev/null || true`);
       
       // Clean up iptables rules
-      for (const [containerId, info] of this.networkInterfaces) {
+      for (const [containerId, _info] of this.networkInterfaces) {
         await this.removeRateLimiting(containerId);
       }
       

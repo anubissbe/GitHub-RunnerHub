@@ -634,7 +634,7 @@ export class SecurityScanner extends EventEmitter {
     try {
       await this.docker.getImage(imageRef).inspect();
       logger.debug('Image exists locally', { imageRef });
-    } catch (error) {
+    } catch {
       logger.info('Pulling image for scanning', { imageRef });
       
       const stream = await this.docker.pull(imageRef);
@@ -653,8 +653,8 @@ export class SecurityScanner extends EventEmitter {
 
     try {
       // Validate and sanitize inputs
-      const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9.\/:_-]/g, '');
-      const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9.\/_-]/g, '');
+      const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9./:_-]/g, '');
+      const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9./_-]/g, '');
       const timeoutSeconds = Math.floor(this.scanTimeout / 1000);
       
       // Prepare safe command arguments
@@ -670,7 +670,7 @@ export class SecurityScanner extends EventEmitter {
       
       try {
         // Try native Trivy first using spawn for safety
-        const { spawn } = require('child_process');
+        const { spawn } = await import('child_process');
         const trivyProcess = spawn('trivy', trivyArgs);
         await new Promise((resolve, reject) => {
           trivyProcess.on('close', (code: number) => {
@@ -678,12 +678,12 @@ export class SecurityScanner extends EventEmitter {
             else reject(new Error(`Trivy command failed with code ${code}`));
           });
         });
-      } catch (nativeError) {
+      } catch {
         // Fallback to Docker
         logger.debug('Falling back to Docker Trivy');
         // Validate and sanitize inputs
-        const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9.\/:_-]/g, '');
-        const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9.\/_-]/g, '');
+        const sanitizedImageRef = imageRef.replace(/[^a-zA-Z0-9./:_-]/g, '');
+        const sanitizedOutputFile = outputFile.replace(/[^a-zA-Z0-9./_-]/g, '');
         const sanitizedVersion = this.trivyVersion.replace(/[^a-zA-Z0-9._-]/g, '');
         
         const dockerArgs = [
@@ -696,7 +696,7 @@ export class SecurityScanner extends EventEmitter {
           sanitizedImageRef
         ];
         
-        const { spawn } = require('child_process');
+        const { spawn } = await import('child_process');
         const dockerProcess = spawn('docker', dockerArgs);
         await new Promise((resolve, reject) => {
           dockerProcess.on('close', (code: number) => {
@@ -743,7 +743,7 @@ export class SecurityScanner extends EventEmitter {
       // Cleanup
       try {
         await fs.unlink(outputFile);
-      } catch (error) {
+      } catch {
         logger.debug('Failed to cleanup scan output file', { outputFile });
       }
     }
