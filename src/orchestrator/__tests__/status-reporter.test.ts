@@ -194,7 +194,7 @@ describe('StatusReporter', () => {
       DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
       DatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
       DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
-      MetricsCollector.getInstance().recordStatusReports.mockResolvedValue(undefined);
+      MonitoringService.getInstance().recordStatusReports.mockResolvedValue(undefined);
 
       // Add multiple jobs to trigger batch processing
       const jobStatuses: JobStatus[] = [];

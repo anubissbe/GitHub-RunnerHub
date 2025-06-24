@@ -572,6 +572,54 @@ export class MonitoringService extends EventEmitter {
       });
     }
   }
+
+  /**
+   * Record orchestrator health metrics
+   */
+  async recordOrchestratorHealth(health: any): Promise<void> {
+    try {
+      logger.debug('Recording orchestrator health metrics', health);
+      
+      this.emit('orchestrator-health', {
+        ...health,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      logger.error('Failed to record orchestrator health metrics', { health, error });
+    }
+  }
+
+  /**
+   * Record orchestrator metrics
+   */
+  async recordOrchestratorMetrics(metrics: any): Promise<void> {
+    try {
+      logger.debug('Recording orchestrator metrics', metrics);
+      
+      this.emit('orchestrator-metrics', {
+        ...metrics,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      logger.error('Failed to record orchestrator metrics', { metrics, error });
+    }
+  }
+
+  /**
+   * Record status reports
+   */
+  async recordStatusReports(statusReports: any): Promise<void> {
+    try {
+      logger.debug('Recording status reports', statusReports);
+      
+      this.emit('status-reports', {
+        ...statusReports,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      logger.error('Failed to record status reports', { statusReports, error });
+    }
+  }
 }
 
 export default MonitoringService.getInstance();

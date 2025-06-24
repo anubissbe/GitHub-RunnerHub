@@ -54,7 +54,7 @@ global.createMockLogger = () => ({
 
 global.createMockDatabase = () => ({
   query: jest.fn(),
-  getActiveContainers: jest.fn().mockResolvedValue([] as any[]),
+  getActiveContainers: jest.fn().mockResolvedValue([]),
   saveContainer: jest.fn(),
   removeContainer: jest.fn(),
   createAssignment: jest.fn(),
@@ -62,12 +62,12 @@ global.createMockDatabase = () => ({
   updateJobStatus: jest.fn(),
   saveJobStatus: jest.fn(),
   markJobStatusReported: jest.fn(),
-  getPendingStatusUpdates: jest.fn().mockResolvedValue([] as any[]),
+  getPendingStatusUpdates: jest.fn().mockResolvedValue([]),
   appendJobLogs: jest.fn(),
   updateJobCheckRunId: jest.fn(),
   getJob: jest.fn(),
   createContainerAssignment: jest.fn(),
-  getInterruptedJobs: jest.fn().mockResolvedValue([] as any[]),
+  getInterruptedJobs: jest.fn().mockResolvedValue([]),
   createMigrationRules: jest.fn(),
   saveAlert: jest.fn(),
   updateAlert: jest.fn(),

@@ -66,7 +66,7 @@ export class OrchestratorDashboard extends EventEmitter {
   private containerAssignmentManager: ContainerAssignmentManager;
   private statusReporter: StatusReporter;
   
-  private updateInterval?: NodeJS.Timer;
+  private updateInterval?: NodeJS.Timeout;
   private metricsHistory: MetricSnapshot[] = [];
   private alertHistory: Alert[] = [];
   private eventHistory: RealtimeEvent[] = [];
@@ -239,7 +239,7 @@ export class OrchestratorDashboard extends EventEmitter {
     // In a real implementation, these would be calculated from historical data
     const recentEvents = this.eventHistory.slice(0, 100);
     
-    const jobEvents = recentEvents.filter(e => 
+    const _jobEvents = recentEvents.filter(e => 
       e.type === 'job_queued' || e.type === 'job_started' || e.type === 'job_completed'
     );
     

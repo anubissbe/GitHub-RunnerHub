@@ -189,7 +189,7 @@ export class OrchestratorMonitor extends EventEmitter {
         await this.performHealthCheck();
       } catch (error) {
         logger.error('Health check failed:', error);
-        this.createAlert('critical', 'monitor', 'Health check failed', { error: error.message });
+        this.createAlert('critical', 'monitor', 'Health check failed', { error: error instanceof Error ? error.message : String(error) });
       }
     }, this.config.healthCheckInterval);
   }

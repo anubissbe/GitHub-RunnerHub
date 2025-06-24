@@ -456,7 +456,7 @@ describe('RunnerOrchestrator', () => {
     });
 
     it('should emit scaling events when needed', async () => {
-      let _scalingEvent: any = null;
+      let _scalingEvent: unknown = null;
       orchestrator.on('scaling:needed', (event) => {
         _scalingEvent = event;
       });

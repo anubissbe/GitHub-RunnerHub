@@ -505,7 +505,7 @@ export class ImageOptimizer extends EventEmitter {
       }
 
       // Get image information
-      const imageInfo = await (this.dockerClient as any).getImageInfo(imageId);
+      const imageInfo = await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<unknown> }).getImageInfo(imageId);
       if (!imageInfo) {
         throw new Error(`Image not found: ${imageId}`);
       }
@@ -576,10 +576,17 @@ export class ImageOptimizer extends EventEmitter {
   /**
    * Analyze image for optimization opportunities
    */
-  private async analyzeImage(imageId: string): Promise<any> {
+  private async analyzeImage(imageId: string): Promise<{
+    size: unknown;
+    layers: number;
+    architecture: unknown;
+    config: unknown;
+    vulnerabilities: unknown[];
+    optimization_opportunities: unknown[];
+  }> {
     try {
-      const imageInfo = await (this.dockerClient as any).getImageInfo(imageId);
-      const history = await (this.dockerClient as any).getImageHistory(imageId);
+      const imageInfo = await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<unknown> }).getImageInfo(imageId);
+      const history = await (this.dockerClient as DockerClient & { getImageHistory: (id: string) => Promise<unknown> }).getImageHistory(imageId);
       
       return {
         size: imageInfo.size,
@@ -603,7 +610,7 @@ export class ImageOptimizer extends EventEmitter {
    * Select applicable optimization rules
    */
   private selectOptimizationRules(
-    analysis: any,
+    analysis: unknown,
     requestedOptimizations?: string[]
   ): OptimizationRule[] {
     const allRules = this.getAllOptimizationRules();
@@ -642,7 +649,7 @@ export class ImageOptimizer extends EventEmitter {
     try {
       logger.info(`Applying optimization rule: ${rule.name} to ${imageId}`);
 
-      const sizeBefore = (await (this.dockerClient as any).getImageInfo(imageId))?.size || 0;
+      const sizeBefore = (await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<{ size?: number }> }).getImageInfo(imageId))?.size || 0;
       let optimizedImageId = imageId;
 
       // Apply each action in the rule
@@ -654,7 +661,7 @@ export class ImageOptimizer extends EventEmitter {
         );
       }
 
-      const sizeAfter = (await (this.dockerClient as any).getImageInfo(optimizedImageId))?.size || sizeBefore;
+      const sizeAfter = (await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<{ size?: number }> }).getImageInfo(optimizedImageId))?.size || sizeBefore;
       
       const impact: OptimizationImpact = {
         sizeReduction: sizeBefore - sizeAfter,
@@ -825,7 +832,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
         }
       };
 
-      const imageId = await (this.dockerClient as any).buildImage(buildContext, buildOptions);
+      const imageId = await (this.dockerClient as DockerClient & { buildImage: (context: unknown, options: unknown) => Promise<string> }).buildImage(buildContext, buildOptions);
       
       // Cleanup build context
       await fs.rmdir(buildContext, { recursive: true });
@@ -884,7 +891,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Calculate optimization potential
    */
-  private calculateOptimizationPotential(imageInfo: any, history: any[]): number {
+  private calculateOptimizationPotential(imageInfo: unknown, history: unknown[]): number {
     // Simple heuristic based on size and layer count
     const sizeFactor = Math.min(imageInfo.size / (1024 * 1024 * 1024), 1); // GB
     const layerFactor = Math.min(history.length / 50, 1);
@@ -895,7 +902,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Evaluate optimization condition
    */
-  private evaluateCondition(condition: OptimizationCondition, analysis: any): boolean {
+  private evaluateCondition(condition: OptimizationCondition, analysis: unknown): boolean {
     const value = this.getAnalysisValue(analysis, condition.type);
     
     switch (condition.operator) {
@@ -940,7 +947,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Compare values (supports size strings like "100MB")
    */
-  private compareValues(value1: any, value2: any): number {
+  private compareValues(value1: unknown, value2: unknown): number {
     // Handle size comparisons
     if (typeof value2 === 'string' && value2.match(/^\d+[KMGT]?B?$/i)) {
       const size1 = typeof value1 === 'number' ? value1 : this.parseSize(value1);
@@ -1044,7 +1051,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
    */
   private createOptimizedImage(
     imageId: string,
-    imageInfo: any,
+    imageInfo: unknown,
     appliedOptimizations: AppliedOptimization[]
   ): OptimizedImage {
     const sizeBefore = imageInfo.originalSize || imageInfo.size;
@@ -1140,7 +1147,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Get optimization statistics
    */
-  public getOptimizationStats(): any {
+  public getOptimizationStats(): { totalOptimizations: number; totalSavings: number; averageImpact: number; optimizationsByType: Record<string, number>; } {
     const optimizations = Array.from(this.optimizedImages.values());
     
     if (optimizations.length === 0) {

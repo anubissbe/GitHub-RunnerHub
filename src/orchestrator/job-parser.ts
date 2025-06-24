@@ -1,5 +1,6 @@
 import { createLogger } from '../utils/logger';
-import * as yaml from 'js-yaml';
+// Remove unused import
+// import * as yaml from 'js-yaml';
 
 const logger = createLogger('JobParser');
 
@@ -427,14 +428,14 @@ export class JobParser {
   
   private isValidImageName(image: string): boolean {
     // Basic validation for Docker image names
-    const imageRegex = /^[a-z0-9]+([\-._/][a-z0-9]+)*(:[a-z0-9]+([\-._][a-z0-9]+)*)?(@sha256:[a-f0-9]{64})?$/i;
+    const imageRegex = /^[a-z0-9]+([._/-][a-z0-9]+)*(:[a-z0-9]+([._-][a-z0-9]+)*)?(@sha256:[a-f0-9]{64})?$/i;
     return imageRegex.test(image);
   }
   
   private isValidActionReference(action: string): boolean {
     // Validate GitHub Action reference format
     // Examples: actions/checkout@v3, owner/repo@ref, ./path/to/action
-    const actionRegex = /^([a-z0-9\-]+\/[a-z0-9\-._]+@[a-z0-9\-._]+|\.\/[a-z0-9\-._/]+)$/i;
+    const actionRegex = /^([a-z0-9-]+\/[a-z0-9._-]+@[a-z0-9._-]+|\.\/[a-z0-9._/-]+)$/i;
     return actionRegex.test(action);
   }
   
@@ -491,7 +492,7 @@ export class JobParser {
         RUNNER_OS: 'Linux',
         RUNNER_ARCH: 'X64'
       },
-      timeout: job.timeout_minutes * 60 * 1000, // Convert to milliseconds
+      timeout: (job.timeout_minutes || 360) * 60 * 1000, // Convert to milliseconds, default 6 hours
       continueOnError: job.continue_on_error,
       shell: job.defaults?.run?.shell || 'bash',
       workingDirectory: job.defaults?.run?.working_directory || '/github/workspace'

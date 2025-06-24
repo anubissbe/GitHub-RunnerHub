@@ -4,8 +4,8 @@ import { EnhancedOrchestrator, EnhancedOrchestratorConfig } from './enhanced-orc
 import { DockerIntegrationService } from '../docker';
 import { JobDistributionSystem } from '../job-distribution';
 import { WebhookHandler } from './webhook-handler';
-import database from '../services/database';
-import monitoringService from '../services/monitoring';
+import { DatabaseService } from '../services/database';
+import { MonitoringService } from '../services/monitoring';
 
 const logger = createLogger('OrchestrationIntegration');
 
@@ -69,8 +69,8 @@ export class OrchestrationIntegration extends EventEmitter {
   private jobDistributionSystem: JobDistributionSystem;
   private dockerIntegration: DockerIntegrationService;
   private webhookHandler: WebhookHandler;
-  private databaseService: DatabaseService;
-  private metricsCollector: MetricsCollector;
+  private _databaseService: DatabaseService;
+  private _monitoringService: MonitoringService;
   
   // Health and metrics
   private systemHealth: SystemHealth;
