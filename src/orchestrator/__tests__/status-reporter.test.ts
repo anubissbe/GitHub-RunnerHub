@@ -1,4 +1,7 @@
 import { StatusReporter, JobStatus, JobStatusType, JobConclusion } from '../status-reporter';
+import { DatabaseService } from '../../services/database-service';
+import { GitHubService } from '../../services/github-service';
+import { MetricsCollector } from '../../services/metrics-collector';
 
 // Mock dependencies
 jest.mock('../../utils/logger');
@@ -26,12 +29,11 @@ describe('StatusReporter', () => {
 
   describe('initialization', () => {
     it('should initialize successfully', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().getPendingStatusUpdates.mockResolvedValue([]);
+      (DatabaseService.getInstance().getPendingStatusUpdates as jest.Mock).mockResolvedValue([]);
 
       await statusReporter.initialize();
 
-      expect(mockDatabaseService.getInstance().getPendingStatusUpdates).toHaveBeenCalled();
+      expect(DatabaseService.getInstance().getPendingStatusUpdates).toHaveBeenCalled();
     });
 
     it('should recover pending status updates', async () => {
@@ -46,8 +48,7 @@ describe('StatusReporter', () => {
         }
       ];
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().getPendingStatusUpdates.mockResolvedValue(pendingUpdates);
+      (DatabaseService.getInstance().getPendingStatusUpdates as jest.Mock).mockResolvedValue(pendingUpdates);
 
       await statusReporter.initialize();
 
@@ -75,8 +76,7 @@ describe('StatusReporter', () => {
         }
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       let queuedEvent: any = null;
       statusReporter.on('status:queued', (status) => {
@@ -90,8 +90,7 @@ describe('StatusReporter', () => {
     });
 
     it('should report job started', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       await statusReporter.reportJobStarted('job-1', 'test/repo', 'abc123', 'test-job', 456);
 
@@ -100,8 +99,7 @@ describe('StatusReporter', () => {
     });
 
     it('should report job completed', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       await statusReporter.reportJobCompleted(
         'job-1',
@@ -135,8 +133,7 @@ describe('StatusReporter', () => {
         status: JobStatusType.IN_PROGRESS
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       await statusReporter.reportJobStatus(jobStatus);
     });
@@ -192,15 +189,12 @@ describe('StatusReporter', () => {
     });
 
     it('should process status queue in batches', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
 
-      mockGitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
-      mockMetricsCollector.getInstance().recordStatusReports.mockResolvedValue(undefined);
+      GitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
+      DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
+      MetricsCollector.getInstance().recordStatusReports.mockResolvedValue(undefined);
 
       // Add multiple jobs to trigger batch processing
       const jobStatuses: JobStatus[] = [];
@@ -230,21 +224,19 @@ describe('StatusReporter', () => {
       await new Promise(resolve => setTimeout(resolve, 1100));
 
       expect(reportedCount).toBe(6);
-      expect(mockGitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(6);
+      expect(GitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(6);
     });
 
     it('should handle reporting failures with retries', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
 
       // Mock failure then success
-      mockGitHubService.getInstance().createCheckRun
+      GitHubService.getInstance().createCheckRun
         .mockRejectedValueOnce(new Error('API rate limit'))
         .mockResolvedValue({ id: 123 });
 
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
+      DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
 
       const jobStatus: JobStatus = {
         id: 'job-1',
@@ -267,16 +259,14 @@ describe('StatusReporter', () => {
       await (statusReporter as any).processStatusQueue();
 
       expect(reportedEvent).toBeTruthy();
-      expect(mockGitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(2); // Initial failure + retry
+      expect(GitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(2); // Initial failure + retry
     });
 
     it('should emit failure event after max retries', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
 
       // Mock persistent failure
-      mockGitHubService.getInstance().createCheckRun.mockRejectedValue(new Error('Persistent failure'));
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      GitHubService.getInstance().createCheckRun.mockRejectedValue(new Error('Persistent failure'));
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       const jobStatus: JobStatus = {
         id: 'job-1',
@@ -300,7 +290,7 @@ describe('StatusReporter', () => {
 
       expect(failedEvent).toBeTruthy();
       expect(failedEvent.status).toEqual(jobStatus);
-      expect(mockGitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(2); // Max retries
+      expect(GitHubService.getInstance().createCheckRun).toHaveBeenCalledTimes(2); // Max retries
     });
   });
 
@@ -310,13 +300,11 @@ describe('StatusReporter', () => {
     });
 
     it('should create check run for new job', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
 
-      mockGitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
+      GitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
+      DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
 
       const jobStatus: JobStatus = {
         id: 'job-1',
@@ -335,7 +323,7 @@ describe('StatusReporter', () => {
       await statusReporter.reportJobStatus(jobStatus);
       await (statusReporter as any).processStatusQueue();
 
-      expect(mockGitHubService.getInstance().createCheckRun).toHaveBeenCalledWith(
+      expect(GitHubService.getInstance().createCheckRun).toHaveBeenCalledWith(
         'test/repo',
         expect.objectContaining({
           name: 'test-job',
@@ -348,12 +336,10 @@ describe('StatusReporter', () => {
     });
 
     it('should update existing check run', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
 
-      mockGitHubService.getInstance().updateCheckRun.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
+      GitHubService.getInstance().updateCheckRun.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
 
       const jobStatus: JobStatus = {
         id: 'job-1',
@@ -374,7 +360,7 @@ describe('StatusReporter', () => {
       await statusReporter.reportJobStatus(jobStatus);
       await (statusReporter as any).processStatusQueue();
 
-      expect(mockGitHubService.getInstance().updateCheckRun).toHaveBeenCalledWith(
+      expect(GitHubService.getInstance().updateCheckRun).toHaveBeenCalledWith(
         'test/repo',
         123,
         expect.objectContaining({
@@ -393,8 +379,7 @@ describe('StatusReporter', () => {
     });
 
     it('should report logs', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().appendJobLogs.mockResolvedValue(undefined);
+      DatabaseService.getInstance().appendJobLogs.mockResolvedValue(undefined);
 
       let logsEvent: any = null;
       statusReporter.on('logs:received', (event) => {
@@ -409,7 +394,7 @@ describe('StatusReporter', () => {
         level: 'info'
       });
 
-      expect(mockDatabaseService.getInstance().appendJobLogs).toHaveBeenCalledWith(
+      expect(DatabaseService.getInstance().appendJobLogs).toHaveBeenCalledWith(
         'job-1',
         'Test log message',
         'info'
@@ -457,8 +442,7 @@ describe('StatusReporter', () => {
     });
 
     it('should return current statistics', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
 
       // Add some jobs to the queue
       for (let i = 1; i <= 3; i++) {
@@ -493,13 +477,11 @@ describe('StatusReporter', () => {
     });
 
     it('should process remaining queue during shutdown', async () => {
-      const mockGitHubService = require('../../services/github-service').GitHubService;
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
 
-      mockGitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
-      mockDatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
-      mockDatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
+      GitHubService.getInstance().createCheckRun.mockResolvedValue({ id: 123 });
+      DatabaseService.getInstance().saveJobStatus.mockResolvedValue(undefined);
+      DatabaseService.getInstance().updateJobCheckRunId.mockResolvedValue(undefined);
+      DatabaseService.getInstance().markJobStatusReported.mockResolvedValue(undefined);
 
       // Add job to queue
       await statusReporter.reportJobStatus({
@@ -513,7 +495,7 @@ describe('StatusReporter', () => {
 
       await statusReporter.shutdown();
 
-      expect(mockGitHubService.getInstance().createCheckRun).toHaveBeenCalled();
+      expect(GitHubService.getInstance().createCheckRun).toHaveBeenCalled();
     });
   });
 });

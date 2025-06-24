@@ -761,4 +761,5 @@ export class RunnerOrchestrator extends EventEmitter {
   }
 }
 
+export { RunnerOrchestrator };
 export default RunnerOrchestrator;

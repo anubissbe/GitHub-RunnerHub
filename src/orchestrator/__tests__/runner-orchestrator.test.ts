@@ -1,5 +1,5 @@
 import { RunnerOrchestrator, OrchestratorConfig, OrchestratorStatus } from '../runner-orchestrator';
-import { JobType, QUEUE_CONFIG } from '../../queues/config/redis-config';
+import { QUEUE_CONFIG } from '../../queues/config/redis-config';
 import { JobConclusion } from '../status-reporter';
 
 // Mock dependencies
@@ -456,9 +456,9 @@ describe('RunnerOrchestrator', () => {
     });
 
     it('should emit scaling events when needed', async () => {
-      let scalingEvent: any = null;
+      let _scalingEvent: any = null;
       orchestrator.on('scaling:needed', (event) => {
-        scalingEvent = event;
+        _scalingEvent = event;
       });
 
       // Simulate high load condition

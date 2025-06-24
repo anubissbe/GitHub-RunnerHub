@@ -44,12 +44,12 @@ export interface OptimizationRule {
 export interface OptimizationCondition {
   type: 'size' | 'layers' | 'architecture' | 'labels' | 'age';
   operator: 'gt' | 'lt' | 'eq' | 'contains' | 'matches';
-  value: any;
+  value: string | number | RegExp;
 }
 
 export interface OptimizationAction {
   type: OptimizationActionType;
-  parameters: Record<string, any>;
+  parameters: Record<string, unknown>;
   order: number;
 }
 
@@ -66,7 +66,7 @@ export interface LayerCachingConfig {
 export interface CacheInvalidationRule {
   id: string;
   trigger: 'time' | 'size' | 'dependency' | 'manual';
-  condition: any;
+  condition: unknown;
   action: 'delete' | 'rebuild' | 'mark_stale';
 }
 

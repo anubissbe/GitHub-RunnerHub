@@ -372,4 +372,5 @@ export class OrchestratorService extends EventEmitter {
   }
 }
 
+export { OrchestratorService };
 export default OrchestratorService;

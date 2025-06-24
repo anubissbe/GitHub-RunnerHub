@@ -225,7 +225,7 @@ describe('EnhancedOrchestrator', () => {
   afterEach(async () => {
     try {
       await enhancedOrchestrator.shutdown();
-    } catch (error) {
+    } catch {
       // Ignore shutdown errors in tests
     }
     jest.clearAllMocks();
