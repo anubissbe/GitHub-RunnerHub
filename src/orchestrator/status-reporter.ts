@@ -1,8 +1,10 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
-import { GitHubService } from '../services/github-service';
-import database from '../services/database';
-import monitoringService from '../services/monitoring';
+import { GitHubAPIService } from '../services/github-api';
+import _database from '../services/database';
+import _monitoringService from '../services/monitoring';
+import { DatabaseService } from '../services/database';
+import { MonitoringService } from '../services/monitoring';
 
 const logger = createLogger('StatusReporter');
 
@@ -76,9 +78,9 @@ export interface StatusReporterConfig {
 
 export class StatusReporter extends EventEmitter {
   private static instance: StatusReporter;
-  private githubService: GitHubService;
+  private githubService: GitHubAPIService;
   private databaseService: DatabaseService;
-  private metricsCollector: MetricsCollector;
+  private metricsCollector: MonitoringService;
   private config: StatusReporterConfig;
   
   private statusQueue: Map<string, JobStatus> = new Map();
@@ -87,9 +89,9 @@ export class StatusReporter extends EventEmitter {
   
   private constructor(config?: Partial<StatusReporterConfig>) {
     super();
-    this.githubService = GitHubService.getInstance();
+    this.githubService = new GitHubAPIService();
     this.databaseService = DatabaseService.getInstance();
-    this.metricsCollector = MetricsCollector.getInstance();
+    this.metricsCollector = MonitoringService.getInstance();
     
     this.config = {
       batchSize: 10,

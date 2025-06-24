@@ -3,10 +3,12 @@ import { createLogger } from '../utils/logger';
 import { QueueManager } from '../queues/queue-manager';
 import { JobRouter } from '../queues/job-router';
 import { JobType, QUEUE_CONFIG } from '../queues/config/redis-config';
-import database from '../services/database';
-import { GitHubService } from '../services/github-service';
+import _database from '../services/database';
+import { DatabaseService } from '../services/database';
+import { GitHubAPIService } from '../services/github-api';
 import { ContainerPoolManager } from '../container-orchestration/pool/integrated-pool-orchestrator';
-import monitoringService from '../services/monitoring';
+import _monitoringService from '../services/monitoring';
+import { MonitoringService } from '../services/monitoring';
 import { StatusReporter, JobConclusion } from './status-reporter';
 
 const logger = createLogger('RunnerOrchestrator');
@@ -65,9 +67,9 @@ export class RunnerOrchestrator extends EventEmitter {
   private queueManager: QueueManager;
   private jobRouter: JobRouter;
   private databaseService: DatabaseService;
-  private githubService: GitHubService;
+  private githubService: GitHubAPIService;
   private containerPool: ContainerPoolManager;
-  private metricsCollector: MetricsCollector;
+  private metricsCollector: MonitoringService;
   private statusReporter: StatusReporter;
   
   private activeJobs: Map<string, ContainerAssignment> = new Map();
@@ -84,9 +86,9 @@ export class RunnerOrchestrator extends EventEmitter {
     this.queueManager = QueueManager.getInstance();
     this.jobRouter = JobRouter.getInstance();
     this.databaseService = DatabaseService.getInstance();
-    this.githubService = GitHubService.getInstance();
+    this.githubService = new GitHubAPIService();
     this.containerPool = ContainerPoolManager.getInstance();
-    this.metricsCollector = MetricsCollector.getInstance();
+    this.metricsCollector = MonitoringService.getInstance();
     this.statusReporter = StatusReporter.getInstance();
   }
 

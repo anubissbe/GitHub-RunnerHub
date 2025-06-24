@@ -4,6 +4,8 @@ import { EnhancedOrchestrator, EnhancedOrchestratorConfig } from './enhanced-orc
 import { DockerIntegrationService } from '../docker';
 import { JobDistributionSystem } from '../job-distribution';
 import { WebhookHandler } from './webhook-handler';
+import database from '../services/database';
+import monitoringService from '../services/monitoring';
 import { DatabaseService } from '../services/database';
 import { MonitoringService } from '../services/monitoring';
 
@@ -69,8 +71,8 @@ export class OrchestrationIntegration extends EventEmitter {
   private jobDistributionSystem: JobDistributionSystem;
   private dockerIntegration: DockerIntegrationService;
   private webhookHandler: WebhookHandler;
-  private _databaseService: DatabaseService;
-  private _monitoringService: MonitoringService;
+  private databaseService: DatabaseService;
+  private metricsCollector: MonitoringService;
   
   // Health and metrics
   private systemHealth: SystemHealth;
@@ -220,10 +222,10 @@ export class OrchestrationIntegration extends EventEmitter {
     this.systemHealth.components.database = true;
     logger.info('Database Service initialized');
 
-    // Initialize Metrics Collector
-    this.metricsCollector = MetricsCollector.getInstance();
-    await this.metricsCollector.initialize();
-    logger.info('Metrics Collector initialized');
+    // Initialize Monitoring Service
+    this.metricsCollector = MonitoringService.getInstance();
+    await this.metricsCollector.start();
+    logger.info('Monitoring Service initialized');
   }
 
   private setupEventListeners(): void {

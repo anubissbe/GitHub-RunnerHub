@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 import { RunnerOrchestrator } from './runner-orchestrator';
-import { QueueManager } from '../queues/queue-manager';
+import { QueueManager as _QueueManager } from '../queues/queue-manager';
 import { JobRouter } from '../queues/job-router';
 import { JobType, QUEUE_CONFIG } from '../queues/config/redis-config';
 

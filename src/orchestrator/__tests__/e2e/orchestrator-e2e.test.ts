@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import { Express } from 'express';
-import { createApp } from '../../../app';
+import App from '../../../app';
 import { OrchestratorService } from '../../orchestrator-service';
 import { ContainerAssignmentManager } from '../../container-assignment';
 import { StatusReporter } from '../../status-reporter';
