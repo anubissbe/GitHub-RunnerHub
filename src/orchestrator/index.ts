@@ -6,6 +6,16 @@
  * dedicated runners with a sophisticated container-based approach.
  */
 
+// Import types first for use in interfaces
+import { ContainerStatus } from './container-assignment';
+import { HealthStatus } from './monitoring/orchestrator-monitor';
+import { RunnerOrchestrator } from './runner-orchestrator';
+import { OrchestratorService, OrchestratorServiceConfig } from './orchestrator-service';
+import { ContainerAssignmentManager } from './container-assignment';
+import { StatusReporter } from './status-reporter';
+import { EnhancedOrchestrator, EnhancedOrchestratorConfig } from './enhanced-orchestrator';
+import { OrchestrationIntegration, IntegrationConfig } from './orchestration-integration';
+
 // Enhanced Orchestrator Components
 export { EnhancedOrchestrator, EnhancedOrchestratorConfig, EnhancedOrchestratorStatus } from './enhanced-orchestrator';
 export { OrchestrationIntegration, IntegrationConfig, SystemHealth, IntegrationMetrics } from './orchestration-integration';

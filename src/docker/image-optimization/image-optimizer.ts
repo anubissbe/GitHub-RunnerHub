@@ -908,7 +908,10 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
       case 'contains':
         return String(value).includes(String(condition.value));
       case 'matches':
-        return new RegExp(condition.value).test(String(value));
+        if (condition.value instanceof RegExp) {
+          return condition.value.test(String(value));
+        }
+        return new RegExp(String(condition.value)).test(String(value));
       default:
         return false;
     }
@@ -917,7 +920,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Get analysis value by type
    */
-  private getAnalysisValue(analysis: any, type: string): any {
+  private getAnalysisValue(analysis: Record<string, unknown>, type: string): unknown {
     switch (type) {
       case 'size':
         return analysis.size;
