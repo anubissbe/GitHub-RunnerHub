@@ -1,13 +1,13 @@
 import { StatusReporter, JobStatus, JobStatusType, JobConclusion } from '../status-reporter';
-import { DatabaseService } from '../../services/database-service';
-import { GitHubService } from '../../services/github-service';
-import { MetricsCollector } from '../../services/metrics-collector';
+import { DatabaseService } from '../../services/database';
+import { GitHubService } from '../../services/github-api';
+import { MonitoringService } from '../../services/monitoring';
 
 // Mock dependencies
 jest.mock('../../utils/logger');
-jest.mock('../../services/github-service');
-jest.mock('../../services/database-service');
-jest.mock('../../services/metrics-collector');
+jest.mock('../../services/github-api');
+jest.mock('../../services/database');
+jest.mock('../../services/monitoring');
 
 describe('StatusReporter', () => {
   let statusReporter: StatusReporter;
