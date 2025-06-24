@@ -242,7 +242,7 @@ export class WebhookProcessor {
   }
   
   private static async handleCheckRunEvent(job: Job, payload: any, _queueManager: QueueManager): Promise<void> {
-    const { action, check_run, repository } = payload;
+    const { check_run, repository } = payload;
     
     await job.updateProgress(40);
     
@@ -286,7 +286,7 @@ export class WebhookProcessor {
   }
   
   private static async handlePullRequestEvent(job: Job, payload: any, _queueManager: QueueManager): Promise<void> {
-    const { action, pull_request, repository } = payload;
+    const { pull_request, repository } = payload;
     
     await job.updateProgress(40);
     

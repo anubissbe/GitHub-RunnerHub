@@ -576,23 +576,17 @@ export class ImageOptimizer extends EventEmitter {
   /**
    * Analyze image for optimization opportunities
    */
-  private async analyzeImage(imageId: string): Promise<{
-    size: unknown;
-    layers: number;
-    architecture: unknown;
-    config: unknown;
-    vulnerabilities: unknown[];
-    optimization_opportunities: unknown[];
-  }> {
+  private async analyzeImage(imageId: string): Promise<any> {
     try {
-      const imageInfo = await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<unknown> }).getImageInfo(imageId);
-      const history = await (this.dockerClient as DockerClient & { getImageHistory: (id: string) => Promise<unknown> }).getImageHistory(imageId);
+      const imageInfo = await (this.dockerClient as DockerClient & { getImageInfo: (id: string) => Promise<any> }).getImageInfo(imageId);
+      const history = await (this.dockerClient as DockerClient & { getImageHistory: (id: string) => Promise<any[]> }).getImageHistory(imageId);
       
       return {
-        size: imageInfo.size,
-        layers: history.length,
-        architecture: imageInfo.architecture,
-        os: imageInfo.os,
+        size: imageInfo?.size || 0,
+        layers: Array.isArray(history) ? history.length : 0,
+        architecture: imageInfo?.architecture || 'unknown',
+        os: imageInfo?.os || 'unknown',
+        config: imageInfo?.config || {},
         packageCaches: await this.detectPackageCaches(imageId),
         unusedFiles: await this.detectUnusedFiles(imageId),
         vulnerabilities: this.config.security.scanImages 
@@ -607,10 +601,44 @@ export class ImageOptimizer extends EventEmitter {
   }
 
   /**
+   * Detect optimization opportunities
+   */
+  private async detectOptimizationOpportunities(imageInfo: any, history: any[]): Promise<Array<Record<string, unknown>>> {
+    const opportunities: Array<Record<string, unknown>> = [];
+    
+    // Check for large layers
+    if (Array.isArray(history)) {
+      history.forEach((layer, index) => {
+        if (layer?.Size > 50 * 1024 * 1024) { // 50MB
+          opportunities.push({
+            type: 'large-layer',
+            layerIndex: index,
+            size: layer.Size,
+            recommendation: 'Consider splitting this layer or removing unnecessary files'
+          });
+        }
+      });
+    }
+    
+    // Check for package manager caches
+    if (imageInfo?.config?.Env) {
+      const hasAptCache = imageInfo.config.Env.some((env: string) => env.includes('apt-get'));
+      if (hasAptCache) {
+        opportunities.push({
+          type: 'package-cache',
+          recommendation: 'Add rm -rf /var/lib/apt/lists/* after apt-get install'
+        });
+      }
+    }
+    
+    return opportunities;
+  }
+
+  /**
    * Select applicable optimization rules
    */
   private selectOptimizationRules(
-    analysis: unknown,
+    analysis: Record<string, any>,
     requestedOptimizations?: string[]
   ): OptimizationRule[] {
     const allRules = this.getAllOptimizationRules();
@@ -891,10 +919,12 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Calculate optimization potential
    */
-  private calculateOptimizationPotential(imageInfo: unknown, history: unknown[]): number {
+  private calculateOptimizationPotential(imageInfo: any, history: any[]): number {
     // Simple heuristic based on size and layer count
-    const sizeFactor = Math.min(imageInfo.size / (1024 * 1024 * 1024), 1); // GB
-    const layerFactor = Math.min(history.length / 50, 1);
+    const size = imageInfo?.size || 0;
+    const layerCount = Array.isArray(history) ? history.length : 0;
+    const sizeFactor = Math.min(size / (1024 * 1024 * 1024), 1); // GB
+    const layerFactor = Math.min(layerCount / 50, 1);
     
     return Math.round((sizeFactor + layerFactor) * 50);
   }
@@ -902,7 +932,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   /**
    * Evaluate optimization condition
    */
-  private evaluateCondition(condition: OptimizationCondition, analysis: unknown): boolean {
+  private evaluateCondition(condition: OptimizationCondition, analysis: Record<string, any>): boolean {
     const value = this.getAnalysisValue(analysis, condition.type);
     
     switch (condition.operator) {
@@ -950,7 +980,7 @@ RUN find / -type f \\( ${patterns.map(p => `-name "${p}"`).join(' -o ')} \\) -de
   private compareValues(value1: unknown, value2: unknown): number {
     // Handle size comparisons
     if (typeof value2 === 'string' && value2.match(/^\d+[KMGT]?B?$/i)) {
-      const size1 = typeof value1 === 'number' ? value1 : this.parseSize(value1);
+      const size1 = typeof value1 === 'number' ? value1 : this.parseSize(String(value1));
       const size2 = this.parseSize(value2);
       return size1 - size2;
     }

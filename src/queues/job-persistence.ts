@@ -1,4 +1,4 @@
-import { Queue, Job, QueueEvents } from 'bullmq';
+import { Job, QueueEvents } from 'bullmq';
 import { logger } from '../utils/logger';
 import { DatabaseService } from '../services/database-service';
 import { QueueManager } from './queue-manager';

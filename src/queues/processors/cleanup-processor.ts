@@ -331,7 +331,7 @@ export class CleanupProcessor {
           }
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore errors for directory removal
     }
   }

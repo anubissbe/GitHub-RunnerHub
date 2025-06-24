@@ -111,7 +111,7 @@ export class JobProcessor {
       
       // 1. Validate runner configuration
       const githubService = GitHubService.getInstance();
-      const runnerConfig = await githubService.getRunnerConfig(runnerId);
+      const _runnerConfig = await githubService.getRunnerConfig(runnerId);
       
       await job.updateProgress(40);
       
