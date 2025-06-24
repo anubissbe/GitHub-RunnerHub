@@ -155,7 +155,7 @@ export class LoadBalancer extends EventEmitter {
   private config: LoadBalancerConfig;
   private queues: Map<string, JobQueue> = new Map();
   private activeJobs: Map<string, QueuedJob> = new Map();
-  private metrics: LoadBalancerMetrics;
+  private metrics!: LoadBalancerMetrics;
   private circuitBreakers: Map<string, CircuitBreaker> = new Map();
   private throttlers: Map<string, RateLimiter> = new Map();
   private stickySessionManager: StickySessionManager;

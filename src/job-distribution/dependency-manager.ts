@@ -1135,7 +1135,7 @@ export class DependencyManager extends EventEmitter {
       
       // Basic JSONPath support (would use jsonpath library in production)
       return expression.includes('success') ? data.status === JobNodeStatus.COMPLETED : false;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -1145,7 +1145,7 @@ export class DependencyManager extends EventEmitter {
       const regex = new RegExp(expression);
       const output = depNode.result?.output || '';
       return regex.test(output);
-    } catch (error) {
+    } catch {
       return false;
     }
   }

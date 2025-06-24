@@ -11,7 +11,7 @@ import { DockerClient, DockerClientConfig } from './docker-client';
 import { ContainerTemplateManager } from './templates/container-templates';
 import { NetworkManager } from './networking/network-manager';
 import { VolumeManager } from './volumes/volume-manager';
-import { ImageOptimizer } from './image-optimization/image-optimizer';
+import { ImageOptimizer, VulnerabilityLevel, PruneStrategy } from './image-optimization/image-optimizer';
 import { DockerSecurityManager } from './security/docker-security-manager';
 
 // Core Docker Client

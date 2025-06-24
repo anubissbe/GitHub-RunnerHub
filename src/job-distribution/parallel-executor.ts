@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import { JobRouter, JobRoutingRequest, JobRoutingResult } from './job-router';
 import { LoadBalancer, LoadBalancingResult } from './load-balancer';
 import { ResourceScheduler, SchedulingRequest, SchedulingResult } from './resource-scheduler';
-import { DependencyManager, DependencyGraph, JobNode } from './dependency-manager';
+import { DependencyManager, DependencyGraph } from './dependency-manager';
 
 const logger = createLogger('ParallelExecutor');
 

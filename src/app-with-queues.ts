@@ -42,7 +42,7 @@ export class App {
   private io: Server;
   private queueManager: QueueManager;
   // Reserved for future service management integration
-  private _serviceManager: ServiceManager;
+  private _serviceManager: ServiceManager; // Reserved for future use
 
   constructor(serviceManager: ServiceManager, queueManager: QueueManager) {
     this._serviceManager = serviceManager;

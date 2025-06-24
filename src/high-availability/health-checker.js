@@ -675,7 +675,6 @@ class HealthChecker extends EventEmitter {
           containersManaged: 0 // Would be actual count
         }
       };
-      
     } catch (error) {
       return {
         healthy: false,

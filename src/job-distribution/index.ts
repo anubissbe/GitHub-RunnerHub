@@ -278,7 +278,7 @@ export class JobDistributionSystem {
   private parallelExecutor: ParallelExecutor;
   private isInitialized: boolean = false;
 
-  constructor(config = createDefaultJobDistributionConfig()) {
+  constructor(_config = createDefaultJobDistributionConfig()) {
     this.router = JobRouter.getInstance();
     this.loadBalancer = LoadBalancer.getInstance();
     this.scheduler = ResourceScheduler.getInstance();
