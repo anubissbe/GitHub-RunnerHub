@@ -76,6 +76,20 @@ export interface JobConstraints {
     allowedTimeWindows?: Array<{start: string; end: string}>;
   };
   securityLevel: SecurityLevel;
+  // Additional properties for SchedulingConstraints compatibility
+  allowedJobTypes: string[];
+  blockedJobTypes: string[];
+  requiredLabels: Record<string, string>;
+  antiAffinityRules: string[];
+  timeWindows: SchedulingWindow[];
+}
+
+export interface SchedulingWindow {
+  start: string; // HH:mm format
+  end: string;
+  daysOfWeek: number[]; // 0-6, 0 = Sunday
+  timezone: string;
+  priority: JobPriority;
 }
 
 export interface JobPreferences {
@@ -83,6 +97,18 @@ export interface JobPreferences {
   affinityRules: AffinityRule[];
   antiAffinityRules: AntiAffinityRule[];
   performanceProfile: PerformanceProfile;
+  // Additional properties for SchedulingPreferences compatibility
+  preferredPools: string[];
+  costOptimization: boolean;
+  powerEfficiency: boolean;
+  locality: LocalityPreference;
+}
+
+export interface LocalityPreference {
+  region?: string;
+  zone?: string;
+  datacenter?: string;
+  colocation: boolean; // Prefer same location as related jobs
 }
 
 export interface AffinityRule {
@@ -114,6 +140,8 @@ export interface JobRoutingResult {
   estimatedStartTime: Date;
   estimatedCompletionTime: Date;
   metrics: RoutingMetrics;
+  reason?: string;
+  assignedRunner?: RunnerAssignment; // alias for selectedRunner
 }
 
 export interface RoutingDecision {
@@ -206,8 +234,9 @@ export enum SecurityLevel {
 
 export enum PerformanceProfile {
   SPEED = 'speed',
-  BALANCED = 'balanced',
   EFFICIENCY = 'efficiency',
+  BALANCED = 'balanced',
+  COST_OPTIMIZED = 'cost-optimized',
   RELIABILITY = 'reliability'
 }
 
@@ -239,7 +268,7 @@ export enum RoutingFactor {
 
 export class JobRouter extends EventEmitter {
   private static instance: JobRouter;
-  private containerManager: ContainerAssignmentManager;
+  private _containerManager: ContainerAssignmentManager;
   private _dockerIntegration: DockerIntegrationService;
   private routingCache: Map<string, JobRoutingResult> = new Map();
   private performanceHistory: Map<string, PerformanceHistory[]> = new Map();
@@ -247,9 +276,14 @@ export class JobRouter extends EventEmitter {
 
   private constructor() {
     super();
-    this.containerManager = ContainerAssignmentManager.getInstance();
+    this._containerManager = ContainerAssignmentManager.getInstance();
     this._dockerIntegration = DockerIntegrationService.getInstance();
     this.initializeRoutingAlgorithms();
+    
+    // Initialize containerManager for future use
+    logger.debug('JobRouter initialized with container manager', { 
+      hasContainerManager: !!this._containerManager 
+    });
   }
 
   public static getInstance(): JobRouter {

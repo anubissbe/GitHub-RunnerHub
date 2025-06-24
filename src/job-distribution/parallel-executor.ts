@@ -699,12 +699,12 @@ export class ParallelExecutor extends EventEmitter {
       if (this.config.enableResourceAwareScheduling) {
         job.executionStage = ExecutionStage.Scheduling;
         const schedulingRequest: SchedulingRequest = {
-          jobId: job.originalRequest.jobId,
-          resourceRequirements: job.originalRequest.resourceRequirements,
-          priority: job.originalRequest.priority,
+          job: job.originalRequest,
           constraints: job.originalRequest.metadata.constraints,
           preferences: job.originalRequest.metadata.preferences,
-          metadata: job.originalRequest.metadata
+          estimatedDuration: job.originalRequest.metadata.estimatedDuration,
+          resourceRequirements: job.originalRequest.resourceRequirements,
+          deadline: job.originalRequest.metadata.constraints.timeConstraints?.deadline
         };
         
         job.schedulingResult = await this.resourceScheduler.scheduleJob(schedulingRequest);
@@ -716,7 +716,7 @@ export class ParallelExecutor extends EventEmitter {
       
       // Step 4: Execute the job
       job.executionStage = ExecutionStage.Executing;
-      attempt.runner = job.routingResult.assignedRunner?.id || 'unknown';
+      attempt.runner = job.routingResult.assignedRunner?.runnerId || 'unknown';
       
       // Simulate job execution (in real implementation, this would trigger actual job execution)
       await this.simulateJobExecution(job);

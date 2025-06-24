@@ -20,7 +20,8 @@ describe('ContainerAssignmentManager', () => {
 
   describe('initialization', () => {
     it('should initialize successfully', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const { DatabaseService } = jest.requireMock('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
       mockDatabaseService.getInstance().getActiveContainers.mockResolvedValue([]);
 
       await manager.initialize();
@@ -44,7 +45,8 @@ describe('ContainerAssignmentManager', () => {
         }
       ];
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const { DatabaseService } = jest.requireMock('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
       mockDatabaseService.getInstance().getActiveContainers.mockResolvedValue(mockContainers);
 
       await manager.initialize();
@@ -82,7 +84,8 @@ describe('ContainerAssignmentManager', () => {
         utilization: { cpu: 0.1, memory: 0.2, disk: 0.1, network: 0.05 }
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const { DatabaseService } = jest.requireMock('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
       mockDatabaseService.getInstance().saveContainer.mockResolvedValue(undefined);
 
       await manager.registerContainer(container);
@@ -179,11 +182,17 @@ describe('ContainerAssignmentManager', () => {
         priority: 1
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -211,11 +220,17 @@ describe('ContainerAssignmentManager', () => {
         priority: 1
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -231,11 +246,17 @@ describe('ContainerAssignmentManager', () => {
         priority: 1
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -254,11 +275,17 @@ describe('ContainerAssignmentManager', () => {
         priority: 1
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -311,11 +338,17 @@ describe('ContainerAssignmentManager', () => {
       const request1 = { jobId: 'job-1', labels: ['self-hosted'], priority: 1 };
       const request2 = { jobId: 'job-2', labels: ['self-hosted'], priority: 1 };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container1 = await manager.assignContainer(request1);
       
@@ -334,11 +367,17 @@ describe('ContainerAssignmentManager', () => {
 
       const request = { jobId: 'job-1', labels: ['self-hosted'], priority: 1 };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -356,11 +395,17 @@ describe('ContainerAssignmentManager', () => {
         priority: 1 // High priority
       };
 
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
-      mockDatabaseService.getInstance().createAssignment.mockResolvedValue(undefined);
+      const { DatabaseService } = await import('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
+      (mockDatabaseService.getInstance as jest.Mock).mockReturnValue({
+        createAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
-      const mockMetricsCollector = require('../../services/metrics-collector').MetricsCollector;
-      mockMetricsCollector.getInstance().recordAssignment.mockResolvedValue(undefined);
+      const { MetricsCollector } = await import('../../services/metrics-collector');
+      const mockMetricsCollector = MetricsCollector as jest.Mocked<typeof MetricsCollector>;
+      (mockMetricsCollector.getInstance as jest.Mock).mockReturnValue({
+        recordAssignment: jest.fn().mockResolvedValue(undefined)
+      });
 
       const container = await manager.assignContainer(request);
 
@@ -487,7 +532,8 @@ describe('ContainerAssignmentManager', () => {
     });
 
     it('should release container from job', async () => {
-      const mockDatabaseService = require('../../services/database-service').DatabaseService;
+      const { DatabaseService } = jest.requireMock('../../services/database-service');
+      const mockDatabaseService = DatabaseService as jest.Mocked<typeof DatabaseService>;
       mockDatabaseService.getInstance().completeAssignment.mockResolvedValue(undefined);
 
       let releasedEvent: any = null;

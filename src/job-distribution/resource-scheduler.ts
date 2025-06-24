@@ -1,6 +1,6 @@
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
-import { JobRoutingRequest, ResourceRequirements, JobPriority } from './job-router';
+import { JobRoutingRequest, ResourceRequirements, JobPriority, PerformanceProfile } from './job-router';
 
 const logger = createLogger('ResourceScheduler');
 
@@ -266,13 +266,6 @@ export enum PreemptionStrategy {
   SHORTEST_REMAINING = 'shortest-remaining',
   LEAST_PROGRESS = 'least-progress',
   NEWEST_JOB = 'newest-job'
-}
-
-export enum PerformanceProfile {
-  SPEED = 'speed',
-  EFFICIENCY = 'efficiency',
-  BALANCED = 'balanced',
-  COST_OPTIMIZED = 'cost-optimized'
 }
 
 export class ResourceScheduler extends EventEmitter {
@@ -837,7 +830,8 @@ export class ResourceScheduler extends EventEmitter {
     }
 
     // Check job limit
-    if (runner.jobs.length >= runner.metadata.capabilities.includes('multi-job') ? 5 : 1) {
+    const maxJobs = runner.metadata.capabilities.includes('multi-job') ? 5 : 1;
+    if (runner.jobs.length >= maxJobs) {
       return false;
     }
 

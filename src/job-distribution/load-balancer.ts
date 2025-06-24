@@ -114,6 +114,7 @@ export interface LoadBalancingResult {
   position: number;
   routingResult?: JobRoutingResult;
   metadata: LoadBalancingMetadata;
+  error?: string;
 }
 
 export interface LoadBalancingMetadata {
@@ -205,13 +206,13 @@ export class LoadBalancer extends EventEmitter {
       // Apply throttling
       const throttlingResult = await this.applyThrottling(request);
       if (!throttlingResult.allowed) {
-        return this.createThrottledResult(request, throttlingResult.reason);
+        return this.createThrottledResult(request, throttlingResult.reason || 'Throttling limit exceeded');
       }
 
       // Check circuit breakers
       const circuitBreakerCheck = this.checkCircuitBreakers(request);
       if (!circuitBreakerCheck.allowed) {
-        return this.createCircuitBreakerResult(request, circuitBreakerCheck.reason);
+        return this.createCircuitBreakerResult(request, circuitBreakerCheck.reason || 'Circuit breaker is open');
       }
 
       // Select queue based on priority and strategy
@@ -999,7 +1000,7 @@ export class LoadBalancer extends EventEmitter {
     };
   }
 
-  private createErrorResult(request: JobRoutingRequest, error: Error, processingTime: number): LoadBalancingResult {
+  private createErrorResult(request: JobRoutingRequest, _error: Error, processingTime: number): LoadBalancingResult {
     return {
       success: false,
       jobId: request.jobId,
