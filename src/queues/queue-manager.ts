@@ -85,7 +85,7 @@ export class QueueManager {
   private async initializeQueues(): Promise<void> {
     const connection = getBullConnectionOptions();
     
-    for (const [_name, queueName] of Object.entries(QUEUE_CONFIG.queues)) {
+    for (const queueName of Object.values(QUEUE_CONFIG.queues)) {
       const queue = new Queue(queueName, {
         connection: connection.connection,
         defaultJobOptions: QUEUE_CONFIG.defaultJobOptions
@@ -168,7 +168,7 @@ export class QueueManager {
   private async initializeSchedulers(): Promise<void> {
     const connection = getBullConnectionOptions();
     
-    for (const [_name, queueName] of Object.entries(QUEUE_CONFIG.queues)) {
+    for (const queueName of Object.values(QUEUE_CONFIG.queues)) {
       const scheduler = new QueueScheduler(queueName, {
         connection: connection.connection
       });
@@ -323,7 +323,7 @@ export class QueueManager {
   public async getAllQueuesStats(): Promise<Record<string, any>> {
     const stats: Record<string, any> = {};
     
-    for (const [name, _queue] of this.queues.entries()) {
+    for (const name of this.queues.keys()) {
       stats[name] = await this.getQueueStats(name);
     }
     

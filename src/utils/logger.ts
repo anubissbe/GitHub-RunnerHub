@@ -66,3 +66,6 @@ export const createLogger = (component: string) => {
 
 // Export default logger
 export default logger;
+
+// CommonJS compatibility
+export { logger };

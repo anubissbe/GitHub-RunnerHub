@@ -228,11 +228,11 @@ export class ProxyRunner {
         stdio: 'pipe'
       });
 
-      let stdout = '';
+      let _stdout = '';
       let stderr = '';
 
       proc.stdout.on('data', (data) => {
-        stdout += data.toString();
+        _stdout += data.toString();
       });
 
       proc.stderr.on('data', (data) => {

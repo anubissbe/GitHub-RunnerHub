@@ -254,7 +254,7 @@ class ContainerSecurityScanner extends EventEmitter {
    */
   async executeTrivyScanner(scanContext) {
     return new Promise((resolve, reject) => {
-      const { imageId, imageName } = scanContext;
+      const { imageId: _imageId, imageName } = scanContext;
       
       logger.info(`Running Trivy scan on ${imageName}`);
       
@@ -650,7 +650,7 @@ class ContainerSecurityScanner extends EventEmitter {
     
     for (const vuln of vulnerabilities) {
       const severity = vuln.severity?.toUpperCase() || 'UNKNOWN';
-      if (counts.hasOwnProperty(severity)) {
+      if (Object.prototype.hasOwnProperty.call(counts, severity)) {
         counts[severity]++;
       } else {
         counts.UNKNOWN++;
@@ -672,7 +672,7 @@ class ContainerSecurityScanner extends EventEmitter {
   
   async evaluateSecurityPolicy(policy, scanResult) {
     switch (policy.type) {
-      case 'vulnerability_count':
+      case 'vulnerability_count': {
         const count = scanResult.summary.severityCounts[policy.severity] || 0;
         return {
           violated: count > policy.maxCount,
@@ -681,6 +681,7 @@ class ContainerSecurityScanner extends EventEmitter {
           actualCount: count,
           maxCount: policy.maxCount
         };
+      }
       
       default:
         return { violated: false };
@@ -817,7 +818,7 @@ class ContainerSecurityScanner extends EventEmitter {
     logger.info('Stopping Container Security Scanner');
     
     // Cancel any running scans
-    for (const scannerId of this.activeScanners) {
+    for (const _scannerId of this.activeScanners) {
       // Cancel scanner operations
     }
     

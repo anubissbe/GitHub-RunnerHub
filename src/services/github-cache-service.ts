@@ -471,19 +471,19 @@ export class GitHubCacheService {
     const tags: string[] = [];
 
     // Extract repository info
-    const repoMatch = endpoint.match(/repos\/([^\/]+\/[^\/]+)/);
+    const repoMatch = endpoint.match(/repos\/([^/]+\/[^/]+)/);
     if (repoMatch) {
       tags.push(`repo:${repoMatch[1]}`);
     }
 
     // Extract organization info
-    const orgMatch = endpoint.match(/orgs\/([^\/]+)/);
+    const orgMatch = endpoint.match(/orgs\/([^/]+)/);
     if (orgMatch) {
       tags.push(`org:${orgMatch[1]}`);
     }
 
     // Extract user info
-    const userMatch = endpoint.match(/users\/([^\/]+)/);
+    const userMatch = endpoint.match(/users\/([^/]+)/);
     if (userMatch) {
       tags.push(`user:${userMatch[1]}`);
     }

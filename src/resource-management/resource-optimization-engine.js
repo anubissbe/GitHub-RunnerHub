@@ -720,7 +720,7 @@ class ResourceOptimizationEngine extends EventEmitter {
     const actions = [];
     
     // Calculate current costs
-    const currentCosts = this.calculateCurrentCosts(resourceSnapshot);
+    const _currentCosts = this.calculateCurrentCosts(resourceSnapshot);
     
     // Run cost optimizer
     const solution = this.models.costOptimizer.optimize(

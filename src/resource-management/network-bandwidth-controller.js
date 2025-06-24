@@ -218,11 +218,11 @@ class NetworkBandwidthController extends EventEmitter {
       const limits = this.calculateBandwidthLimits(profile, requirements);
       
       // Get container network interface
-      const interface = await this.getContainerInterface(containerId);
+      const networkInterface = await this.getContainerInterface(containerId);
       
       // Apply traffic shaping
       if (this.config.trafficControl.enabled) {
-        await this.applyTrafficShaping(containerId, interface, limits);
+        await this.applyTrafficShaping(containerId, networkInterface, limits);
       }
       
       // Set up rate limiting
@@ -234,7 +234,7 @@ class NetworkBandwidthController extends EventEmitter {
       this.containerBandwidth.set(containerId, {
         limits,
         profile: profile.name,
-        interface,
+        interface: networkInterface,
         appliedAt: new Date(),
         requirements
       });
@@ -450,7 +450,7 @@ class NetworkBandwidthController extends EventEmitter {
   /**
    * Apply traffic shaping
    */
-  async applyTrafficShaping(containerId, interface, limits) {
+  async applyTrafficShaping(containerId, networkInterface, limits) {
     try {
       const classId = this.getOrCreateTcClass(containerId);
       const iface = this.config.trafficControl.interface;
@@ -467,11 +467,11 @@ class NetworkBandwidthController extends EventEmitter {
       );
       
       // Apply ingress policing on container interface
-      await this.applyIngressPolicing(interface, limits.ingress, limits.burst);
+      await this.applyIngressPolicing(networkInterface, limits.ingress, limits.burst);
       
       // Add latency if specified
       if (limits.latency && limits.latency !== '0ms') {
-        await this.applyNetworkLatency(interface, limits.latency);
+        await this.applyNetworkLatency(networkInterface, limits.latency);
       }
       
       // Set up iptables marking for traffic classification

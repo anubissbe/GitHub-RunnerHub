@@ -16,7 +16,7 @@ router.get('/', async (_req: Request, res: Response) => {
     };
 
     res.status(dbHealthy ? 200 : 503).json(health);
-  } catch (error) {
+  } catch (_error) {
     res.status(503).json({
       status: 'unhealthy',
       timestamp: new Date().toISOString(),

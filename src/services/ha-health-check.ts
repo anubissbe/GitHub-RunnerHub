@@ -12,6 +12,8 @@ import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
 import { config } from '../config';
 import axios from 'axios';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export interface HealthStatus {
     status: 'healthy' | 'degraded' | 'unhealthy';
@@ -519,9 +521,6 @@ export class HAHealthCheckService extends EventEmitter {
         const startTime = Date.now();
         
         try {
-            const fs = require('fs').promises;
-            const path = require('path');
-            
             const storagePath = config.ha.storage?.sharedPath || '/shared';
             const testFile = path.join(storagePath, '.health-check');
             const testData = `health-check-${Date.now()}`;

@@ -1,7 +1,7 @@
 import { Job, QueueEvents } from 'bullmq';
 import { createLogger } from '../utils/logger';
 const logger = createLogger('JobPersistence');
-import { DatabaseService } from '../services/database';
+import { DatabaseService } from '../services/database-service';
 import { QueueManager } from './queue-manager';
 import { JobType, QUEUE_CONFIG } from './config/redis-config';
 import * as fs from 'fs/promises';
@@ -150,9 +150,9 @@ export class JobPersistence {
     }
     
     const {
-      _recoverFailed = true,
-      _recoverStalled = true,
-      _recoverIncomplete = true,
+      recoverFailed = true,
+      recoverStalled = true,
+      recoverIncomplete = true,
       maxAge = 24 * 60 * 60 * 1000, // 24 hours default
       batchSize = 100
     } = options;
@@ -168,7 +168,7 @@ export class JobPersistence {
       
       // Get persisted jobs to recover
       const jobsToRecover = await this.db.getPersistedJobs({
-        statuses: this.getRecoveryStatuses(options),
+        statuses: this.getRecoveryStatuses({ recoverFailed, recoverStalled, recoverIncomplete }),
         after: cutoffDate,
         limit: batchSize
       });

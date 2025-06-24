@@ -4,13 +4,13 @@ import { JobRouter } from '../queues/job-router';
 import { RetryHandler } from '../queues/retry-handler';
 import { JobPersistence } from '../queues/job-persistence';
 import { JobType } from '../queues/config/redis-config';
-import { authMiddleware } from '../middleware/auth';
+import AuthMiddleware from '../middleware/auth';
 import { logger } from '../utils/logger';
 
 const router = Router();
 
 // Apply auth middleware to all queue routes
-router.use(authMiddleware);
+router.use(AuthMiddleware.authenticate());
 
 // Queue statistics endpoint
 router.get('/stats', async (req: Request, res: Response) => {
@@ -60,10 +60,11 @@ router.post('/jobs', async (req: Request, res: Response) => {
     const { type, data, priority, delay, metadata } = req.body;
     
     if (!type || !data) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Missing required fields: type and data'
       });
+      return;
     }
     
     const jobRouter = JobRouter.getInstance();
@@ -96,10 +97,11 @@ router.post('/jobs/bulk', async (req: Request, res: Response) => {
     const { jobs } = req.body;
     
     if (!Array.isArray(jobs)) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Jobs must be an array'
       });
+      return;
     }
     
     const jobRouter = JobRouter.getInstance();
@@ -130,29 +132,32 @@ router.get('/jobs/:jobId', async (req: Request, res: Response) => {
     const { queue } = req.query;
     
     if (!queue) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Queue name is required'
       });
+      return;
     }
     
     const queueManager = QueueManager.getInstance();
     const queueInstance = queueManager.getQueue(queue as string);
     
     if (!queueInstance) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Queue not found'
       });
+      return;
     }
     
     const job = await queueInstance.getJob(jobId);
     
     if (!job) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Job not found'
       });
+      return;
     }
     
     res.json({
@@ -188,29 +193,32 @@ router.post('/jobs/:jobId/retry', async (req: Request, res: Response) => {
     const { queue } = req.body;
     
     if (!queue) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: 'Queue name is required'
       });
+      return;
     }
     
     const queueManager = QueueManager.getInstance();
     const queueInstance = queueManager.getQueue(queue);
     
     if (!queueInstance) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Queue not found'
       });
+      return;
     }
     
     const job = await queueInstance.getJob(jobId);
     
     if (!job) {
-      return res.status(404).json({
+      res.status(404).json({
         success: false,
         error: 'Job not found'
       });
+      return;
     }
     
     await job.retry();
@@ -388,7 +396,7 @@ router.get('/persistence/export', async (req: Request, res: Response) => {
 });
 
 // Retry handler statistics
-router.get('/retry/stats', async (req: Request, res: Response) => {
+router.get('/retry/stats', async (_req: Request, res: Response) => {
   try {
     const retryHandler = RetryHandler.getInstance();
     const stats = await retryHandler.getFailureStats();
@@ -407,7 +415,7 @@ router.get('/retry/stats', async (req: Request, res: Response) => {
 });
 
 // Queue routing optimization
-router.post('/routing/optimize', async (req: Request, res: Response) => {
+router.post('/routing/optimize', async (_req: Request, res: Response) => {
   try {
     const jobRouter = JobRouter.getInstance();
     await jobRouter.optimizeRouting();
@@ -425,7 +433,7 @@ router.post('/routing/optimize', async (req: Request, res: Response) => {
   }
 });
 
-router.get('/routing/distribution', async (req: Request, res: Response) => {
+router.get('/routing/distribution', async (_req: Request, res: Response) => {
   try {
     const jobRouter = JobRouter.getInstance();
     const distribution = await jobRouter.getQueueDistribution();

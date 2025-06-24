@@ -212,7 +212,7 @@ export class ContainerOrchestrator {
 
     try {
       await this.docker.getNetwork(networkName).inspect();
-    } catch (error) {
+    } catch (_error) {
       // Network doesn't exist, create it
       logger.info('Creating network for repository', { repository, networkName });
       

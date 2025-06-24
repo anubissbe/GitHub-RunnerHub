@@ -669,9 +669,9 @@ class AuditLogger extends EventEmitter {
   checkPHIInvolvement(event) {
     // Check if event involves Protected Health Information
     return event.details && (
-      event.details.hasOwnProperty('patient') ||
-      event.details.hasOwnProperty('medical') ||
-      event.details.hasOwnProperty('health')
+      Object.prototype.hasOwnProperty.call(event.details, 'patient') ||
+      Object.prototype.hasOwnProperty.call(event.details, 'medical') ||
+      Object.prototype.hasOwnProperty.call(event.details, 'health')
     );
   }
   
@@ -703,9 +703,9 @@ class AuditLogger extends EventEmitter {
   
   checkCardDataInvolvement(event) {
     return event.details && (
-      event.details.hasOwnProperty('card') ||
-      event.details.hasOwnProperty('payment') ||
-      event.details.hasOwnProperty('pan')
+      Object.prototype.hasOwnProperty.call(event.details, 'card') ||
+      Object.prototype.hasOwnProperty.call(event.details, 'payment') ||
+      Object.prototype.hasOwnProperty.call(event.details, 'pan')
     );
   }
 

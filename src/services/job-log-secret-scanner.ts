@@ -478,7 +478,7 @@ export class JobLogSecretScanner extends EventEmitter {
       {
         name: 'Generic API Key',
         description: 'Generic API key pattern',
-        regex: /\b(api[_-]?key[_-]?[=:][\s]*["\']?([a-zA-Z0-9_\-]{16,})["\']?)\b/i,
+        regex: /\b(api[_-]?key[_-]?[=:][\s]*["\']?([a-zA-Z0-9_-]{16,})["\']?)\b/i,
         enabled: true,
         severity: SecretSeverity.HIGH,
         category: SecretCategory.API_KEY,

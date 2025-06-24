@@ -32,13 +32,13 @@ export class CleanupProcessor {
     }
   }
   
-  private static async cleanupOldJobs(job: Job, data: any): Promise<any> {
+  private static async cleanupOldJobs(job: Job, _data: any): Promise<any> {
     const { 
       maxAge = 7 * 24 * 60 * 60 * 1000, // 7 days default
       batchSize = 100,
       cleanQueues = true,
       cleanDatabase = true
-    } = data;
+    } = _data;
     
     try {
       await job.updateProgress(10);
@@ -107,13 +107,13 @@ export class CleanupProcessor {
     }
   }
   
-  private static async cleanupContainers(job: Job, data: any): Promise<any> {
+  private static async cleanupContainers(job: Job, _data: any): Promise<any> {
     const { 
       maxAge = 24 * 60 * 60 * 1000, // 24 hours default
       includeExited = true,
       includeDead = true,
       preserveLabels = ['com.github-runnerhub.preserve=true']
-    } = data;
+    } = _data;
     
     try {
       await job.updateProgress(10);
@@ -196,7 +196,7 @@ export class CleanupProcessor {
     }
   }
   
-  private static async cleanupLogs(job: Job, data: any): Promise<any> {
+  private static async cleanupLogs(job: Job, _data: any): Promise<any> {
     const { 
       maxAge = 30 * 24 * 60 * 60 * 1000, // 30 days default
       maxSize = 100 * 1024 * 1024, // 100MB default
@@ -205,7 +205,7 @@ export class CleanupProcessor {
         '/tmp/runner-logs'
       ],
       patterns = ['*.log', '*.txt', '*.out']
-    } = data;
+    } = _data;
     
     try {
       await job.updateProgress(10);
@@ -296,7 +296,7 @@ export class CleanupProcessor {
         } else if (entry.isFile()) {
           // Check if file matches any pattern
           const matches = patterns.some(pattern => {
-            const regex = new RegExp(pattern.replace('*', '.*'));
+            const regex = new RegExp(pattern.replace(/\*/g, '.*'));
             return regex.test(entry.name);
           });
           
@@ -331,7 +331,7 @@ export class CleanupProcessor {
           }
         }
       }
-    } catch (_error) {
+    } catch {
       // Ignore errors for directory removal
     }
   }

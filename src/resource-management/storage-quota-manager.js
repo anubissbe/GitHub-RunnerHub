@@ -5,7 +5,6 @@
 
 const EventEmitter = require('events');
 const Docker = require('dockerode');
-const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -990,7 +989,7 @@ class StorageQuotaManager extends EventEmitter {
         try {
           // Truncate large log files
           await execAsync(
-            `docker exec ${containerId} find ${logPath} -type f -name "*.log" -size +100M -exec truncate -s 0 {} \; 2>/dev/null || true`
+            `docker exec ${containerId} find ${logPath} -type f -name "*.log" -size +100M -exec truncate -s 0 {} ; 2>/dev/null || true`
           );
           
           // Delete old log files
@@ -1178,7 +1177,7 @@ class StorageQuotaManager extends EventEmitter {
     let totalUsage = 0;
     let containerCount = 0;
     
-    for (const [containerId, usage] of this.storageUsage) {
+    for (const [_containerId, usage] of this.storageUsage) {
       totalUsage += usage.disk.used;
       containerCount++;
     }

@@ -364,7 +364,7 @@ export class ContainerCleanupService extends EventEmitter {
     const now = Date.now();
 
     switch (policy.type) {
-      case 'idle':
+      case 'idle': {
         // Check if container is idle for specified time
         // Using started time as proxy for last activity
         if (container.state !== ContainerState.RUNNING || !container.started) {
@@ -382,6 +382,7 @@ export class ContainerCleanupService extends EventEmitter {
           return true;
         }
         break;
+      }
 
       case 'failed':
         // Check failed containers
@@ -415,7 +416,7 @@ export class ContainerCleanupService extends EventEmitter {
         }
         break;
 
-      case 'expired':
+      case 'expired': {
         // Check if container exceeded max lifetime
         const lifetime = now - container.created.getTime();
         const maxLifetime = (policy.conditions.maxLifetimeHours || 24) * 60 * 60 * 1000;
@@ -428,6 +429,7 @@ export class ContainerCleanupService extends EventEmitter {
           return true;
         }
         break;
+      }
     }
 
     return false;

@@ -6,6 +6,7 @@
 const EventEmitter = require('events');
 const fs = require('fs').promises;
 const path = require('path');
+const { promisify } = require('util');
 const logger = require('../utils/logger');
 
 class UsageReportingAnalytics extends EventEmitter {
@@ -939,7 +940,7 @@ class UsageReportingAnalytics extends EventEmitter {
    */
   async saveJsonReport(report) {
     const filename = `${report.id}.json`;
-    const filepath = path.join(this.config.storage.path, 'reports', filename);
+    let filepath = path.join(this.config.storage.path, 'reports', filename);
     
     let content = JSON.stringify(report, null, 2);
     
@@ -1026,7 +1027,7 @@ class UsageReportingAnalytics extends EventEmitter {
     
     // Check different granularities based on period duration
     const duration = end - start;
-    const hour = 3600000;
+    const _hour = 3600000;
     const day = 86400000;
     
     if (duration <= day) {
