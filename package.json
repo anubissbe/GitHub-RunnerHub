@@ -53,7 +53,7 @@
     "bcrypt": "^5.1.1",
     "bull": "^4.16.5",
     "bullmq": "^5.55.0",
-    "compression": "^1.8.0",
+    "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dockerode": "^4.0.7",
     "dotenv": "^16.5.0",
